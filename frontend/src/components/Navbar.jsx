@@ -72,6 +72,15 @@ function Navbar() {
                 </li>
                 <li className="quantum-nav-item">
                     <Link
+                        to="/video-generator"
+                        className={`quantum-link ${activeLink === 'videogenerator' ? 'active' : ''}`}
+                        onClick={() => handleLinkClick('videogenerator')}
+                    >
+                        Video Generator
+                    </Link>
+                </li>
+                <li className="quantum-nav-item">
+                    <Link
                         to="/signup"
                         className={`quantum-link ${activeLink === 'signup' ? 'active' : ''}`}
                         onClick={() => handleLinkClick('signup')}
