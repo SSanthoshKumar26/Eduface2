@@ -2,10 +2,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FiSend, FiMic, FiPlus, FiLoader, FiArrowLeft } from "react-icons/fi";
+import { FiSend, FiMic, FiPlus, FiLoader, FiArrowLeft, FiBook } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "../styles/ContentGen.css";
-
 
 export default function ContentGen() {
   const [text, setText] = useState("");
@@ -18,9 +17,9 @@ export default function ContentGen() {
   const navigate = useNavigate();
 
   const modes = [
-    { key: "Quick Response", label: "⚡ Quick Response" },
-    { key: "Detailed", label: "📋 Detailed" },
-    { key: "Creative", label: "🎨 Creative" }
+    { key: "Quick Response", label: "⚡ Quick Response", desc: "Fast and concise" },
+    { key: "Detailed", label: "📋 Detailed", desc: "In-depth explanation" },
+    { key: "Creative", label: "🎨 Creative", desc: "Engaging and unique" }
   ];
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function ContentGen() {
       }
       setOutput(data.output || "[No output]");
     } catch (err) {
-      setOutput(`[Error]: ${err.message}`);
+      setOutput(`**Error:** ${err.message}\n\nPlease try again or check your connection.`);
     } finally {
       setLoading(false);
     }
@@ -68,6 +67,7 @@ export default function ContentGen() {
   };
 
   const toggleDropdown = () => setDropdownOpen((o) => !o);
+  
   const selectMode = (key) => {
     setMode(key);
     setDropdownOpen(false);
@@ -77,91 +77,126 @@ export default function ContentGen() {
     navigate("/");
   };
 
+  const handleGeneratePPT = () => {
+    if (output.trim()) {
+      navigate("/ppt-generator", { state: { generatedContent: output } });
+    } else {
+      alert("⚠️ Please generate content first!");
+    }
+  };
+
   return (
     <div className="cge-container">
-      {/* Back Button */}
+      {/* Header */}
       <div className="cge-header">
-        <button className="cge-back-button" onClick={goHome} title="Go back to Home">
+        <button className="cge-back-button" onClick={goHome}>
           <FiArrowLeft size={18} />
           Back to Home
         </button>
       </div>
 
-      <div className="cge-editor">
-        <textarea
-          ref={textareaRef}
-          className="cge-textarea"
-          rows={5}
-          value={text}
-          placeholder="Write your vision..."
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <div className="cge-footer">
-          <div className="cge-dropdown">
-            <button className="cge-dd-toggle" onClick={toggleDropdown}>
-              {modes.find((m) => m.key === mode).label}
-            </button>
-            {dropdownOpen && (
-              <ul className="cge-dd-menu">
-                {modes.map(({ key, label }) => (
-                  <li
-                    key={key}
-                    className="cge-dd-item"
-                    onClick={() => selectMode(key)}
-                  >
-                    {label}
-                  </li>
-                ))}
-              </ul>
-            )}
+      {/* Main Grid Layout */}
+      <div className="cge-main-wrapper">
+        {/* LEFT - EDITOR */}
+        <div className="cge-editor">
+          <div className="cge-editor-title">
+            <FiBook size={24} style={{ color: "var(--cyan-primary)" }} />
+            Create Your Content
           </div>
-          <div className="cge-buttons">
-            {isTyping && (
-              <div className="cge-loading">
-                <FiLoader className="cge-spinner" />
-                Generating...
+
+          <textarea
+            ref={textareaRef}
+            className="cge-textarea"
+            value={text}
+            placeholder="Enter your topic, title, or description here...&#10;Tip: Be specific for better results!"
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+
+          <div className="cge-controls">
+            <div className="cge-mode-section">
+              <label className="cge-mode-label">Content Style</label>
+              <div className="cge-dropdown">
+                <button className="cge-dd-toggle" onClick={toggleDropdown}>
+                  <span>{modes.find((m) => m.key === mode).label}</span>
+                  <span style={{ fontSize: "1.2rem" }}>▼</span>
+                </button>
+                {dropdownOpen && (
+                  <ul className="cge-dd-menu">
+                    {modes.map(({ key, label }) => (
+                      <li
+                        key={key}
+                        className="cge-dd-item"
+                        onClick={() => selectMode(key)}
+                      >
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            )}
-            <button className="cge-icon" disabled title="Add attachment">
-              <FiPlus />
-            </button>
-            <button className="cge-icon" disabled title="Voice input">
-              <FiMic />
-            </button>
+            </div>
+
+            <div className="cge-actions">
+              {isTyping ? (
+                <div className="cge-loading-state">
+                  <FiLoader className="cge-spinner" />
+                  Generating...
+                </div>
+              ) : (
+                <>
+                  <button className="cge-icon-btn" disabled title="Add attachment (Coming soon)">
+                    <FiPlus />
+                  </button>
+                  <button className="cge-icon-btn" disabled title="Voice input (Coming soon)">
+                    <FiMic />
+                  </button>
+                  <button
+                    className="cge-submit-btn"
+                    onClick={sendText}
+                    disabled={!text.trim() || loading}
+                  >
+                    <FiSend />
+                    Generate
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT - OUTPUT */}
+        <div className="cge-output-section">
+          <div className="cge-output-card">
+            <div className="cge-output">
+              {loading ? (
+                <div className="cge-output-loading">
+                  <div className="cge-output-loading-icon">⚙️</div>
+                  <div className="cge-output-loading-text">Generating your content...</div>
+                </div>
+              ) : output ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+              ) : (
+                <div className="cge-placeholder">
+                  <div className="cge-placeholder-icon">✨</div>
+                  <div>Your generated content will appear here</div>
+                  <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>Fill in the topic and click Generate!</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="cge-ppt-wrapper">
             <button
-              className="cge-submit"
-              onClick={sendText}
-              disabled={!text.trim() || loading}
+              onClick={handleGeneratePPT}
+              className="gen-ppt-btn"
+              disabled={!output.trim() || loading}
             >
-              <FiSend />
-              Generate
+              📊 Convert to PowerPoint
             </button>
           </div>
         </div>
       </div>
-      <div className="cge-output">
-        {loading ? (
-          <div className="cge-output-loading">
-            <FiLoader className="cge-spinner" />
-            Generating content...
-          </div>
-        ) : output ? (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
-        ) : (
-          <p className="cge-placeholder">Ready to generate amazing content...</p>
-        )}
-      </div>
-      <button
-        onClick={() => {
-          if (output.trim()) {
-            navigate("/PPTGenerator", { state: { generatedContent: output } });
-          } else {
-            alert("Please generate content first!");
-          }
-        }}
-        className="gen-ppt-btn" 
-      >Generate PPT...</button>
     </div>
   );
 }

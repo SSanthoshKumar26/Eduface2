@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 import '../styles/Navbar.css';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [activeLink, setActiveLink] = useState('home');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -17,86 +20,75 @@ function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleLinkClick = (linkName) => {
-        setActiveLink(linkName);
+    const toggleMenu = () => {
+        setIsOpen((prev) => !prev);
+    };
+
+    const handleNavigation = (path) => {
+        navigate(path);
         setIsOpen(false);
     };
 
-    const toggleMobileMenu = () => {
-        setIsOpen(!isOpen);
-    };
-
-    const handleOutsideClick = (e) => {
-        if (!e.target.closest('.quantum-navbar')) {
-            setIsOpen(false);
-        }
-    };
-
-    useEffect(() => {
-        document.addEventListener('click', handleOutsideClick);
-        return () => document.removeEventListener('click', handleOutsideClick);
-    }, []);
+    const navItems = [
+        { label: 'Home', path: '/' },
+        { label: 'Content Generator', path: '/content-gen' },
+        { label: 'Video Generator', path: '/video-gen' },
+        { label: 'PPT Generator', path: '/ppt-generator' },
+    ];
 
     return (
-        <nav className={`quantum-navbar ${scrolled ? 'scrolled' : ''}`}>
-            <div className="quantum-particles">
-                {[...Array(5)].map((_, index) => (
-                    <div
-                        key={index}
-                        className="quantum-particle"
-                        style={{
-                            left: `${20 + index * 20}%`,
-                            animationDelay: `${index}s`
-                        }}
-                    />
-                ))}
-            </div>
+        <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+            <div className="navbar-container">
+                {/* Logo */}
+                <Link to="/" className="navbar-logo">
+                    <Logo size="md" />
+                </Link>
 
-            <Link
-                to="/"
-                className="quantum-logo"
-                onClick={() => handleLinkClick('home')}
-            >
-                EduFace
-            </Link>
+                {/* Desktop Menu */}
+                <div className="navbar-menu">
+                    <div className="navbar-links">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className="nav-link"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                    </div>
 
-            <ul className={`quantum-nav-links ${isOpen ? 'active' : ''}`}>
-                <li className="quantum-nav-item">
-                    <Link
-                        to="/"
-                        className={`quantum-link ${activeLink === 'home' ? 'active' : ''}`}
-                        onClick={() => handleLinkClick('home')}
-                    >
-                        Home
-                    </Link>
-                </li>
-                <li className="quantum-nav-item">
-                    <Link
-                        to="/video-generator"
-                        className={`quantum-link ${activeLink === 'videogenerator' ? 'active' : ''}`}
-                        onClick={() => handleLinkClick('videogenerator')}
-                    >
-                        Video Generator
-                    </Link>
-                </li>
-                <li className="quantum-nav-item">
-                    <Link
-                        to="/signup"
-                        className={`quantum-link ${activeLink === 'signup' ? 'active' : ''}`}
-                        onClick={() => handleLinkClick('signup')}
-                    >
-                        Signup / Login
-                    </Link>
-                </li>
-            </ul>
+                    {/* Theme Toggle */}
+                    <div className="navbar-actions">
+                        <ThemeToggle />
+                    </div>
+                </div>
 
-            <div
-                className={`quantum-mobile-toggle ${isOpen ? 'active' : ''}`}
-                onClick={toggleMobileMenu}
-            >
-                <div className="quantum-bar"></div>
-                <div className="quantum-bar"></div>
-                <div className="quantum-bar"></div>
+                {/* Mobile Menu Button */}
+                <button className="navbar-toggle" onClick={toggleMenu}>
+                    {isOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+
+                {/* Mobile Menu */}
+                {isOpen && (
+                    <div className="navbar-mobile">
+                        <div className="mobile-links">
+                            {navItems.map((item) => (
+                                <button
+                                    key={item.path}
+                                    className="mobile-link"
+                                    onClick={() => handleNavigation(item.path)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mobile-actions">
+                            <ThemeToggle />
+                        </div>
+                    </div>
+                )}
             </div>
         </nav>
     );

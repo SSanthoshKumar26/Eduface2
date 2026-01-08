@@ -1,23 +1,28 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import Home from "./pages/Home.jsx";
-import ContentGen from "./components/ContentGen.jsx";
-import PPTGenerator from "./components/PPTGenerator.jsx";
-import VideoGenerator from "./components/VideoGenerator.jsx";
+import { ThemeProvider } from "./context/ThemeContext";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import ContentGen from "./components/ContentGen";
+import VideoGen from "../src/components/VideoGenerator";
+import PPTGenerator from "../src/components/PPTGenerator";
+import "./App.css";
+import "./styles/theme.css";
 
-export default function App() {
+function App() {
   return (
-    <Router>
-      <Navbar />
-      <div className="container py-3">
+    <ThemeProvider>
+      <Router>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/content-gen" element={<ContentGen />} />
+          <Route path="/video-gen" element={<VideoGen />} />
           <Route path="/ppt-generator" element={<PPTGenerator />} />
-          <Route path="/video-generator" element={<VideoGenerator />} />
         </Routes>
-      </div>
-    </Router>
+      </Router>
+    </ThemeProvider>
   );
 }
+
+export default App;

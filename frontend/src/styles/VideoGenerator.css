@@ -1,0 +1,704 @@
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+.vg-root-container {
+  min-height: 100vh;
+  background: var(--bg-light);
+  padding: 40px 20px;
+  font-family: var(--font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   HEADER SECTION
+   ============================================ */
+.vg-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: slideIn 0.6s ease;
+}
+
+.vg-icon-wrapper {
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.vg-icon {
+  font-size: 64px;
+  display: inline-block;
+  filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
+}
+
+.vg-title {
+  font-size: 48px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--cyan-tertiary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+  font-family: var(--font-display);
+}
+
+.vg-subtitle {
+  font-size: 18px;
+  color: var(--text-gray);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+  transition: color 0.3s ease;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+.vg-alert {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: slideIn 0.4s ease;
+  transition: all 0.3s ease;
+}
+
+.vg-alert-danger {
+  background: rgba(255, 59, 48, 0.15);
+  border: 1px solid rgba(255, 59, 48, 0.4);
+}
+
+.vg-alert-success {
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+.vg-alert-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.vg-alert-content {
+  flex: 1;
+  color: var(--text-dark);
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.vg-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dark);
+  font-size: 28px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 0 8px;
+}
+
+.vg-close-btn:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   PROGRESS CARD
+   ============================================ */
+.vg-progress-card {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 24px;
+  animation: slideIn 0.4s ease;
+}
+
+.vg-progress-content {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.vg-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 212, 255, 0.2);
+  border-top: 4px solid var(--cyan-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.vg-progress-text {
+  flex: 1;
+}
+
+.vg-progress-title {
+  color: var(--text-dark);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  transition: color 0.3s ease;
+}
+
+.vg-progress-subtitle {
+  color: var(--text-gray);
+  font-size: 14px;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.vg-progress-bar {
+  height: 8px;
+  background: rgba(0, 212, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.vg-progress-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--cyan-primary), var(--cyan-tertiary));
+  animation: progress 2s ease-in-out infinite;
+}
+
+/* ============================================
+   GLASS CARD
+   ============================================ */
+.vg-glass-card {
+  background: var(--bg-white);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--border-light);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.vg-glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+  border-color: var(--cyan-primary);
+}
+
+.vg-neon-border {
+  border: 2px solid var(--cyan-primary);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5), inset 0 0 10px rgba(0, 229, 255, 0.2);
+}
+
+/* ============================================
+   GRID LAYOUT
+   ============================================ */
+.vg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto 32px;
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+.vg-card {
+  padding: 0;
+  overflow: hidden;
+  animation: slideIn 0.6s ease;
+}
+
+.vg-card-config {
+  animation-delay: 0.1s;
+}
+
+.vg-card-header {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.vg-card-header-config {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 212, 255, 0.15));
+}
+
+.vg-card-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+}
+
+.vg-card-title {
+  color: var(--text-dark);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  transition: color 0.3s ease;
+  font-family: var(--font-heading);
+}
+
+.vg-card-body {
+  padding: 28px 24px;
+}
+
+/* ============================================
+   FORM STYLES
+   ============================================ */
+.vg-form-group {
+  margin-bottom: 24px;
+}
+
+.vg-label {
+  display: block;
+  color: var(--text-dark);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  transition: color 0.3s ease;
+  font-family: var(--font-heading);
+}
+
+.vg-required {
+  color: #ff3b30;
+}
+
+.vg-cyber-input {
+  background: var(--bg-light);
+  border: 2px solid var(--border-light);
+  color: var(--text-dark);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.vg-cyber-input:focus {
+  outline: none;
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+  background: var(--bg-white);
+}
+
+.vg-cyber-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vg-hint {
+  display: block;
+  color: var(--text-gray);
+  font-size: 13px;
+  margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.vg-file-info {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: var(--cyan-primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.vg-checkmark {
+  font-size: 18px;
+}
+
+/* ============================================
+   PREVIEW STYLES
+   ============================================ */
+.vg-preview-wrapper {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.vg-preview-label {
+  color: var(--text-dark);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  transition: color 0.3s ease;
+}
+
+.vg-image-wrapper {
+  display: inline-block;
+  padding: 4px;
+  background: linear-gradient(135deg, var(--cyan-primary), var(--cyan-tertiary));
+  border-radius: 50%;
+}
+
+.vg-preview-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-white);
+}
+
+/* ============================================
+   STATUS BADGE
+   ============================================ */
+.vg-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  font-size: 13px;
+  color: var(--cyan-primary);
+  transition: all 0.3s ease;
+}
+
+.vg-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan-primary);
+  animation: pulse 2s infinite;
+}
+
+.vg-loading-spinner {
+  margin-left: 8px;
+  font-size: 14px;
+  animation: spin 1s linear infinite;
+}
+
+.vg-refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  margin-left: auto;
+}
+
+.vg-refresh-btn:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.vg-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.vg-button-wrapper {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: slideIn 0.8s ease;
+}
+
+.vg-cyber-button {
+  background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--cyan-tertiary) 100%);
+  border: none;
+  color: white;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+  font-family: var(--font-heading);
+}
+
+.vg-cyber-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.6);
+}
+
+.vg-cyber-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vg-cyber-button-secondary {
+  background: var(--bg-light);
+  border: 2px solid var(--border-light);
+  color: var(--text-dark);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.vg-cyber-button-secondary:hover:not(:disabled) {
+  border-color: var(--cyan-primary);
+  color: var(--cyan-primary);
+  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.3);
+}
+
+.vg-cyber-button-script {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  margin: 8px;
+}
+
+.vg-cyber-button-script:hover:not(:disabled) {
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+}
+
+.vg-cyber-button-audio {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  margin: 8px;
+}
+
+.vg-cyber-button-audio:hover:not(:disabled) {
+  box-shadow: 0 6px 25px rgba(245, 87, 108, 0.6);
+}
+
+/* ============================================
+   RESULTS SECTION
+   ============================================ */
+.vg-results-card {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 32px;
+  animation: slideIn 0.6s ease;
+}
+
+.vg-results-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.vg-results-title {
+  color: var(--text-dark);
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  transition: color 0.3s ease;
+  font-family: var(--font-display);
+}
+
+.vg-video-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.vg-video {
+  width: 100%;
+  display: block;
+  background: var(--bg-light);
+}
+
+.vg-download-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.vg-job-id {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--text-gray);
+  font-size: 13px;
+  transition: color 0.3s ease;
+}
+
+/* ============================================
+   TIPS SECTION
+   ============================================ */
+.vg-tips-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  animation: slideIn 1s ease;
+}
+
+.vg-tips-title {
+  color: var(--text-dark);
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: color 0.3s ease;
+  font-family: var(--font-heading);
+}
+
+.vg-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vg-tip-item {
+  color: var(--text-gray);
+  font-size: 15px;
+  padding: 10px 0;
+  line-height: 1.6;
+  transition: color 0.3s ease;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ============================================
+   INPUT FILE STYLING
+   ============================================ */
+input[type="file"] {
+  color: var(--text-dark);
+  transition: color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button {
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  color: var(--cyan-primary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 10px;
+  font-weight: 600;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: rgba(0, 212, 255, 0.25);
+  border-color: rgba(0, 212, 255, 0.7);
+}
+
+select.vg-cyber-input {
+  cursor: pointer;
+}
+
+select.vg-cyber-input option {
+  background: var(--bg-white);
+  color: var(--text-dark);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 1024px) {
+  .vg-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .vg-root-container {
+    padding: 30px 15px;
+  }
+
+  .vg-title {
+    font-size: 36px;
+  }
+
+  .vg-subtitle {
+    font-size: 16px;
+  }
+
+  .vg-card-body {
+    padding: 20px 16px;
+  }
+
+  .vg-button-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .vg-cyber-button {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 12px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .vg-root-container {
+    padding: 20px 10px;
+  }
+
+  .vg-title {
+    font-size: 28px;
+  }
+
+  .vg-subtitle {
+    font-size: 14px;
+  }
+
+  .vg-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .vg-card-body {
+    padding: 16px 12px;
+  }
+
+  .vg-results-card {
+    padding: 16px;
+  }
+
+  .vg-download-buttons {
+    flex-direction: column;
+  }
+
+  .vg-cyber-button {
+    width: 100%;
+    font-size: 14px;
+    padding: 12px 24px;
+  }
+
+  .vg-preview-image {
+    width: 120px;
+    height: 120px;
+  }
+}

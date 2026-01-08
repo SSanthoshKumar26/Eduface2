@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
+import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX } from 'react-icons/fi';
 import ThemeSelector from './ThemeSelector';
 import '../styles/PPTGenerator.css';
 
@@ -88,81 +89,133 @@ const PPTGenerator = () => {
   };
 
   return (
-    <div className="ppt-generator">
-      <div className="ppt-generator-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
-        <h2>Professional PPT Generator</h2>
+    <div className="ppt-root-container">
+      <div className="ppt-header">
+        <button className="ppt-back-btn" onClick={() => navigate(-1)}>
+          <FiArrowLeft size={20} />
+          Back
+        </button>
+        <h1 className="ppt-page-title">Professional PPT Generator</h1>
+        <div className="ppt-header-spacer"></div>
       </div>
 
-      <div className="generator-content">
-        <div className="content-preview">
-          <h3>Generated Content Preview</h3>
-          <div className="content-box">
-            <p>{generatedContent.substring(0,2000)}...</p>
+      <div className="ppt-main-content">
+        <div className="ppt-grid-wrapper">
+          {/* Left Section - Content Preview */}
+          <div className="ppt-left-panel">
+            <div className="ppt-preview-card">
+              <h3 className="ppt-card-title">Content Preview</h3>
+              <div className="ppt-content-box">
+                <p className="ppt-preview-text">{generatedContent.substring(0, 2000)}...</p>
+              </div>
+              <div className="ppt-content-info">
+                <span className="ppt-info-badge">📄 {Math.ceil(generatedContent.length / 500)} pages</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="customization-section">
-          <ThemeSelector selectedTheme={selectedTheme} onThemeSelect={handleThemeSelect} />
+          {/* Right Section - Customization */}
+          <div className="ppt-right-panel">
+            {/* Theme Section */}
+            <div className="ppt-settings-card">
+              <h3 className="ppt-card-title">Design Theme</h3>
+              <ThemeSelector selectedTheme={selectedTheme} onThemeSelect={handleThemeSelect} />
+            </div>
 
-          <div className="advanced-options">
-            <h3>Advanced Options</h3>
+            {/* Advanced Options */}
+            <div className="ppt-settings-card">
+              <h3 className="ppt-card-title">Customization</h3>
+              
+              <div className="ppt-form-group">
+                <label className="ppt-form-label">Font Size</label>
+                <div className="ppt-slider-container">
+                  <input
+                    type="range"
+                    min="14"
+                    max="28"
+                    value={customizations.font_size}
+                    onChange={e => handleCustomizationChange('font_size', parseInt(e.target.value))}
+                    className="ppt-slider"
+                  />
+                  <span className="ppt-slider-value">{customizations.font_size}px</span>
+                </div>
+              </div>
 
-            <div className="form-group">
-              <label>Font Size</label>
-              <div className="range-input">
+              <div className="ppt-form-group">
+                <label className="ppt-form-label">Number of Slides</label>
                 <input
-                  type="range"
-                  min="14"
-                  max="28"
-                  value={customizations.font_size}
-                  onChange={e => handleCustomizationChange('font_size', parseInt(e.target.value))}
+                  type="number"
+                  min="3"
+                  max="15"
+                  value={customizations.slide_count}
+                  onChange={e => handleCustomizationChange('slide_count', parseInt(e.target.value))}
+                  className="ppt-number-input"
                 />
-                <span>{customizations.font_size}px</span>
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Number of Slides</label>
-              <input
-                type="number"
-                min="3"
-                max="15"
-                value={customizations.slide_count}
-                onChange={e => handleCustomizationChange('slide_count', parseInt(e.target.value))}
-              />
+            {/* Filename Input */}
+            <div className="ppt-settings-card">
+              <h3 className="ppt-card-title">File Name</h3>
+              <div className="ppt-form-group">
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={e => setFileName(e.target.value)}
+                  placeholder="Enter presentation name"
+                  className="ppt-text-input"
+                />
+                <small className="ppt-input-hint">.pptx will be added automatically</small>
+              </div>
             </div>
+
+            {/* Progress Section */}
+            {status === 'generating' && (
+              <div className="ppt-progress-card">
+                <div className="ppt-progress-content">
+                  <FiLoader size={24} className="ppt-progress-spinner" />
+                  <div className="ppt-progress-text">
+                    <p className="ppt-progress-title">Creating Presentation...</p>
+                    <p className="ppt-progress-subtitle">{Math.round(progress)}% complete</p>
+                  </div>
+                </div>
+                <div className="ppt-progress-bar">
+                  <div className="ppt-progress-fill" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            )}
+
+            {/* Status Messages */}
+            {status === 'success' && (
+              <div className="ppt-status-card ppt-status-success">
+                <FiCheck size={24} className="ppt-status-icon" />
+                <div>
+                  <p className="ppt-status-title">Success!</p>
+                  <p className="ppt-status-message">Professional PPT generated and downloaded</p>
+                </div>
+              </div>
+            )}
+
+            {status === 'error' && (
+              <div className="ppt-status-card ppt-status-error">
+                <FiX size={24} className="ppt-status-icon" />
+                <div>
+                  <p className="ppt-status-title">Error!</p>
+                  <p className="ppt-status-message">Generation failed. Please try again.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Generate Button */}
+            <button
+              className="ppt-generate-btn"
+              onClick={handleGeneratePPT}
+              disabled={isGenerating || !generatedContent}
+            >
+              <FiDownload size={20} />
+              {isGenerating ? 'Generating...' : 'Generate Professional PPT'}
+            </button>
           </div>
-        </div>
-
-        <div className="generation-section">
-          {status === 'generating' && (
-            <div className="progress-section">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progress}%` }} />
-              </div>
-              <p>Creating your professional presentation... {Math.round(progress)}%</p>
-            </div>
-          )}
-
-          <label htmlFor="ppt-filename">Enter PPT Filename:</label>
-          <input
-            id="ppt-filename"
-            type="text"
-            value={fileName}
-            onChange={e => setFileName(e.target.value)}
-            placeholder="File name without extension"
-          />
-          <button
-            className="generate-ppt-btn"
-            onClick={handleGeneratePPT}
-            disabled={isGenerating || !generatedContent}
-          >
-            {isGenerating ? 'Generating Professional PPT...' : 'Generate Professional PPT'}
-          </button>
-
-          {status === 'success' && <div className="success-message">✅ Professional PPT generated successfully!</div>}
-          {status === 'error' && <div className="error-message">❌ Generation failed. Please try again.</div>}
         </div>
       </div>
     </div>

@@ -1054,8 +1054,23 @@ def generate_video():
         print(f"   Face: {face_path}")
         print(f"   Options: {options}")
         
-        # Process video
-        result = video_pipeline.process(ppt_path, face_path, options)
+        # ADD THIS: More detailed error logging
+        try:
+            result = video_pipeline.process(ppt_path, face_path, options)
+        except Exception as pipeline_error:
+            print(f"❌ Pipeline Error Details:")
+            print(f"   Error Type: {type(pipeline_error).__name__}")
+            print(f"   Error Message: {str(pipeline_error)}")
+            import traceback
+            print(f"   Full Traceback:\n{traceback.format_exc()}")
+            
+            # Return detailed error to frontend
+            return jsonify({
+                "success": False,
+                "error": f"Audio generation failed: {str(pipeline_error)}",
+                "error_type": type(pipeline_error).__name__,
+                "details": traceback.format_exc()
+            }), 500
         
         if result['status'] == 'completed':
             job_id = os.path.basename(os.path.dirname(result['final_video']))
@@ -1081,7 +1096,8 @@ def generate_video():
         traceback.print_exc()
         return jsonify({
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "traceback": traceback.format_exc()
         }), 500
 
 @app.route("/api/download-video/<job_id>/<file_type>", methods=["GET"])
