@@ -10,8 +10,9 @@ class LipSyncGenerator:
         wav2lip_path: Path to Wav2Lip installation
         """
         if wav2lip_path is None:
-            # FIXED: Windows absolute path
-            self.wav2lip_path = r'E:\Faceprep\backend\Wav2Lip'
+            # Auto-detect: look relative to this file's backend directory
+            backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.wav2lip_path = os.path.join(backend_dir, 'Wav2Lip')
         else:
             self.wav2lip_path = wav2lip_path
         
@@ -39,11 +40,18 @@ class LipSyncGenerator:
         if not is_installed:
             return None, message
 
-        # FIXED: Convert paths to ABSOLUTE paths
-        backend_dir = Path(__file__).parent.parent.resolve()  # E:\Faceprep\backend
-        face_abs = (backend_dir / face_path).resolve()
-        audio_abs = (backend_dir / audio_path).resolve()
-        output_abs = (backend_dir / output_path).resolve()
+        # Convert paths to ABSOLUTE paths
+        def make_abs(p):
+            p_obj = Path(p)
+            if p_obj.is_absolute():
+                return p_obj.resolve()
+            # If relative, assume it's relative to the backend workspace root
+            backend_dir = Path(__file__).parent.parent.resolve()
+            return (backend_dir / p).resolve()
+
+        face_abs = make_abs(face_path)
+        audio_abs = make_abs(audio_path)
+        output_abs = make_abs(output_path)
         
         # FIXED: Verify files exist BEFORE calling Wav2Lip
         if not face_abs.exists():
@@ -92,7 +100,7 @@ class LipSyncGenerator:
                 cwd=self.wav2lip_path,          # Already correct
                 capture_output=True,
                 text=True,
-                timeout=600  # 10 minute timeout
+                timeout=1800  # 30-minute timeout for long videos
             )
             
             if result.returncode == 0:

@@ -40,6 +40,7 @@ pydub==0.25.1
 # Text-to-Speech & Speech-to-Text
 # ============================================
 gTTS==2.3.2
+edge-tts==7.2.7
 pyttsx3==2.90
 google-cloud-speech==2.21.0
 google-cloud-texttospeech==2.14.0

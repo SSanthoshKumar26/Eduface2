@@ -43,7 +43,7 @@ class TTSEngine:
                 )
                 
                 # Save to temporary MP3
-                temp_mp3 = output_path.replace('.wav', '_temp.mp3')
+                temp_mp3 = output_path.replace('.wav', f'_temp_{int(time.time())}.mp3')
                 tts.save(temp_mp3)
                 
                 # Convert MP3 to WAV
@@ -53,7 +53,10 @@ class TTSEngine:
                 
                 # Clean up temp file
                 if os.path.exists(temp_mp3):
-                    os.remove(temp_mp3)
+                    try:
+                        os.remove(temp_mp3)
+                    except:
+                        pass
                 
                 print(f"  ✅ Audio generated successfully!")
                 return output_path
@@ -104,7 +107,7 @@ class TTSEngine:
             
             async def _generate():
                 communicate = edge_tts.Communicate(text, edge_voice)
-                temp_mp3 = output_path.replace('.wav', '_edge.mp3')
+                temp_mp3 = output_path.replace('.wav', f'_edge_{int(time.time())}.mp3')
                 await communicate.save(temp_mp3)
                 
                 # Convert to WAV
@@ -113,7 +116,10 @@ class TTSEngine:
                 
                 # Clean up
                 if os.path.exists(temp_mp3):
-                    os.remove(temp_mp3)
+                    try:
+                        os.remove(temp_mp3)
+                    except:
+                        pass
             
             asyncio.run(_generate())
             print(f"  ✅ Edge TTS succeeded!")
@@ -159,20 +165,52 @@ class TTSEngine:
             engine.setProperty('rate', 150)
             
             # Save audio
-            temp_wav = output_path.replace('.wav', '_pyttsx3.wav')
+            temp_wav = output_path.replace('.wav', f'_pyttsx3_{int(time.time())}.wav')
+            
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(temp_wav), exist_ok=True)
+            
+            # If the file exists for some reason, try to remove it
+            if os.path.exists(temp_wav):
+                try:
+                    os.remove(temp_wav)
+                except:
+                    pass
+            
             engine.save_to_file(text, temp_wav)
             engine.runAndWait()
+            
+            # Critical: stop and delete engine to release file lock on Windows
+            try:
+                engine.stop()
+            except:
+                pass
+            del engine
+            
+            # Wait a moment for Windows to release the file handle
+            time.sleep(1)
             
             # Copy to final path
             if os.path.exists(temp_wav):
                 import shutil
-                shutil.move(temp_wav, output_path)
+                # Use a try-except for the move as well
+                for i in range(3):
+                    try:
+                        shutil.move(temp_wav, output_path)
+                        break
+                    except Exception as e:
+                        if i == 2: raise e
+                        time.sleep(1)
             
             print(f"  ✅ pyttsx3 succeeded!")
             return output_path
             
         except Exception as e:
             print(f"  ❌ pyttsx3 failed: {str(e)}")
+            # Cleanup if possible
+            if 'temp_wav' in locals() and os.path.exists(temp_wav):
+                try: os.remove(temp_wav)
+                except: pass
             return None
     
     def generate_audio_with_fallback(self, text, output_path, preferred_engine='gtts', voice_id='gtts_en'):

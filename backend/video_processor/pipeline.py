@@ -1,4 +1,12 @@
 import os
+import time
+from typing import Dict, Any
+from moviepy.editor import (
+    VideoFileClip, ImageClip, CompositeVideoClip,
+    concatenate_videoclips, ColorClip
+)
+import moviepy.video.fx.all as vfx
+
 from .ppt_extractor import PPTExtractor
 from .text_processor import TextProcessor
 from .tts_engine import TTSEngine
@@ -6,218 +14,371 @@ from .face_processor import FaceProcessor
 from .lipsync_generator import LipSyncGenerator
 from .video_assembler import VideoAssembler
 
+
 class VideoPipeline:
+
     def __init__(self, output_dir='uploads/outputs'):
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Initialize all processors
+
+        self.output_dir = os.path.abspath(output_dir)
+        os.makedirs(self.output_dir, exist_ok=True)
+
         self.text_processor = TextProcessor()
         self.tts_engine = TTSEngine()
         self.face_processor = FaceProcessor()
         self.lipsync_generator = LipSyncGenerator()
         self.video_assembler = VideoAssembler()
-    
+
+    # ─────────────────────────────────────────────
+    # Helpers
+    # ─────────────────────────────────────────────
+
+    def _log(self, pct, msg):
+
+        print(f"\n{'='*52}")
+        print(f"[{pct:3d}%] {msg}")
+        print(f"{'='*52}")
+
+    # ─────────────────────────────────────────────
+    # MAIN PIPELINE
+    # ─────────────────────────────────────────────
+
     def process(self, ppt_path, face_path, options=None):
-        """
-        Main processing pipeline
-        
-        Args:
-            ppt_path: Path to PPT file
-            face_path: Path to face image
-            options: Dict with processing options
-                - voice_id: Voice style ID
-                - slang_level: 'none', 'medium', 'high'
-                - quality: 'low', 'medium', 'high'
-                - tts_engine: 'gtts', 'edge', or 'pyttsx3'
-        
-        Returns:
-            Dict with status and output paths
-        """
-        
+
         if options is None:
             options = {}
-        
-        # Extract options with better defaults
+
         voice_id = options.get('voice_id', 0)
         slang_level = options.get('slang_level', 'medium')
         quality = options.get('quality', 'medium')
-        tts_engine = options.get('tts_engine', 'edge')  # Changed default to edge
-        
-        # Create unique output directory for this job
-        job_id = os.path.basename(ppt_path).split('.')[0]
+        tts_engine = options.get('tts_engine', 'edge')
+
+        job_id = f"{int(time.time())}_{os.path.splitext(os.path.basename(ppt_path))[0]}"
+
         job_dir = os.path.join(self.output_dir, job_id)
+        slides_dir = os.path.join(job_dir, 'slides')
+
         os.makedirs(job_dir, exist_ok=True)
-        
-        results = {
+        os.makedirs(slides_dir, exist_ok=True)
+
+        results: Dict[str, Any] = {
             'status': 'processing',
-            'steps': {},
+            'steps': {
+                'extraction': 'pending',
+                'preprocessing': 'pending',
+                'script': 'pending',
+                'audio': 'pending',
+                'lipsync': 'pending',
+                'finalization': 'pending'
+            },
             'job_dir': job_dir
         }
-        
+
         try:
-            # Step 1: Extract PPT content
-            print("Step 1: Extracting PPT content...")
+
+            # STEP 1
+            self._log(10, "STEP 1/6 — Extracting PPT content")
+
             extractor = PPTExtractor(ppt_path)
+
             slides_data = extractor.extract_text()
-            
+
             if not slides_data:
                 results['status'] = 'error'
-                results['error'] = 'No content extracted from PPT'
+                results['error'] = 'No PPT content extracted'
                 return results
-            
+
+            slide_images = extractor.export_slides_as_images(
+                slides_dir,
+                width=1920,
+                height=1080
+            )
+
             results['steps']['extraction'] = 'completed'
-            print(f"  ✅ Extracted {len(slides_data)} slides")
-            
-            # Step 2: Generate script
-            print("\nStep 2: Generating speech script...")
-            script = self.text_processor.format_for_speech(slides_data, slang_level)
-            
-            if not script or len(script.strip()) < 10:
-                results['status'] = 'error'
-                results['error'] = 'Generated script is too short or empty'
-                return results
-            
-            # Save script for reference
-            script_path = os.path.join(job_dir, 'script.txt')
-            with open(script_path, 'w', encoding='utf-8') as f:
-                f.write(script)
-            
-            results['script_path'] = script_path
-            results['steps']['script'] = 'completed'
-            print(f"  ✅ Script generated ({len(script)} characters)")
-            print(f"     Preview: {script[:150]}...")
-            
-            # Step 3: Validate face image
-            print("\nStep 3: Validating face image...")
-            is_valid, message = self.face_processor.validate_image(face_path)
+
+            # STEP 2
+            self._log(20, "STEP 2/6 — Validating face image")
+
+            is_valid, msg = self.face_processor.validate_image(face_path)
+
             if not is_valid:
                 results['status'] = 'error'
-                results['error'] = f'Face validation failed: {message}'
+                results['error'] = msg
                 return results
-            
-            results['steps']['validation'] = 'completed'
-            print(f"  ✅ Face image validated")
-            
-            # Step 4: Preprocess face
-            print("\nStep 4: Preprocessing face image...")
-            processed_face = os.path.join(job_dir, 'processed_face.jpg')
-            processed_face = self.face_processor.preprocess_face(face_path, processed_face)
-            
+
+            processed_face = os.path.join(job_dir, 'processed_face.png')
+
+            processed_face = self.face_processor.preprocess_face(
+                face_path,
+                processed_face
+            )
+
             if not processed_face or not os.path.exists(processed_face):
+
                 results['status'] = 'error'
                 results['error'] = 'Face preprocessing failed'
                 return results
-            
-            results['face_path'] = processed_face
+
             results['steps']['preprocessing'] = 'completed'
-            print(f"  ✅ Face preprocessed")
-            
-            # Step 5: Generate audio with fallback system
-            print("\nStep 5: Generating audio narration...")
-            audio_path = os.path.join(job_dir, 'narration.wav')
-            
-            try:
-                # Use the new fallback method with voice_id
-                audio_file = self.tts_engine.generate_audio_with_fallback(
-                    text=script,
+
+            # STEP 3
+            self._log(35, "STEP 3/6 — Generating narration scripts")
+
+            scripts = self.text_processor.format_for_speech_per_slide(
+                slides_data,
+                slang_level
+            )
+
+            script_path = os.path.join(job_dir, 'script.txt')
+
+            combined_script = '\n\n--- SLIDE BREAK ---\n\n'.join(scripts)
+
+            with open(script_path, 'w', encoding='utf-8') as f:
+                f.write(combined_script)
+
+            results['script_path'] = script_path
+            results['steps']['script'] = 'completed'
+
+            # STEP 4
+            self._log(50, "STEP 4/6 — Generating audio")
+
+            audio_files = []
+
+            for idx, script_text in enumerate(scripts):
+
+                audio_path = os.path.join(job_dir, f'narration_{idx:03d}.wav')
+
+                af = self.tts_engine.generate_audio_with_fallback(
+                    text=script_text,
                     output_path=audio_path,
                     preferred_engine=tts_engine,
-                    voice_id=voice_id  # Pass the voice_id from options
+                    voice_id=voice_id
                 )
-                
-                if not audio_file or not os.path.exists(audio_file):
-                    results['status'] = 'error'
-                    results['error'] = 'Audio generation failed with all TTS engines'
-                    results['steps']['audio'] = 'failed'
-                    return results
-                
-                # Normalize audio
-                print(f"\n  🔊 Normalizing audio volume...")
-                audio_file = self.tts_engine.normalize_audio(audio_file)
-                
-                results['audio_path'] = audio_file
-                results['steps']['audio'] = 'completed'
-                print(f"  ✅ Audio generation completed!")
-                
-            except Exception as audio_error:
-                print(f"\n  ❌ Audio generation error: {str(audio_error)}")
-                results['status'] = 'error'
-                results['error'] = f'Audio generation failed: {str(audio_error)}'
-                results['steps']['audio'] = 'failed'
-                
-                import traceback
-                print(f"  Full traceback:\n{traceback.format_exc()}")
-                return results
-            
-            # Step 6: Generate lip-sync video
-            print("\nStep 6: Generating lip-synced video...")
-            lipsync_video = os.path.join(job_dir, 'lipsync_video.mp4')
-            
-            try:
-                video_path, message = self.lipsync_generator.generate_video(
+
+                if not af or not os.path.exists(af):
+
+                    raise RuntimeError(
+                        f"Audio generation failed for slide {idx+1}"
+                    )
+
+                af = self.tts_engine.normalize_audio(af)
+
+                audio_files.append(af)
+
+            results['steps']['audio'] = 'completed'
+
+            # STEP 5
+            self._log(65, "STEP 5/6 — Generating lip-sync videos")
+
+            lipsync_videos = []
+
+            for idx, audio_file in enumerate(audio_files):
+
+                lipsync_path = os.path.join(job_dir, f'lipsync_{idx:03d}.mp4')
+
+                vp, vmsg = self.lipsync_generator.generate_video(
                     processed_face,
                     audio_file,
-                    lipsync_video,
+                    lipsync_path,
                     quality=quality
                 )
-                
-                if not video_path or not os.path.exists(video_path):
-                    results['status'] = 'error'
-                    results['error'] = f'Lip-sync generation failed: {message}'
-                    results['steps']['lipsync'] = 'failed'
-                    return results
-                
-                results['video_path'] = video_path
-                results['steps']['lipsync'] = 'completed'
-                print(f"  ✅ Lip-sync video generated")
-                
-            except Exception as video_error:
-                print(f"\n  ❌ Video generation error: {str(video_error)}")
-                results['status'] = 'error'
-                results['error'] = f'Video generation failed: {str(video_error)}'
-                results['steps']['lipsync'] = 'failed'
-                return results
-            
-            # Step 7: Final video assembly (optional enhancements)
-            print("\nStep 7: Finalizing video...")
-            final_video = os.path.join(job_dir, 'final_video.mp4')
-            
-            # Add watermark or other enhancements if needed
-            # final_video = self.video_assembler.add_watermark(video_path, final_video)
-            
-            results['final_video'] = video_path  # or final_video if enhanced
+
+                if not vp or not os.path.exists(vp):
+
+                    raise RuntimeError(
+                        f"Lip-sync failed for slide {idx+1}: {vmsg}"
+                    )
+
+                lipsync_videos.append(vp)
+
+            results['steps']['lipsync'] = 'completed'
+
+            # STEP 6
+            self._log(90, "STEP 6/6 — Compositing final video")
+
+            VIDEO_W = 1920
+            VIDEO_H = 1080
+
+            AVATAR_W = 420
+            AVATAR_MARGIN = 30
+
+            final_clips = []
+            n_clips = len(lipsync_videos)
+
+            for idx, lipsync_vid in enumerate(lipsync_videos):
+
+                try:
+
+                    avatar_clip = VideoFileClip(lipsync_vid)
+
+                    duration = avatar_clip.duration
+
+                    # Apply alpha mask
+                    try:
+                        is_video = processed_face.lower().endswith(('.mp4', '.mov', '.webm'))
+
+                        if not is_video:
+                            orig_face = ImageClip(
+                                processed_face,
+                                transparent=True
+                            )
+
+                            if orig_face.mask is not None:
+                                avatar_mask = orig_face.mask.set_duration(duration)
+                                avatar_clip = avatar_clip.set_mask(avatar_mask)
+
+                            orig_face.close()
+                        else:
+                            print("  🔍 Generating dynamic video mask (this may take a while)...")
+                            from rembg import remove, new_session
+                            from moviepy.editor import VideoClip
+                            
+                            try:
+                                session = new_session("u2net")
+                                def make_rembg_mask(t):
+                                    frame = avatar_clip.get_frame(t)
+                                    rgba = remove(frame, session=session)
+                                    return (rgba[:, :, 3] / 255.0).astype("float32")
+                                    
+                                mask_clip = VideoClip(make_frame=make_rembg_mask, ismask=True).set_duration(duration)
+                                avatar_clip = avatar_clip.set_mask(mask_clip)
+                            except Exception as e:
+                                print(f"  ⚠️ Could not apply dynamic mask: {e}")
+                                # Apply greenscreen keying as fallback if rembg fails
+                                avatar_clip = vfx.mask_color(avatar_clip, color=[0, 255, 0], thr=100, s=5)
+                                
+                    except Exception as mask_err:
+
+                        print(f"Mask warning: {mask_err}")
+
+                    avatar_clip = avatar_clip.resize(width=AVATAR_W)
+
+                    if avatar_clip.h > VIDEO_H * 0.85:
+
+                        avatar_clip = avatar_clip.resize(
+                            height=VIDEO_H * 0.85
+                        )
+
+                    avatar_x = VIDEO_W - avatar_clip.w - AVATAR_MARGIN
+                    avatar_y = VIDEO_H - avatar_clip.h - AVATAR_MARGIN
+
+                    # Background
+                    if idx < len(slide_images) and os.path.exists(slide_images[idx]):
+
+                        bg = (
+                            ImageClip(slide_images[idx])
+                            .set_duration(duration)
+                            .resize((VIDEO_W, VIDEO_H))
+                        )
+
+                    else:
+
+                        bg = (
+                            ColorClip(
+                                size=(VIDEO_W, VIDEO_H),
+                                color=(30, 30, 45)
+                            )
+                            .set_duration(duration)
+                        )
+
+                    composed = CompositeVideoClip(
+                        [
+                            bg,
+                            avatar_clip.set_position((avatar_x, avatar_y))
+                        ],
+                        size=(VIDEO_W, VIDEO_H)
+                    )
+
+                    if avatar_clip.audio:
+
+                        composed = composed.set_audio(
+                            avatar_clip.audio
+                        )
+
+                    final_clips.append(composed)
+
+                except Exception as clip_err:
+
+                    print(f"Skipping slide {idx+1}: {clip_err}")
+
+            if not final_clips:
+
+                raise RuntimeError(
+                    "No slides could be composited"
+                )
+
+            print(f"\nConcatenating {len(final_clips)} clips")
+
+            final_video_path = os.path.join(
+                job_dir,
+                'lipsync_video.mp4'
+            )
+
+            final_concat = concatenate_videoclips(
+                final_clips,
+                method="compose"
+            )
+
+            final_concat.write_videofile(
+                final_video_path,
+                fps=24,
+                codec='libx264',
+                audio_codec='aac',
+                threads=1,
+                preset='ultrafast',
+                ffmpeg_params=['-crf', '28']
+            )
+
+            # Cleanup
+            for c in final_clips:
+
+                try:
+
+                    if c.audio:
+                        c.audio.close()
+
+                    c.close()
+
+                except:
+                    pass
+
+            try:
+                final_concat.close()
+            except:
+                pass
+
+            results['final_video'] = final_video_path
             results['status'] = 'completed'
             results['steps']['finalization'] = 'completed'
-            
-            print(f"\n{'='*60}")
-            print(f"✅ VIDEO GENERATION COMPLETED!")
-            print(f"{'='*60}")
-            print(f"   📁 Job ID: {job_id}")
-            print(f"   📄 Script: {script_path}")
-            print(f"   🔊 Audio: {audio_file}")
-            print(f"   🎥 Video: {results['final_video']}")
-            print(f"{'='*60}\n")
-            
+
         except Exception as e:
+
             results['status'] = 'error'
             results['error'] = str(e)
-            print(f"\n❌ Pipeline error: {e}")
-            
+
             import traceback
-            print(f"Full traceback:\n{traceback.format_exc()}")
-        
+            traceback.print_exc()
+
         return results
-    
+
+    # ─────────────────────────────────────────────
+    # Available voices
+    # ─────────────────────────────────────────────
+
     def get_available_voices(self):
-        """Get list of available voices from TTS engine"""
+
         try:
+
             return self.tts_engine.list_voices()
+
         except Exception as e:
-            print(f"Error getting voices: {e}")
-            return [{
-                'id': 'gtts_en',
-                'name': 'Google TTS (English)',
-                'engine': 'gtts',
-                'language': 'en'
-            }]
+
+            print(f"Voice error: {e}")
+
+            return [
+                {
+                    'id': 'gtts_en',
+                    'name': 'Google TTS (English)',
+                    'engine': 'gtts',
+                    'language': 'en'
+                }
+            ]

@@ -33,14 +33,17 @@ class TextProcessor:
         
         # Add occasional filler words if high slang
         if slang_level == 'high':
-            sentences = text.split('... ')
-            for i, sentence in enumerate(sentences):
-                if len(sentence.split()) > 12 and i % 3 == 0:
-                    words = sentence.split()
+            sentences_list = text.split('... ')
+            result_sentences = []
+            for i, sentence in enumerate(sentences_list):
+                words = sentence.split()
+                if len(words) > 12 and i % 3 == 0:
                     insert_pos = len(words) // 2
                     words.insert(insert_pos, 'you know')
-                    sentences[i] = ' '.join(words)
-            text = '... '.join(sentences)
+                    result_sentences.append(' '.join(words))
+                else:
+                    result_sentences.append(sentence)
+            text = '... '.join(result_sentences)
         
         return text
     
@@ -83,3 +86,65 @@ class TextProcessor:
         full_script = re.sub(r'\.{3,}', '...', full_script)
         
         return full_script.strip()
+
+    def _clean_for_speech(self, text):
+        """Cleans text so text-to-speech doesn't fail on code or weird symbols."""
+        if not text: return ""
+        # Remove URLs
+        text = re.sub(r'http[s]?://\S+', '', text)
+        # Handle common symbols
+        text = text.replace('&', ' and ').replace('+', ' plus ').replace('@', ' at ')
+        text = text.replace('_', ' ').replace('{', ' ').replace('}', ' ')
+        text = text.replace('[', ' ').replace(']', ' ').replace('*', ' ')
+        # Remove any weird standalone punctuation. Hyphen MUST be at the end of the regex class.
+        text = re.sub(r'[^\w\s.,?!;:\'"-]', ' ', text)
+        # Collapse multiple spaces
+        return re.sub(r'\s+', ' ', text).strip()
+
+    def format_for_speech_per_slide(self, slides_data, slang_level='medium'):
+        """
+        Returns a list of narration strings — one per slide.
+        Each string is the spoken script for that slide only.
+        """
+        scripts = []
+        total = len(slides_data)
+        for i, slide in enumerate(slides_data):
+            parts = []
+
+            # Opening hook
+            if i == 0:
+                parts.append("Hey everyone! Welcome. Let's get started.")
+            elif i == total - 1:
+                parts.append("Alright, for our final point.")
+            else:
+                parts.append("Moving on.")
+
+            # Content: prefer speaker notes, fall back to slide text
+            content = slide.get('notes') or slide.get('content', '')
+            content = content.strip()
+            
+            # CRITICAL FIX: Ensure TTS doesn't crash from garbled/short text
+            clean_content = self._clean_for_speech(content)
+            
+            if len(clean_content) >= 10:
+                parts.append(self.add_conversational_style(clean_content, slang_level))
+            else:
+                # Minimal fallback using slide title
+                title = slide.get('title', f"Slide {i+1}")
+                clean_title = self._clean_for_speech(title)
+                parts.append(f"This slide covers {clean_title}.")
+
+            # Closing on last slide
+            if i == total - 1:
+                parts.append("And that wraps things up. Thanks for watching!")
+
+            slide_script = ' '.join(parts)
+            slide_script = re.sub(r'\s+', ' ', slide_script).strip()
+            
+            # Failsafe if script somehow ended up empty
+            if len(slide_script) < 5:
+                slide_script = f"Now looking at slide {i+1}."
+                
+            scripts.append(slide_script)
+
+        return scripts

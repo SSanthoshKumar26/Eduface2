@@ -29,9 +29,9 @@ app = Flask(__name__)
 CORS(app)
 
 # ============ CONFIGURATION ============
-# Mistral/Ollama Configuration
+# AI Model Configuration (Ollama)
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "mistral")
+AI_MODEL = os.getenv("OLLAMA_MODEL", "tinyllama")
 
 # Image APIs
 UNSPLASH_API_KEY = os.getenv("UNSPLASH_API_KEY", "").strip()
@@ -39,24 +39,30 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "").strip()
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY", "").strip()
 
 # File upload configuration
-UPLOAD_FOLDER = 'uploads'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB
 ALLOWED_PPT_EXTENSIONS = {'ppt', 'pptx'}
-ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+ALLOWED_FACE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'mp4', 'mov', 'webm'}
+
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # Create upload directories
-os.makedirs('uploads/ppts', exist_ok=True)
-os.makedirs('uploads/faces', exist_ok=True)
-os.makedirs('uploads/outputs', exist_ok=True)
+PPT_UPLOAD_DIR = os.path.join(UPLOAD_FOLDER, 'ppts')
+FACE_UPLOAD_DIR = os.path.join(UPLOAD_FOLDER, 'faces')
+OUTPUT_DIR = os.path.join(UPLOAD_FOLDER, 'outputs')
+
+os.makedirs(PPT_UPLOAD_DIR, exist_ok=True)
+os.makedirs(FACE_UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Initialize video pipeline if available
 video_pipeline = None
 if VIDEO_GENERATION_ENABLED:
     try:
-        video_pipeline = VideoPipeline(output_dir='uploads/outputs')
+        video_pipeline = VideoPipeline(output_dir=OUTPUT_DIR)
         print("✅ Video generation pipeline initialized")
     except Exception as e:
         print(f"⚠️  Could not initialize video pipeline: {e}")
@@ -295,12 +301,12 @@ def startup_diagnostics():
         print(f"✅ Ollama is running ({OLLAMA_BASE_URL})")
         if models:
             print(f"📦 Available models: {models}")
-            if "mistral" in models or MISTRAL_MODEL in models:
-                print(f"✅ {MISTRAL_MODEL} model found!")
+            if AI_MODEL in models:
+                print(f"✅ {AI_MODEL} model found!")
             else:
-                print(f"⚠️  {MISTRAL_MODEL} not found. Run: ollama pull {MISTRAL_MODEL}")
+                print(f"⚠️  {AI_MODEL} not found. Run: ollama pull {AI_MODEL}")
         else:
-            print("⚠️  No models found. Run: ollama pull mistral")
+            print(f"⚠️  No models found. Run: ollama pull {AI_MODEL}")
     else:
         print(f"❌ Ollama not running at {OLLAMA_BASE_URL}")
         print("   Start with: ollama serve")
@@ -372,8 +378,8 @@ def calculate_dynamic_font_sizes(slide_sections, mode, has_image):
     }
 
 # ============ MISTRAL API ============
-def generate_with_mistral(prompt: str, mode: str = "Creative") -> str:
-    """Generate content using local Mistral model via Ollama"""
+def generate_with_ai(prompt: str, mode: str = "Creative") -> str:
+    """Generate content using local AI model via Ollama"""
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Creative"])
     mode_instruction = mode_config.get("instructions", "")
     
@@ -401,13 +407,13 @@ CRITICAL INSTRUCTIONS:
         url = f"{OLLAMA_BASE_URL}/api/generate"
         
         payload = {
-            "model": MISTRAL_MODEL,
+            "model": AI_MODEL,
             "prompt": enhanced_prompt,
             "stream": False,
             "temperature": 0.7 if mode == "Creative" else (0.5 if mode == "Quick Response" else 0.6),
         }
         
-        print(f"🤖 Generating [{mode}] with {MISTRAL_MODEL} (LOCAL)...")
+        print(f"🤖 Generating [{mode}] with {AI_MODEL} (LOCAL)...")
         
         response = requests.post(url, json=payload, timeout=120)
         
@@ -427,13 +433,13 @@ CRITICAL INSTRUCTIONS:
         return f"[Error]: {error_msg}"
     
     except requests.exceptions.Timeout:
-        error_msg = "Mistral generation timed out (120s). Try a simpler prompt or Quick Response mode."
+        error_msg = f"{AI_MODEL} generation timed out (120s). Try a simpler prompt or Quick Response mode."
         print(f"❌ {error_msg}")
         return f"[Error]: {error_msg}"
     
     except Exception as e:
         error_msg = str(e)
-        print(f"❌ Mistral error: {error_msg}")
+        print(f"❌ AI error: {error_msg}")
         return f"[Error]: {error_msg}"
 
 # ============ TEXT PROCESSING ============
@@ -638,7 +644,7 @@ def set_background(slide, rgb):
 # ============ API ROUTES - CONTENT GENERATION ============
 @app.route("/api/generate", methods=["POST"])
 def generate_content():
-    """Generate content using Mistral"""
+    """Generate content using requested mode and model"""
     data = request.get_json()
     prompt = data.get("prompt", "")
     mode = data.get("mode", "Creative")
@@ -647,7 +653,7 @@ def generate_content():
         mode = "Creative"
     
     print(f"\n📝 Generating content in '{mode}' mode...")
-    output = generate_with_mistral(prompt, mode)
+    output = generate_with_ai(prompt, mode)
     
     return jsonify({
         "output": output,
@@ -968,10 +974,10 @@ def upload_files():
                 "error": "Invalid PPT file format. Use .ppt or .pptx"
             }), 400
         
-        if not allowed_file(face_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+        if not allowed_file(face_file.filename, ALLOWED_FACE_EXTENSIONS):
             return jsonify({
                 "success": False,
-                "error": "Invalid image file format. Use JPG or PNG"
+                "error": "Invalid presenter file format. Use JPG, PNG, MP4, MOV, or WEBM"
             }), 400
         
         # Save files with secure filenames
@@ -984,8 +990,8 @@ def upload_files():
         ppt_filename = f"{timestamp}_{ppt_filename}"
         face_filename = f"{timestamp}_{face_filename}"
         
-        ppt_path = os.path.join('uploads/ppts', ppt_filename)
-        face_path = os.path.join('uploads/faces', face_filename)
+        ppt_path = os.path.join(PPT_UPLOAD_DIR, ppt_filename)
+        face_path = os.path.join(FACE_UPLOAD_DIR, face_filename)
         
         ppt_file.save(ppt_path)
         face_file.save(face_path)
@@ -1046,7 +1052,7 @@ def generate_video():
             'voice_id': data.get('voice_id', 0),
             'slang_level': data.get('slang_level', 'medium'),
             'quality': data.get('quality', 'medium'),
-            'tts_engine': data.get('tts_engine', 'gtts')
+            'tts_engine': data.get('tts_engine', 'edge')
         }
         
         print(f"\n🎥 Starting video generation...")
@@ -1148,7 +1154,7 @@ def health_check():
         "status": "healthy" if ollama_ok else "degraded",
         "ollama_running": ollama_ok,
         "ollama_url": OLLAMA_BASE_URL,
-        "mistral_model": MISTRAL_MODEL,
+        "ai_model": AI_MODEL,
         "available_models": models,
         "available_modes": list(MODE_PROMPTS.keys()),
         "video_generation_enabled": VIDEO_GENERATION_ENABLED,
