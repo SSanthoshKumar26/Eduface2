@@ -106,45 +106,90 @@ class TextProcessor:
         Returns a list of narration strings — one per slide.
         Each string is the spoken script for that slide only.
         """
+        import os
+        import requests
+        
+        OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        AI_MODEL = os.getenv("OLLAMA_MODEL", "tinyllama")
+        
         scripts = []
         total = len(slides_data)
         for i, slide in enumerate(slides_data):
-            parts = []
-
-            # Opening hook
-            if i == 0:
-                parts.append("Hey everyone! Welcome. Let's get started.")
-            elif i == total - 1:
-                parts.append("Alright, for our final point.")
-            else:
-                parts.append("Moving on.")
-
-            # Content: prefer speaker notes, fall back to slide text
+            
             content = slide.get('notes') or slide.get('content', '')
             content = content.strip()
             
-            # CRITICAL FIX: Ensure TTS doesn't crash from garbled/short text
             clean_content = self._clean_for_speech(content)
-            
-            if len(clean_content) >= 10:
-                parts.append(self.add_conversational_style(clean_content, slang_level))
-            else:
-                # Minimal fallback using slide title
+            if len(clean_content) < 10:
                 title = slide.get('title', f"Slide {i+1}")
                 clean_title = self._clean_for_speech(title)
-                parts.append(f"This slide covers {clean_title}.")
-
-            # Closing on last slide
-            if i == total - 1:
-                parts.append("And that wraps things up. Thanks for watching!")
-
-            slide_script = ' '.join(parts)
-            slide_script = re.sub(r'\s+', ' ', slide_script).strip()
-            
-            # Failsafe if script somehow ended up empty
-            if len(slide_script) < 5:
-                slide_script = f"Now looking at slide {i+1}."
+                clean_content = f"This slide covers {clean_title}."
                 
+            # Create Scene Script via LLM Prompt
+            sys_prompt = f"""Your job is to generate an AI presenter script.
+1. Spoken dialogue (natural teaching voice)
+2. Facial expressions (eyes, eyebrows, blinking, gaze)
+3. Head movement
+4. Hand gestures
+5. Body posture shifts
+6. Timing cues
+
+STYLE: Friendly, confident, slightly energetic teacher. Speak like explaining to a real student.
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "[Insert spoken text here]"
+FACE:
+- [face action]
+EYES:
+- [eye action]
+HEAD:
+- [head action]
+HANDS:
+- [hand action]
+BODY:
+- [body action]
+TIMING:
+- duration: [X]s
+
+Content to teach:
+{clean_content}
+"""
+            
+            # Failsafe default script
+            slide_script = f"""[SCENE START]
+TEXT: "{self.add_conversational_style(clean_content, slang_level)}"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: {len(clean_content)//15}s"""
+            
+            try:
+                # Try to use Ollama API to generate
+                print(f"  🤖 Generating Director Script for Slide {i+1} via Ollama...")
+                payload = {
+                    "model": AI_MODEL,
+                    "prompt": sys_prompt,
+                    "stream": False,
+                    "temperature": 0.7
+                }
+                response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=20)
+                if response.status_code == 200:
+                    generated = response.json().get('response', '').strip()
+                    if "[SCENE START]" in generated and "TEXT:" in generated:
+                        slide_script = generated
+            except Exception as e:
+                print(f"  ⚠️ LLM Script generation failed, using fallback: {e}")
+
             scripts.append(slide_script)
 
         return scripts

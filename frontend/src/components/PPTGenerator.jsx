@@ -35,6 +35,8 @@ const PPTGenerator = () => {
     setCustomizations(prev => ({ ...prev, [key]: value }));
   };
 
+  const [generatedPpt, setGeneratedPpt] = useState(null);
+
   const handleGeneratePPT = async () => {
     if (!generatedContent) {
       alert('No content available for PPT generation!');
@@ -62,10 +64,17 @@ const PPTGenerator = () => {
 
       const response = await axios.post('http://localhost:5000/api/generate-ppt', pptData, {
         responseType: 'blob',
-        timeout: 60000
+        timeout: 120000 // Extended timeout for large PPTs
       });
 
       setProgress(100);
+
+      const pptPath = response.headers['x-ppt-path'];
+      const pptFilename = response.headers['x-ppt-filename'];
+      
+      if (pptPath) {
+        setGeneratedPpt({ path: pptPath, filename: pptFilename });
+      }
 
       const blob = new Blob([response.data], {
         type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
@@ -74,10 +83,7 @@ const PPTGenerator = () => {
       saveAs(blob, `${fileName}.pptx`);
       setStatus('success');
 
-      setTimeout(() => {
-        setStatus('idle');
-        setProgress(0);
-      }, 3000);
+      // Keep success status visible longer
     } catch (error) {
       console.error('PPT generation failed:', error);
       setStatus('error');
@@ -86,6 +92,18 @@ const PPTGenerator = () => {
       setIsGenerating(false);
       clearInterval(progressInterval);
     }
+  };
+
+  const handleUseForVideo = () => {
+    if (!generatedPpt) return;
+    navigate('/video-gen', { 
+      state: { 
+        passedPpt: {
+          path: generatedPpt.path,
+          name: generatedPpt.filename
+        }
+      } 
+    });
   };
 
   return (
@@ -206,15 +224,27 @@ const PPTGenerator = () => {
               </div>
             )}
 
-            {/* Generate Button */}
-            <button
-              className="ppt-generate-btn"
-              onClick={handleGeneratePPT}
-              disabled={isGenerating || !generatedContent}
-            >
-              <FiDownload size={20} />
-              {isGenerating ? 'Generating...' : 'Generate Professional PPT'}
-            </button>
+            {/* Buttons Group */}
+            <div className="ppt-actions-wrapper">
+              <button
+                className="ppt-generate-btn"
+                onClick={handleGeneratePPT}
+                disabled={isGenerating || !generatedContent}
+              >
+                <FiDownload size={20} />
+                {isGenerating ? 'Generating...' : status === 'success' ? 'Regenerate PPT' : 'Generate Professional PPT'}
+              </button>
+
+              {status === 'success' && generatedPpt && (
+                <button
+                  className="ppt-use-btn"
+                  onClick={handleUseForVideo}
+                >
+                  <FiCheck size={20} />
+                  Use this PPT for Video
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

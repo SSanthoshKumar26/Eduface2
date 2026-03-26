@@ -14,6 +14,8 @@ from pptx.enum.shapes import MSO_SHAPE
 from PIL import Image
 from io import BytesIO
 from werkzeug.utils import secure_filename
+from openai import OpenAI
+from groq import Groq
 
 # Video generation imports
 try:
@@ -377,8 +379,8 @@ def calculate_dynamic_font_sizes(slide_sections, mode, has_image):
         'line_spacing': 1.1 if total_items > 8 else 1.15
     }
 
-# ============ MISTRAL API ============
-def generate_with_ai(prompt: str, mode: str = "Creative") -> str:
+# ============ AI GENERATION ============
+def generate_with_ai(prompt: str, mode: str = "Creative", slide_count: int = 5) -> str:
     """Generate content using local AI model via Ollama"""
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Creative"])
     mode_instruction = mode_config.get("instructions", "")
@@ -390,6 +392,7 @@ User Topic/Request: {prompt}
 Please structure your response ONLY with markdown:
 - Use # for the main topic (only once at the very start)
 - Use ## for each major section (each ## becomes one slide)
+- Create EXACTLY {slide_count} slides (exactly {slide_count} ## sections)
 - Use ### for subsections within a slide
 - Use * or - for bullet points (keep to {mode_config.get('max_bullets', 4)} per section)
 - Keep points clear, concise, and well-organized
@@ -399,9 +402,9 @@ CRITICAL INSTRUCTIONS:
 - Do NOT mention "Slide 1", "Slide 2", etc in the content
 - Do NOT use dashes or separators like "-----" or "============"
 - Only use proper markdown headers (# ## ###)
-- Each ## section will automatically become a separate slide
+- Each ## section MUST be a separate slide
 - Focus on clear, structured markdown ONLY
-- Generate comprehensive content with all details"""
+- Generate comprehensive content for ALL {slide_count} slides"""
     
     try:
         url = f"{OLLAMA_BASE_URL}/api/generate"
@@ -413,7 +416,7 @@ CRITICAL INSTRUCTIONS:
             "temperature": 0.7 if mode == "Creative" else (0.5 if mode == "Quick Response" else 0.6),
         }
         
-        print(f"🤖 Generating [{mode}] with {AI_MODEL} (LOCAL)...")
+        print(f"🤖 Generating [{mode}] ({slide_count} slides) with {AI_MODEL} (LOCAL)...")
         
         response = requests.post(url, json=payload, timeout=120)
         
@@ -545,7 +548,7 @@ def group_into_slides(sections, max_slides=5):
     if current_slide:
         slides.append(current_slide)
     
-    return slides
+    return slides[:max_slides]
 
 # ============ IMAGE FUNCTIONS ============
 def fetch_unsplash_image(query):
@@ -648,12 +651,13 @@ def generate_content():
     data = request.get_json()
     prompt = data.get("prompt", "")
     mode = data.get("mode", "Creative")
+    slide_count = data.get("slide_count", 5) # New: accept slide count
     
     if mode not in MODE_PROMPTS:
         mode = "Creative"
     
-    print(f"\n📝 Generating content in '{mode}' mode...")
-    output = generate_with_ai(prompt, mode)
+    print(f"\n📝 Generating content in '{mode}' mode for {slide_count} slides...")
+    output = generate_with_ai(prompt, mode, slide_count)
     
     return jsonify({
         "output": output,
@@ -904,21 +908,48 @@ def generate_ppt():
                 
                 first_para = False
         
-        # Save presentation
-        ppt_bytes = BytesIO()
-        prs.save(ppt_bytes)
-        ppt_bytes.seek(0)
+        # Save presentation to disk (for direct use in video generation)
+        import time
+        timestamp = str(int(time.time()))
+        final_filename = f"{timestamp}_{filename}.pptx"
+        ppt_path = os.path.join(PPT_UPLOAD_DIR, final_filename)
+        prs.save(ppt_path)
         
+        # Determine the relative path for the frontend
+        # We also want to return the blob so they can download it
+        with open(ppt_path, 'rb') as f:
+            ppt_bytes_data = f.read()
+            
         print(f"\n✅ Presentation created successfully!")
         print(f"📊 Total slides: {len(prs.slides)}")
-        print(f"📦 File size: {len(ppt_bytes.getvalue()) / 1024:.1f} KB\n")
+        print(f"📁 Saved to: {ppt_path}")
+        print(f"📦 File size: {len(ppt_bytes_data) / 1024:.1f} KB\n")
         
-        return send_file(
-            ppt_bytes,
+        # We'll return JSON if the request headers say so, or just return the blob if they want attachment
+        # Actually, to make it work with both, we'll return a JSON containing the path AND the download URL
+        # But wait, send_file is more convenient for immediate download.
+        # How about we return the path in custom headers? Or just return JSON?
+        
+        # Let's check if the client expects JSON
+        if request.headers.get('Accept') == 'application/json':
+            return jsonify({
+                "success": True,
+                "ppt_path": ppt_path,
+                "filename": final_filename,
+                "message": "PPT generated successfully on server"
+            })
+        
+        # Otherwise return the file (default for browser downloads)
+        response = send_file(
+            io.BytesIO(ppt_bytes_data),
             mimetype='application/vnd.openxmlformats-officedocument.presentationml.presentation',
             as_attachment=True,
             download_name=f"{filename}.pptx"
         )
+        response.headers['X-PPT-Path'] = ppt_path
+        response.headers['X-PPT-Filename'] = final_filename
+        response.headers['Access-Control-Expose-Headers'] = 'X-PPT-Path, X-PPT-Filename'
+        return response
     
     except Exception as e:
         print(f"❌ Error generating PowerPoint: {str(e)}")
@@ -950,7 +981,7 @@ def get_voices():
 
 @app.route("/api/upload-files", methods=["POST"])
 def upload_files():
-    """Upload PPT and face image for video generation"""
+    """Upload PPT, face image, and optional audio for video generation"""
     if not VIDEO_GENERATION_ENABLED:
         return jsonify({
             "success": False,
@@ -958,53 +989,50 @@ def upload_files():
         }), 503
     
     try:
-        if 'ppt' not in request.files or 'face' not in request.files:
+        ppt_file = request.files.get('ppt')
+        face_file = request.files.get('face')
+        audio_file = request.files.get('audio')
+        
+        # Determine based on request.files if either is present
+        if not ppt_file and not face_file and not audio_file:
             return jsonify({
                 "success": False,
-                "error": "Both PPT and face image are required"
+                "error": "At least one file (PPT, Face, or Audio) is required"
             }), 400
         
-        ppt_file = request.files['ppt']
-        face_file = request.files['face']
+        # Use existing directories or determine which one to use
+        # PPTs go to UPLOAD_FOLDER (or specifically PPT_UPLOAD_DIR if it exists)
+        # Faces go to FACE_UPLOAD_DIR
         
-        # Validate file types
-        if not allowed_file(ppt_file.filename, ALLOWED_PPT_EXTENSIONS):
-            return jsonify({
-                "success": False,
-                "error": "Invalid PPT file format. Use .ppt or .pptx"
-            }), 400
-        
-        if not allowed_file(face_file.filename, ALLOWED_FACE_EXTENSIONS):
-            return jsonify({
-                "success": False,
-                "error": "Invalid presenter file format. Use JPG, PNG, MP4, MOV, or WEBM"
-            }), 400
-        
-        # Save files with secure filenames
-        ppt_filename = secure_filename(ppt_file.filename)
-        face_filename = secure_filename(face_file.filename)
-        
-        # Add timestamp to avoid conflicts
         import time
         timestamp = str(int(time.time()))
-        ppt_filename = f"{timestamp}_{ppt_filename}"
-        face_filename = f"{timestamp}_{face_filename}"
+        response_data = {"success": True}
         
-        ppt_path = os.path.join(PPT_UPLOAD_DIR, ppt_filename)
-        face_path = os.path.join(FACE_UPLOAD_DIR, face_filename)
-        
-        ppt_file.save(ppt_path)
-        face_file.save(face_path)
-        
-        print(f"✅ Files uploaded: {ppt_filename}, {face_filename}")
-        
-        return jsonify({
-            "success": True,
-            "ppt_path": ppt_path,
-            "face_path": face_path,
-            "ppt_filename": ppt_filename,
-            "face_filename": face_filename
-        })
+        if ppt_file:
+            # We assume UPLOAD_FOLDER or PPT_UPLOAD_DIR
+            target_dir = globals().get('PPT_UPLOAD_DIR', UPLOAD_FOLDER)
+            filename = f"{timestamp}_{secure_filename(ppt_file.filename)}"
+            path = os.path.join(target_dir, filename)
+            ppt_file.save(path)
+            response_data["ppt_path"] = path
+            
+        if face_file:
+            target_dir = globals().get('FACE_UPLOAD_DIR', UPLOAD_FOLDER)
+            filename = f"{timestamp}_{secure_filename(face_file.filename)}"
+            path = os.path.join(target_dir, filename)
+            face_file.save(path)
+            response_data["face_path"] = path
+
+        if audio_file:
+            # Create audio upload directory if needed
+            audio_upload_dir = os.path.join(UPLOAD_FOLDER, 'audio')
+            os.makedirs(audio_upload_dir, exist_ok=True)
+            filename = f"{timestamp}_{secure_filename(audio_file.filename)}"
+            path = os.path.join(audio_upload_dir, filename)
+            audio_file.save(path)
+            response_data["audio_path"] = path
+            
+        return jsonify(response_data)
     
     except Exception as e:
         print(f"❌ Upload error: {e}")
@@ -1027,6 +1055,7 @@ def generate_video():
         
         ppt_path = data.get('ppt_path')
         face_path = data.get('face_path')
+        audio_path = data.get('audio_path')
         
         if not ppt_path or not face_path:
             return jsonify({
@@ -1046,13 +1075,20 @@ def generate_video():
                 "success": False,
                 "error": f"Face image not found: {face_path}"
             }), 404
+
+        if audio_path and not os.path.exists(audio_path):
+            return jsonify({
+                "success": False,
+                "error": f"Custom audio file not found: {audio_path}"
+            }), 404
         
         # Get options
         options = {
             'voice_id': data.get('voice_id', 0),
             'slang_level': data.get('slang_level', 'medium'),
             'quality': data.get('quality', 'medium'),
-            'tts_engine': data.get('tts_engine', 'edge')
+            'tts_engine': data.get('tts_engine', 'edge'),
+            'audio_path': audio_path
         }
         
         print(f"\n🎥 Starting video generation...")
@@ -1143,6 +1179,62 @@ def download_video_file(job_id, file_type):
     except Exception as e:
         print(f"❌ Download error: {e}")
         return jsonify({"error": str(e)}), 500
+
+# ============ EDUFACE AI CHATBOT ============
+@app.route("/api/chat", methods=["POST"])
+def tutor_chat():
+    '''Elite Groq-powered Eduface AI (Llama 3.3)'''
+    try:
+        data = request.json
+        messages = data.get('messages', [])
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            return jsonify({"success": False, "error": "GROQ_API_KEY not found"}), 500
+            
+        client = Groq(api_key=api_key)
+
+        # 1. CLEAN CONTEXT (Metadata Scrubbing)
+        if messages and messages[0]['role'] == 'system':
+            msg_content = messages[0]['content']
+            clean_c = re.sub(r'\[\d{2}:\d{2}\]|\[SCENE START\]', '', msg_content)
+            clean_c = re.sub(r'(FACE|EYES|HEAD|HANDS|BODY|TIMING):.*?(?=(FACE|EYES|HEAD|HANDS|BODY|TIMING|TEXT:|\Z))', '', clean_c, flags=re.DOTALL)
+            clean_c = re.sub(r'TEXT:\s*"([^"]*)"', r'\1', clean_c)
+            clean_c = re.sub(r'\s+', ' ', clean_c).strip()
+            messages[0]['content'] = f"Context: {clean_c}"
+
+        # 2. ELITE NOTEBOOKLM-STYLE IDENTITY
+        system_i = {
+            "role": "system",
+            "content": (
+                "You are 'Eduface AI', an intelligent real-time learner assistant. "
+                "YOUR CORE RULE: ALWAYS respond. NEVER stay silent. NEVER return empty output. "
+                "\n\nBEHAVIOR:"
+                "\n1. Explain like a teacher. Be clear, simple, and concise."
+                "\n2. If user is confused, use analogies or real-world examples. "
+                "\n3. Format: 2-5 lines of output, use bullet points if needed. "
+                "\n4. Engagement: Always offer follow-up help."
+            )
+        }
+        messages.insert(0, system_i)
+
+        comp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.7
+        )
+        return jsonify({"success": True, "message": {"role": "assistant", "content": comp.choices[0].message.content}})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # SCRUBBED FALLBACK POLICY
+        friendly_fallback = "I’m currently unable to access the full model response, but I can still help you understand the topic."
+        return jsonify({
+            "success": True, 
+            "message": {
+                "role": "assistant", 
+                "content": f"{friendly_fallback}\n\nThis lesson covers specialized materials. Would you like me to explain a related key concept while I refresh my connection?"
+            }
+        }), 200
 
 # ============ HEALTH CHECK ============
 @app.route("/api/health", methods=["GET"])

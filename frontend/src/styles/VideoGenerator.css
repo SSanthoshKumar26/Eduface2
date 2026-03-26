@@ -1,12 +1,31 @@
 /* ============================================
-   GLOBAL STYLES
+   EduFace Video Studio - Premium Dark Theme
+   Inspired by NotebookLM & Elite SaaS Platforms
    ============================================ */
+
+:root {
+  --cyan-primary: #00d4ff;
+  --cyan-secondary: #0099ff;
+  --cyan-tertiary: #00ff88;
+  --bg-core: #030712;
+  --glass-surface: rgba(17, 24, 39, 0.6);
+  --glass-surface-hover: rgba(31, 41, 55, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(0, 212, 255, 0.3);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --font-display: 'Outfit', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --neon-glow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
 .vg-root-container {
   min-height: 100vh;
-  background: var(--bg-light);
-  padding: 40px 20px;
+  background: radial-gradient(circle at top right, #0a192f 0%, var(--bg-core) 40%, var(--bg-core) 100%);
+  color: var(--text-primary);
+  padding: 60px 20px;
   font-family: var(--font-body);
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================
@@ -14,237 +33,152 @@
    ============================================ */
 .vg-header {
   text-align: center;
-  margin-bottom: 40px;
-  animation: slideIn 0.6s ease;
-}
-
-.vg-icon-wrapper {
-  margin-bottom: 20px;
-  animation: float 3s ease-in-out infinite;
-}
-
-.vg-icon {
-  font-size: 64px;
-  display: inline-block;
-  filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 10;
 }
 
 .vg-title {
-  font-size: 48px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--cyan-tertiary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 12px;
-  text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+  font-size: 3rem;
+  font-weight: 800;
   font-family: var(--font-display);
+  background: linear-gradient(135deg, #fff 20%, var(--cyan-primary) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 40px rgba(0, 212, 255, 0.1);
 }
 
 .vg-subtitle {
-  font-size: 18px;
-  color: var(--text-gray);
-  max-width: 700px;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
-  transition: color 0.3s ease;
 }
 
 /* ============================================
-   ALERTS
+   ALERTS & PROGRESS
    ============================================ */
 .vg-alert {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-radius: 12px;
-  margin-bottom: 24px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  animation: slideIn 0.4s ease;
-  transition: all 0.3s ease;
+  margin: 0 auto 24px;
+  max-width: 1100px;
+  font-size: 0.95rem;
+  backdrop-filter: blur(12px);
+  font-weight: 500;
 }
 
 .vg-alert-danger {
-  background: rgba(255, 59, 48, 0.15);
-  border: 1px solid rgba(255, 59, 48, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
 }
 
 .vg-alert-success {
-  background: rgba(0, 255, 136, 0.15);
-  border: 1px solid rgba(0, 255, 136, 0.4);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
 }
 
-.vg-alert-icon {
-  font-size: 24px;
-  margin-right: 12px;
-}
-
-.vg-alert-content {
-  flex: 1;
-  color: var(--text-dark);
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.vg-close-btn {
-  background: none;
-  border: none;
-  color: var(--text-dark);
-  font-size: 28px;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  padding: 0 8px;
-}
-
-.vg-close-btn:hover {
-  opacity: 1;
-}
-
-/* ============================================
-   PROGRESS CARD
-   ============================================ */
 .vg-progress-card {
-  max-width: 1200px;
-  margin: 0 auto 32px;
-  padding: 24px;
-  animation: slideIn 0.4s ease;
-}
-
-.vg-progress-content {
+  max-width: 1100px;
+  margin: 0 auto 40px;
+  padding: 40px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 20px;
+  background: var(--glass-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .vg-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(0, 212, 255, 0.2);
-  border-top: 4px solid var(--cyan-primary);
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 212, 255, 0.1);
+  border-top-color: var(--cyan-primary);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 20px;
-  flex-shrink: 0;
+  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.vg-progress-text {
-  flex: 1;
-}
-
-.vg-progress-title {
-  color: var(--text-dark);
-  font-size: 20px;
+.vg-progress-card h3 {
+  font-size: 1.2rem;
   font-weight: 600;
-  margin: 0 0 8px 0;
-  transition: color 0.3s ease;
-}
-
-.vg-progress-subtitle {
-  color: var(--text-gray);
-  font-size: 14px;
   margin: 0;
-  transition: color 0.3s ease;
+  color: #fff;
 }
 
-.vg-progress-bar {
-  height: 8px;
-  background: rgba(0, 212, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border-light);
+.vg-progress-card p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
 }
 
-.vg-progress-bar-fill {
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, var(--cyan-primary), var(--cyan-tertiary));
-  animation: progress 2s ease-in-out infinite;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================
-   GLASS CARD
-   ============================================ */
-.vg-glass-card {
-  background: var(--bg-white);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid var(--border-light);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.vg-glass-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
-  border-color: var(--cyan-primary);
-}
-
-.vg-neon-border {
-  border: 2px solid var(--cyan-primary);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5), inset 0 0 10px rgba(0, 229, 255, 0.2);
-}
-
-/* ============================================
-   GRID LAYOUT
+   GRID & CARDS
    ============================================ */
 .vg-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto 32px;
+  gap: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-/* ============================================
-   CARD STYLES
-   ============================================ */
-.vg-card {
-  padding: 0;
+.vg-glass-card {
+  background: var(--glass-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  animation: slideIn 0.6s ease;
 }
 
-.vg-card-config {
-  animation-delay: 0.1s;
+.vg-glass-card:hover {
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), var(--neon-glow);
 }
 
 .vg-card-header {
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-light);
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
 }
 
-.vg-card-header-config {
-  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 212, 255, 0.15));
+.vg-card-header svg {
+  color: var(--cyan-primary);
 }
 
-.vg-card-icon {
-  font-size: 28px;
-  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
-}
-
-.vg-card-title {
-  color: var(--text-dark);
-  font-size: 22px;
-  font-weight: 600;
+.vg-card-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
   margin: 0;
-  transition: color 0.3s ease;
-  font-family: var(--font-heading);
+  letter-spacing: 0.01em;
+  font-family: var(--font-display);
 }
 
 .vg-card-body {
-  padding: 28px 24px;
+  padding: 28px;
 }
 
 /* ============================================
-   FORM STYLES
+   FORM ELEMENTS
    ============================================ */
 .vg-form-group {
   margin-bottom: 24px;
@@ -252,148 +186,93 @@
 
 .vg-label {
   display: block;
-  color: var(--text-dark);
-  font-size: 15px;
   font-weight: 600;
   margin-bottom: 10px;
-  transition: color 0.3s ease;
-  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.vg-required {
-  color: #ff3b30;
-}
+.vg-required { color: #ef4444; }
 
 .vg-cyber-input {
-  background: var(--bg-light);
-  border: 2px solid var(--border-light);
-  color: var(--text-dark);
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.3s ease;
   width: 100%;
-  box-sizing: border-box;
-  font-family: inherit;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .vg-cyber-input:focus {
   outline: none;
   border-color: var(--cyan-primary);
-  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
-  background: var(--bg-white);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1), inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .vg-cyber-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: rgba(0,0,0,0.1);
 }
 
-.vg-hint {
-  display: block;
-  color: var(--text-gray);
-  font-size: 13px;
-  margin-top: 8px;
-  transition: color 0.3s ease;
-}
-
-.vg-file-info {
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  border-radius: 8px;
-  color: var(--cyan-primary);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-.vg-checkmark {
-  font-size: 18px;
-}
-
-/* ============================================
-   PREVIEW STYLES
-   ============================================ */
-.vg-preview-wrapper {
-  text-align: center;
-  margin-top: 24px;
-}
-
-.vg-preview-label {
-  color: var(--text-dark);
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  transition: color 0.3s ease;
-}
-
-.vg-image-wrapper {
-  display: inline-block;
-  padding: 4px;
-  background: linear-gradient(135deg, var(--cyan-primary), var(--cyan-tertiary));
-  border-radius: 50%;
-}
-
-.vg-preview-image {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--bg-white);
-}
-
-/* ============================================
-   STATUS BADGE
-   ============================================ */
-.vg-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+/* File Input specific */
+input[type="file"]::file-selector-button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
   padding: 8px 16px;
-  border-radius: 20px;
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  font-size: 13px;
-  color: var(--cyan-primary);
-  transition: all 0.3s ease;
-}
-
-.vg-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--cyan-primary);
-  animation: pulse 2s infinite;
-}
-
-.vg-loading-spinner {
-  margin-left: 8px;
-  font-size: 14px;
-  animation: spin 1s linear infinite;
-}
-
-.vg-refresh-btn {
-  background: none;
-  border: none;
+  border-radius: 8px;
+  margin-right: 16px;
   cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  margin-left: auto;
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
-.vg-refresh-btn:hover:not(:disabled) {
-  opacity: 1;
+input[type="file"]::file-selector-button:hover {
+  background: rgba(0,212,255,0.1);
+  border-color: var(--cyan-primary);
+  color: var(--cyan-primary);
 }
 
-.vg-refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.vg-server-file-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 12px;
+  color: var(--cyan-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.vg-server-file-info button {
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: var(--cyan-primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.vg-server-file-info button:hover {
+  background: var(--cyan-primary);
+  color: #000;
+}
+
+select.vg-cyber-input option {
+  background: #1e293b;
+  color: white;
 }
 
 /* ============================================
@@ -401,304 +280,67 @@
    ============================================ */
 .vg-button-wrapper {
   text-align: center;
-  margin-bottom: 40px;
-  animation: slideIn 0.8s ease;
+  margin-top: 50px;
+  margin-bottom: 80px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
 }
 
 .vg-cyber-button {
-  background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--cyan-tertiary) 100%);
+  background: linear-gradient(135deg, var(--cyan-primary), #0284c7);
+  color: #fff;
   border: none;
-  color: white;
-  padding: 14px 32px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 16px 40px;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-right: 16px;
-  font-family: var(--font-heading);
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0, 212, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 
 .vg-cyber-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.6);
+  box-shadow: 0 15px 30px rgba(0, 212, 255, 0.3), 0 0 20px rgba(0, 212, 255, 0.2);
 }
 
 .vg-cyber-button:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  filter: grayscale(0.5);
+  box-shadow: none;
+  transform: none;
 }
 
-.vg-cyber-button-secondary {
-  background: var(--bg-light);
-  border: 2px solid var(--border-light);
-  color: var(--text-dark);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.vg-cyber-button-secondary:hover:not(:disabled) {
-  border-color: var(--cyan-primary);
-  color: var(--cyan-primary);
-  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.3);
-}
-
-.vg-cyber-button-script {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  margin: 8px;
-}
-
-.vg-cyber-button-script:hover:not(:disabled) {
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
-}
-
-.vg-cyber-button-audio {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-  margin: 8px;
-}
-
-.vg-cyber-button-audio:hover:not(:disabled) {
-  box-shadow: 0 6px 25px rgba(245, 87, 108, 0.6);
-}
-
-/* ============================================
-   RESULTS SECTION
-   ============================================ */
-.vg-results-card {
-  max-width: 1200px;
-  margin: 0 auto 32px;
-  padding: 32px;
-  animation: slideIn 0.6s ease;
-}
-
-.vg-results-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.vg-results-title {
-  color: var(--text-dark);
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0;
-  transition: color 0.3s ease;
-  font-family: var(--font-display);
-}
-
-.vg-video-wrapper {
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.vg-video {
-  width: 100%;
-  display: block;
-  background: var(--bg-light);
-}
-
-.vg-download-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-}
-
-.vg-job-id {
-  text-align: center;
-  margin-top: 20px;
-  color: var(--text-gray);
-  font-size: 13px;
-  transition: color 0.3s ease;
-}
-
-/* ============================================
-   TIPS SECTION
-   ============================================ */
-.vg-tips-card {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 28px 32px;
-  animation: slideIn 1s ease;
-}
-
-.vg-tips-title {
-  color: var(--text-dark);
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
-  font-family: var(--font-heading);
-}
-
-.vg-tips-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.vg-tip-item {
-  color: var(--text-gray);
-  font-size: 15px;
-  padding: 10px 0;
-  line-height: 1.6;
-  transition: color 0.3s ease;
-}
-
-/* ============================================
-   ANIMATIONS
-   ============================================ */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes progress {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* ============================================
-   INPUT FILE STYLING
-   ============================================ */
-input[type="file"] {
-  color: var(--text-dark);
-  transition: color 0.3s ease;
-}
-
-input[type="file"]::file-selector-button {
-  background: rgba(0, 212, 255, 0.15);
-  border: 1px solid rgba(0, 212, 255, 0.4);
-  color: var(--cyan-primary);
-  padding: 8px 16px;
-  border-radius: 8px;
+.vg-reset-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 16px 32px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-right: 10px;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
-input[type="file"]::file-selector-button:hover {
-  background: rgba(0, 212, 255, 0.25);
-  border-color: rgba(0, 212, 255, 0.7);
+.vg-reset-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }
 
-select.vg-cyber-input {
-  cursor: pointer;
-}
-
-select.vg-cyber-input option {
-  background: var(--bg-white);
-  color: var(--text-dark);
-}
-
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-@media (max-width: 1024px) {
-  .vg-grid {
-    grid-template-columns: 1fr;
-  }
+.vg-spin {
+  animation: spin 1s linear infinite;
 }
 
 @media (max-width: 768px) {
-  .vg-root-container {
-    padding: 30px 15px;
-  }
-
-  .vg-title {
-    font-size: 36px;
-  }
-
-  .vg-subtitle {
-    font-size: 16px;
-  }
-
-  .vg-card-body {
-    padding: 20px 16px;
-  }
-
-  .vg-button-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .vg-cyber-button {
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 12px;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .vg-root-container {
-    padding: 20px 10px;
-  }
-
-  .vg-title {
-    font-size: 28px;
-  }
-
-  .vg-subtitle {
-    font-size: 14px;
-  }
-
-  .vg-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .vg-card-body {
-    padding: 16px 12px;
-  }
-
-  .vg-results-card {
-    padding: 16px;
-  }
-
-  .vg-download-buttons {
-    flex-direction: column;
-  }
-
-  .vg-cyber-button {
-    width: 100%;
-    font-size: 14px;
-    padding: 12px 24px;
-  }
-
-  .vg-preview-image {
-    width: 120px;
-    height: 120px;
-  }
+  .vg-grid { grid-template-columns: 1fr; }
+  .vg-title { font-size: 2.2rem; }
+  .vg-button-wrapper { flex-direction: column; padding: 0 20px; }
+  .vg-cyber-button, .vg-reset-btn { width: 100%; justify-content: center; }
 }

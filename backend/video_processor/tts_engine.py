@@ -6,7 +6,16 @@ from pydub.effects import normalize
 
 class TTSEngine:
     def __init__(self):
-        self.supported_engines = ['edge', 'gtts', 'pyttsx3']
+        self.supported_engines = ['elevenlabs', 'edge', 'gtts', 'pyttsx3']
+        
+        # Configure ffmpeg path for pydub
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ffmpeg_exe = os.path.join(backend_dir, 'Wav2Lip', 'ffmpeg.exe')
+        if os.path.exists(ffmpeg_exe):
+            AudioSegment.converter = ffmpeg_exe
+            print(f"  ✅ pydub configured with ffmpeg at: {ffmpeg_exe}")
+        else:
+            print("  ⚠️ Wav2Lip/ffmpeg.exe not found. Audio normalization might fail.")
     
     def generate_audio_gtts(self, text, output_path, retries=3):
         """
@@ -226,6 +235,21 @@ class TTSEngine:
         Returns:
             Path to generated audio file or None
         """
+        import re
+        
+        # Strip metadata from scene script if present
+        spoken_text = text
+        if "TEXT:" in text:
+            # Extract text enclosed in quotes after TEXT:
+            match = re.search(r'TEXT:\s*"([^"]+)"', text)
+            if match:
+                spoken_text = match.group(1).strip()
+            else:
+                # Fallback if no quotes used
+                match = re.search(r'TEXT:\s*(.*?)(?=\n[A-Z]+:|\Z)', text, re.DOTALL)
+                if match:
+                    spoken_text = match.group(1).strip()
+        
         print(f"\n🔊 Generating audio with fallback system...")
         print(f"   Voice ID: {voice_id}")
         print(f"   Preferred engine: {preferred_engine}")
@@ -241,7 +265,7 @@ class TTSEngine:
             numeric_voice_id = int(voice_id)
         
         # Validate text
-        if not text or len(text.strip()) < 5:
+        if not spoken_text or len(spoken_text.strip()) < 2:
             print(f"❌ Invalid text: too short or empty")
             return None
         
@@ -249,7 +273,7 @@ class TTSEngine:
         engines_to_try = [preferred_engine]
         
         # Add other engines as fallbacks
-        for engine in ['edge', 'gtts', 'pyttsx3']:
+        for engine in ['elevenlabs', 'edge', 'gtts', 'pyttsx3']:
             if engine not in engines_to_try:
                 engines_to_try.append(engine)
         
@@ -257,12 +281,14 @@ class TTSEngine:
         for engine in engines_to_try:
             print(f"\n  Trying {engine.upper()}...")
             
-            if engine == 'edge':
-                result = self.generate_audio_edge(text, output_path, voice_id)
+            if engine == 'elevenlabs':
+                result = self.generate_audio_elevenlabs(spoken_text, output_path, voice_id)
+            elif engine == 'edge':
+                result = self.generate_audio_edge(spoken_text, output_path, voice_id)
             elif engine == 'gtts':
-                result = self.generate_audio_gtts(text, output_path)
+                result = self.generate_audio_gtts(spoken_text, output_path)
             elif engine == 'pyttsx3':
-                result = self.generate_audio_pyttsx3(text, output_path, numeric_voice_id)
+                result = self.generate_audio_pyttsx3(spoken_text, output_path, numeric_voice_id)
             else:
                 continue
             
@@ -304,6 +330,82 @@ class TTSEngine:
         except Exception as e:
             print(f"  ⚠️ Audio normalization failed: {e}")
             return audio_path
+            
+    def generate_audio_elevenlabs(self, text, output_path, voice_id='elevenlabs_rachel'):
+        """
+        Generate premium highly realistic audio using ElevenLabs (V2 SDK)
+        """
+        try:
+            from elevenlabs.client import ElevenLabs
+            
+            print(f"  🎙️ Connecting to ElevenLabs API...")
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            client = ElevenLabs(api_key=api_key)
+            
+            voice_map = {
+                'elevenlabs_rachel': '21m00Tcm4TlvDq8ikWAM',
+                'elevenlabs_drew': '29vD33N1CtxCmqQRPOHJ',
+                'elevenlabs_clyde': '2EiwWnXFnvU5JabPnv8n',
+                'elevenlabs_mim': 'EXAVITQu4vr4xnSDxMaL'
+            }
+            
+            # Use mapped ID or raw clone ID
+            actual_voice_id = voice_map.get(voice_id, voice_id if voice_id else '21m00Tcm4TlvDq8ikWAM')
+            
+            print(f"  📝 Synthesizing with voice: {actual_voice_id}")
+            audio_generator = client.text_to_speech.convert(
+                text=text,
+                voice_id=actual_voice_id,
+                model_id="eleven_multilingual_v2"
+            )
+            
+            print(f"  💾 Saving audio stream...")
+            with open(output_path, "wb") as f:
+                for chunk in audio_generator:
+                    if chunk:
+                        f.write(chunk)
+            
+            print(f"  ✅ ElevenLabs generation succeeded!")
+            return output_path
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"  ❌ ElevenLabs failed: {str(e)}")
+            return None
+
+    def extract_voice_profile(self, audio_path):
+        """
+        Extract voice characteristics from an uploaded audio file (Instant Voice Cloning)
+        """
+        print(f"\n🧬 Extracting voice style characteristics from: {audio_path}")
+        
+        try:
+            from elevenlabs.client import ElevenLabs
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            
+            if not api_key:
+                print("  ⚠️ No ElevenLabs API key found.")
+                return None
+                
+            client = ElevenLabs(api_key=api_key)
+            clone_name = f"EduFace_Clone_{int(time.time())}"
+            
+            print("  🎙️ Creating instant voice clone in ElevenLabs...")
+            with open(audio_path, "rb") as f:
+                voice = client.voices.add(
+                    name=clone_name,
+                    description="Extracted voice profile for style transfer",
+                    files=[f]
+                )
+            
+            print(f"  ✅ Voice clone successful! ID: {voice.voice_id}")
+            return voice.voice_id
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"  ❌ Voice extraction failed: {str(e)}")
+            return None
     
     def list_voices(self):
         """
@@ -314,6 +416,42 @@ class TTSEngine:
         """
         voices = []
         
+        # ElevenLabs Premium Voices
+        try:
+            import elevenlabs
+            voices.extend([
+                {
+                    'id': 'elevenlabs_rachel',
+                    'name': 'Rachel (Female, US, ElevenLabs Premium)',
+                    'engine': 'elevenlabs',
+                    'language': 'en-US',
+                    'gender': 'Female'
+                },
+                {
+                    'id': 'elevenlabs_drew',
+                    'name': 'Drew (Male, US, ElevenLabs Premium)',
+                    'engine': 'elevenlabs',
+                    'language': 'en-US',
+                    'gender': 'Male'
+                },
+                {
+                    'id': 'elevenlabs_clyde',
+                    'name': 'Clyde (Male, US, ElevenLabs Premium)',
+                    'engine': 'elevenlabs',
+                    'language': 'en-US',
+                    'gender': 'Male'
+                },
+                {
+                    'id': 'elevenlabs_mim',
+                    'name': 'Mim (Female, UK, ElevenLabs Premium)',
+                    'engine': 'elevenlabs',
+                    'language': 'en-UK',
+                    'gender': 'Female'
+                }
+            ])
+        except ImportError:
+            print("  ℹ️ ElevenLabs not available (import failed)")
+
         # Edge TTS voices (best quality)
         try:
             import edge_tts
