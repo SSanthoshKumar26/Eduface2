@@ -33,7 +33,6 @@ const VideoGenerator = () => {
   const [serverPptPath, setServerPptPath] = useState(null);
   const [faceImage, setFaceImage] = useState(null);
   const [facePreview, setFacePreview] = useState(null);
-  const [audioFile, setAudioFile] = useState(null);
   
   // Configuration states
   const [voices, setVoices] = useState([]);
@@ -115,16 +114,11 @@ const VideoGenerator = () => {
     }
   };
 
-  const handleAudioChange = (e) => {
-    const file = e.target.files[0];
-    if (file) setAudioFile(file);
-  };
-
   const resetForm = () => {
     localStorage.removeItem('eduface_video_session');
     setVideoUrl(null); setScriptUrl(null); setAudioUrl(null); setJobId(null);
     setPptFile(null); setServerPptPath(null); setFaceImage(null); setFacePreview(null);
-    setAudioFile(null); setError(null); setSuccess(null);
+    setError(null); setSuccess(null);
   };
 
   const handleGenerate = async () => {
@@ -137,7 +131,6 @@ const VideoGenerator = () => {
       const formData = new FormData();
       if (!serverPptPath) formData.append('ppt', pptFile);
       formData.append('face', faceImage);
-      if (audioFile) formData.append('audio', audioFile);
 
       const uploadRes = await axios.post(`${API_BASE_URL}/api/upload-files`, formData);
       if (!uploadRes.data.success) throw new Error(uploadRes.data.error);
@@ -148,11 +141,10 @@ const VideoGenerator = () => {
       const generateRes = await axios.post(`${API_BASE_URL}/api/generate-video`, {
         ppt_path: serverPptPath || uploadRes.data.ppt_path,
         face_path: uploadRes.data.face_path,
-        audio_path: uploadRes.data.audio_path,
-        voice_id: audioFile ? null : selectedVoice,
-        slang_level: audioFile ? null : slangLevel,
+        voice_id: selectedVoice,
+        slang_level: slangLevel,
         quality,
-        tts_engine: audioFile ? null : ttsEngine
+        tts_engine: ttsEngine
       });
 
       const baseUrl = API_BASE_URL;
@@ -192,10 +184,33 @@ const VideoGenerator = () => {
           {error && <div className="vg-alert vg-alert-danger">{error}</div>}
 
           {loading && (
-            <div className="vg-glass-card vg-progress-card">
-              <div className="vg-spinner"></div>
-              <h3>{currentStep}</h3>
-              <p>{progress}</p>
+            <div className="vg-premium-loading-overlay">
+              <div className="vg-premium-loading-card">
+                <div className="vg-loading-icon-wrapper">
+                  <div className="vg-loading-orbit"></div>
+                  <Sparkles className="vg-loading-sparkle" size={32} />
+                </div>
+                
+                <div className="vg-loading-content">
+                  <h3 className="vg-loading-status-title">
+                    {currentStep === 'uploading' ? 'Vaulting Assets' : 'Architecting Your Lesson'}
+                  </h3>
+                  <p className="vg-loading-subtitle">{progress}</p>
+                  
+                  <div className="vg-premium-progress-container">
+                    <div className="vg-premium-progress-bar">
+                      <div className="vg-premium-progress-fill"></div>
+                      <div className="vg-premium-progress-shimmer"></div>
+                    </div>
+                  </div>
+
+                  <div className="vg-loading-features">
+                    <span className="vg-feature-tag">AI Voice Synthesis</span>
+                    <span className="vg-feature-tag">Neural Lip-Sync</span>
+                    <span className="vg-feature-tag">HD Compositing</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -220,12 +235,6 @@ const VideoGenerator = () => {
                   <input type="file" className="vg-cyber-input" accept="image/*" onChange={handleFaceChange} />
                   {facePreview && <div className="mt-2"><img src={facePreview} alt="Preview" style={{width: 80, borderRadius: '50%'}} /></div>}
                 </div>
-
-                <div className="vg-form-group">
-                  <label className="vg-label">Voice Sample for Cloning (Optional)</label>
-                  <input type="file" className="vg-cyber-input" accept="audio/*" onChange={handleAudioChange} />
-                  {audioFile && <small className="text-success d-block mt-1">Audio file selected: {audioFile.name}</small>}
-                </div>
               </div>
             </div>
 
@@ -233,15 +242,15 @@ const VideoGenerator = () => {
               <div className="vg-card-header"><Settings size={20} /> <h2>Step 2: Configuration</h2></div>
               <div className="vg-card-body">
                 <div className="vg-form-group">
-                  <label className="vg-label">AI Voice Persona {audioFile && '(Ignored - Custom Voice Clone Applied)'}</label>
-                  <select className="vg-cyber-input" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)} disabled={!!audioFile}>
+                  <label className="vg-label">AI Voice Persona</label>
+                  <select className="vg-cyber-input" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)}>
                     {voices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </select>
                 </div>
 
                 <div className="vg-form-group">
                   <label className="vg-label">Educational Tone</label>
-                  <select className="vg-cyber-input" value={slangLevel} onChange={(e) => setSlangLevel(e.target.value)} disabled={!!audioFile}>
+                  <select className="vg-cyber-input" value={slangLevel} onChange={(e) => setSlangLevel(e.target.value)}>
 
                     <option value="none">Professional</option>
                     <option value="medium">Conversational</option>

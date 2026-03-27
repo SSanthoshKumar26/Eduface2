@@ -125,34 +125,39 @@ class TextProcessor:
                 clean_title = self._clean_for_speech(title)
                 clean_content = f"This slide covers {clean_title}."
                 
-            # Create Scene Script via LLM Prompt
-            sys_prompt = f"""Your job is to generate an AI presenter script.
-1. Spoken dialogue (natural teaching voice)
-2. Facial expressions (eyes, eyebrows, blinking, gaze)
-3. Head movement
-4. Hand gestures
-5. Body posture shifts
-6. Timing cues
+            # Create Scene Script via Conversational teaching LLM Prompt
+            sys_prompt = f"""You are an AI Teaching Narrator.
+Your goal is to convert PPT slide content into NATURAL, HUMAN-LIKE teaching speech.
+The narration must sound like a real teacher explaining concepts — NOT reading slides.
 
-STYLE: Friendly, confident, slightly energetic teacher. Speak like explaining to a real student.
+STRICT RULES:
+1. DO NOT read bullet points directly.
+2. DO NOT start abruptly with the topic.
+3. ALWAYS begin with a conversational hook (e.g., “Let’s look at this…”, “Now here’s something interesting…”, “Alright, so here’s the idea…”, “Now, think about this for a moment…”).
+4. Use natural spoken language with flow between ideas.
+5. Sound engaging and human.
+6. Explanation style: Use simple language, add small pauses using commas and ellipses (...), and break long sentences naturally.
+7. Use engagement phrases like “you might notice…”, “what this means is…”, “in simple terms…”.
+8. Transition from previous ideas using phrases like “Now building on that…”, “Once we understand this…”, “The next thing to look at is…”.
 
 OUTPUT FORMAT (STRICT):
 [SCENE START]
-TEXT: "[Insert spoken text here]"
+TEXT: "[Insert the conversational, teacher-style narration here]"
 FACE:
-- [face action]
+- slight smile
+- attentive
 EYES:
-- [eye action]
+- look straight at viewer
 HEAD:
-- [head action]
+- small nod
 HANDS:
-- [hand action]
+- subtle gestures
 BODY:
-- [body action]
+- upright posture
 TIMING:
-- duration: [X]s
+- duration: [X]s (approx 1 second per 15 characters of text)
 
-Content to teach:
+Content to transform:
 {clean_content}
 """
             

@@ -2,6 +2,9 @@ import os
 import io
 import re
 import requests
+import uuid
+import json
+import time
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -55,10 +58,12 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 PPT_UPLOAD_DIR = os.path.join(UPLOAD_FOLDER, 'ppts')
 FACE_UPLOAD_DIR = os.path.join(UPLOAD_FOLDER, 'faces')
 OUTPUT_DIR = os.path.join(UPLOAD_FOLDER, 'outputs')
+SHARED_CHATS_DIR = os.path.join(UPLOAD_FOLDER, 'shared_chats')
 
 os.makedirs(PPT_UPLOAD_DIR, exist_ok=True)
 os.makedirs(FACE_UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(SHARED_CHATS_DIR, exist_ok=True)
 
 # Initialize video pipeline if available
 video_pipeline = None
@@ -1161,8 +1166,51 @@ def download_video_file(job_id, file_type):
             download_name = f'{job_id}_script.txt'
         elif file_type == 'audio':
             file_path = os.path.join(base_path, 'narration.wav')
+            
+            # --- STRICT AUDIO VALIDATION & RE-ENCODING (Pydub + FFmpeg) ---
+            print(f"\n🎧 AUDIO GENERATED")
+            print(f"- Path: {file_path}")
+            exists = os.path.exists(file_path)
+            print(f"- Exists: {exists}")
+            
+            if not exists:
+                raise RuntimeError("Audio generation failed: file does NOT exist")
+            
+            size = os.path.getsize(file_path)
+            print(f"- File size: {size} bytes")
+            if size < 5000:
+                 raise RuntimeError("Audio generation failed: file size too small")
+
+            print(f"\n🔄 AUDIO RE-ENCODING")
+            print("- Target: PCM 16-bit WAV (44.1kHz)")
+            
+            from pydub import AudioSegment
+            try:
+                audio = AudioSegment.from_file(file_path)
+                # Force conversion to PCM 16-bit, 44.1kHz, Mono (standard for educators)
+                audio = audio.set_frame_rate(44100).set_sample_width(2).set_channels(1)
+                audio.export(file_path, format="wav")
+            except Exception as conv_err:
+                raise RuntimeError(f"Corrupted WAV after conversion: {conv_err}")
+
+            print(f"\n🧪 AUDIO VALIDATION")
+            new_size = os.path.getsize(file_path)
+            duration = len(audio) / 1000.0
+            print(f"- File path: {file_path}")
+            print(f"- Size: {new_size} bytes")
+            print(f"- Duration: {duration:.2f}s")
+            
+            print(f"\n📦 DOWNLOAD READY")
+            print(f"- Path: {file_path}")
+            print(f"- MIME type: audio/wav")
+            print(f"- Size: {new_size}")
+            
+            print("\n✅ AUDIO FILE READY FOR DOWNLOAD")
+            print("- Fully playable WAV file")
+            # -------------------------------------------------------------
+
             mimetype = 'audio/wav'
-            download_name = f'{job_id}_audio.wav'
+            download_name = f'eduface_{job_id}_narration.wav'
         else:
             return jsonify({"error": "Invalid file type"}), 400
         
@@ -1207,12 +1255,14 @@ def tutor_chat():
             "role": "system",
             "content": (
                 "You are 'Eduface AI', an intelligent real-time learner assistant. "
-                "YOUR CORE RULE: ALWAYS respond. NEVER stay silent. NEVER return empty output. "
+                "YOUR CORE RULE: ALWAYS respond in professional MARKDOWN. "
                 "\n\nBEHAVIOR:"
-                "\n1. Explain like a teacher. Be clear, simple, and concise."
-                "\n2. If user is confused, use analogies or real-world examples. "
-                "\n3. Format: 2-5 lines of output, use bullet points if needed. "
-                "\n4. Engagement: Always offer follow-up help."
+                "\n1. Explain like an elite teacher. Be clear, structured, and authoritative."
+                "\n2. Use **bolding** for key terms and concepts."
+                "\n3. Use bullet points or numbered lists for steps and examples."
+                "\n4. Use ### Headers for section breaks."
+                "\n5. Ensure your response is professional and readable with appropriate spacing."
+                "\n6. Engagement: Always offer follow-up help."
             )
         }
         messages.insert(0, system_i)
@@ -1256,6 +1306,66 @@ def health_check():
             "pixabay": bool(PIXABAY_API_KEY)
         }
     })
+
+# ==========================================
+# Chat Sharing Endpoints
+# ==========================================
+@app.route('/api/share-chat', methods=['POST'])
+def share_chat():
+    try:
+        data = request.json
+        messages = data.get('messages', [])
+        visibility = data.get('visibility', 'public')
+        
+        chat_id = str(uuid.uuid4())
+        
+        # Ensure only safe client data is stored
+        safe_messages = []
+        for msg in messages:
+            safe_messages.append({
+                'role': msg.get('role'),
+                'content': msg.get('content')
+            })
+            
+        chat_data = {
+            'id': chat_id,
+            'visibility': visibility,
+            'messages': safe_messages,
+            'timestamp': time.time(),
+            'read_only': True
+        }
+        
+        file_path = os.path.join(SHARED_CHATS_DIR, f"{chat_id}.json")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(chat_data, f)
+            
+        return jsonify({
+            'success': True,
+            'share_id': chat_id,
+            'share_url': f"http://localhost:5173/shared/{chat_id}"
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/shared-chat/<chat_id>', methods=['GET'])
+def get_shared_chat(chat_id):
+    try:
+        # Prevent directory traversal
+        safe_id = secure_filename(f"{chat_id}.json")
+        file_path = os.path.join(SHARED_CHATS_DIR, safe_id)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Shared chat not found'}), 404
+            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            chat_data = json.load(f)
+            
+        return jsonify({
+            'success': True,
+            'chat': chat_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Failed to load chat'}), 500
 
 # ============ START SERVER ============
 if __name__ == "__main__":

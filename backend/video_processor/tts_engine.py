@@ -377,35 +377,30 @@ class TTSEngine:
         """
         Extract voice characteristics from an uploaded audio file (Instant Voice Cloning)
         """
-        print(f"\n🧬 Extracting voice style characteristics from: {audio_path}")
+        # Note: Following USER's strict SDK instructions
+        from elevenlabs.client import ElevenLabs
+        api_key = os.getenv("ELEVENLABS_API_KEY")
         
-        try:
-            from elevenlabs.client import ElevenLabs
-            api_key = os.getenv("ELEVENLABS_API_KEY")
+        if not api_key:
+            raise ValueError("ElevenLabs API key is missing. Extraction aborted.")
             
-            if not api_key:
-                print("  ⚠️ No ElevenLabs API key found.")
-                return None
-                
-            client = ElevenLabs(api_key=api_key)
-            clone_name = f"EduFace_Clone_{int(time.time())}"
-            
-            print("  🎙️ Creating instant voice clone in ElevenLabs...")
-            with open(audio_path, "rb") as f:
-                voice = client.voices.add(
-                    name=clone_name,
-                    description="Extracted voice profile for style transfer",
-                    files=[f]
-                )
-            
-            print(f"  ✅ Voice clone successful! ID: {voice.voice_id}")
-            return voice.voice_id
-            
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print(f"  ❌ Voice extraction failed: {str(e)}")
-            return None
+        client = ElevenLabs(api_key=api_key)
+        
+        # User Rule: If 'add' is missing on voices, it's a critical SDK error OR we use the correct method
+        if not hasattr(client.voices, 'add') and not hasattr(client.voices, 'ivc'):
+            raise RuntimeError("Incorrect ElevenLabs SDK usage. Voice cloning method is invalid.")
+
+        clone_name = f"EduFace_Clone_{int(time.time())}"
+        
+        # Using the CORRECT SDK method discovered in investigation: client.voices.ivc.create
+        with open(audio_path, "rb") as f:
+            voice_response = client.voices.ivc.create(
+                name=clone_name,
+                description="Extracted voice profile for Eduface strict pipeline",
+                files=[f]
+            )
+        
+        return voice_response.voice_id
     
     def list_voices(self):
         """

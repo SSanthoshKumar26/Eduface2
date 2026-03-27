@@ -1,6 +1,7 @@
 import os
 import time
 from typing import Dict, Any
+from pydub import AudioSegment
 from moviepy.editor import (
     VideoFileClip, ImageClip, CompositeVideoClip,
     concatenate_videoclips, ColorClip
@@ -138,117 +139,35 @@ class VideoPipeline:
             results['script_path'] = script_path
             results['steps']['script'] = 'completed'
 
-            # --- ENFORCED AUDIO PROCESSING & DEBUG VISIBILITY ---
-            custom_audio_path = options.get('audio_path')
-            user_audio_present = custom_audio_path and os.path.exists(custom_audio_path)
-            audio_source_type = "Uploaded" if user_audio_present else "None" # In future can track recorded
+            # 🎬 STEP 4: Audio Generation
+            self._log(50, "STEP 4/6 — Generating audio narration")
+            print("\n🎙️ GENERATING TTS NARRATION")
+            print(f"- Engine used: {tts_engine}")
+            print(f"- Voice Persona ID: {voice_id}")
             
-            # 1. AUDIO INPUT DETECTION LOGGING
-            self._log(45, f"DEBUG: AUDIO INPUT DETECTION")
-            print(f"   - User audio detected: {'TRUE' if user_audio_present else 'FALSE'}")
-            print(f"   - Audio source type: {audio_source_type}")
-            
-            # STEP 4: Audio Preparation
-            self._log(50, "STEP 4/6 — Preparing audio via Voice Style Transfer")
-            
-            # Determine processing parameters based on custom audio for style transfer
-            cloned_voice_id = None
-            voice_extraction_success = False
-            extracted_features = "N/A"
-            fallback_triggered = False
-            fallback_reason = "N/A"
-            final_voice_source = "Premium" if not user_audio_present else "Pending"
-            
-            if user_audio_present:
-                # 2. VOICE EXTRACTION STAGE
-                self._log(51, "DEBUG: VOICE EXTRACTION STATUS")
-                print(f"   - Voice extraction started")
-                
-                # Attempt with retries
-                max_retries = 2
-                for attempt in range(max_retries + 1):
-                    try:
-                        self._log(52, f"ℹ️ Extracting voice profile (Attempt {attempt+1}/{max_retries+1}) from: {custom_audio_path}")
-                        cloned_voice_id = self.tts_engine.extract_voice_profile(custom_audio_path)
-                        if cloned_voice_id:
-                            voice_extraction_success = True
-                            extracted_features = "Tone, Pitch, Accent, Frequency"
-                            break
-                        else:
-                            if attempt < max_retries:
-                                time.sleep(2)
-                    except Exception as e:
-                        print(f"   ⚠️ Extraction attempt failed: {str(e)}")
-                        if attempt == max_retries:
-                            fallback_reason = f"Voice extraction failed after {max_retries+1} attempts: {str(e)}"
-                        time.sleep(2)
-
-                print(f"   - Voice extraction success: {'TRUE' if voice_extraction_success else 'FALSE'}")
-                print(f"   - Extracted features: {extracted_features}")
-                
-                if voice_extraction_success:
-                    use_engine = 'elevenlabs'
-                    use_voice = cloned_voice_id
-                    final_voice_source = "User (Cloned)"
-                else:
-                    # 4. FALLBACK CHECK
-                    fallback_triggered = True
-                    if not fallback_reason or fallback_reason == "N/A":
-                        fallback_reason = "System failed to extract voice profile from sample"
-                    
-                    self._log(53, "DEBUG: FALLBACK CHECK")
-                    print(f"   - Fallback triggered: TRUE")
-                    print(f"   - Fallback reason: {fallback_reason}")
-                    
-                    self._log(54, "⚠️ CRITICAL: Enforced voice cloning failed. Falling back to high-quality default.")
-                    use_engine = 'edge'
-                    use_voice = 'edge_aria'
-                    final_voice_source = "Fallback"
-            else:
-                use_engine = tts_engine
-                use_voice = voice_id
-                if use_engine == 'elevenlabs': final_voice_source = "Premium"
-                elif use_engine == 'edge': final_voice_source = "Default (Edge)"
-                else: final_voice_source = "Local Fallback"
-
-            # 3. VOICE PROFILE APPLICATION & NARRATION
             audio_files = []
-            narration_success = True
-            
-            self._log(55, "DEBUG: VOICE PROFILE APPLICATION")
-            print(f"   - Voice profile applied: {'TRUE' if voice_extraction_success or not user_audio_present else 'FALSE'}")
-
-            # Core TTS Generation Logic: Creates entirely new narration audio ensuring script alignment
             for idx, script_text in enumerate(scripts):
-                self._log(56 + min(idx, 8), f"🎙️ Generating narration for slide {idx+1}/{len(scripts)}")
                 audio_path = os.path.join(job_dir, f'narration_{idx:03d}.wav')
-                
-                # Attempt generation with retry
-                af = None
-                for tts_attempt in range(2):
-                    af = self.tts_engine.generate_audio_with_fallback(
-                        text=script_text,
-                        output_path=audio_path,
-                        preferred_engine=use_engine,
-                        voice_id=use_voice
-                    )
-                    if af and os.path.exists(af): break
-                    time.sleep(1)
+                af = self.tts_engine.generate_audio_with_fallback(
+                    text=script_text,
+                    output_path=audio_path,
+                    preferred_engine=tts_engine,
+                    voice_id=voice_id
+                )
                 
                 if not af or not os.path.exists(af):
-                    narration_success = False
-                    raise RuntimeError(f"Audio generation failed for slide {idx+1} after retries")
-                
+                    results['status'] = 'error'
+                    results['error'] = f"Audio generation failed for slide {idx+1}"
+                    return results
+
                 af = self.tts_engine.normalize_audio(af)
                 audio_files.append(af)
-            
-            print(f"   - Narration generated using cloned voice: {'TRUE' if voice_extraction_success else 'FALSE'}")
-            
-            # 5. FINAL VALIDATION
-            self._log(64, "DEBUG: FINAL VALIDATION")
-            print(f"   - Final voice source used: {final_voice_source}")
-            print(f"   - Voice consistency check: PASSED")
-            
+                
+            print("\n✅ AUDIO PIPELINE SUCCESS")
+            print("- Audio source: GENERATED TTS")
+            print("- Audio files count: ", len(audio_files))
+            print("━"*40 + "\n")
+
             results['steps']['audio'] = 'completed'
 
             # STEP 5
@@ -422,6 +341,19 @@ class VideoPipeline:
                 final_clips,
                 method="compose"
             )
+
+            # --- ADDED: Generate final combined narration audio ---
+            from moviepy.editor import concatenate_audioclips
+            final_audio_path = os.path.join(job_dir, 'narration.wav')
+            
+            # Extract audio from each slide clip and join them
+            slide_audios = [c.audio for c in final_clips if c.audio]
+            if slide_audios:
+                print(f"   Generating final narration audio ({len(slide_audios)} segments)...")
+                final_narration = concatenate_audioclips(slide_audios)
+                # Export as wav with standard parameters for max Windows compatibility
+                final_narration.write_audiofile(final_audio_path, logger=None, codec='pcm_s16le')
+            # ---------------------------------------------------
 
             final_concat.write_videofile(
                 final_video_path,

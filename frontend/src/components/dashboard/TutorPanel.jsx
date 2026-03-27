@@ -1,8 +1,12 @@
-import React, { useRef, useEffect } from 'react';
-import { Send, Sparkles, MessageSquare, Lightbulb, FileText, HelpCircle, X } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, Sparkles, MessageSquare, Lightbulb, FileText, HelpCircle, X, Trash2, Share2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import ShareModal from './ShareModal';
 
-const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, setIsChatOpen }) => {
+const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, onClearChat }) => {
   const chatEndRef = useRef(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,6 +26,27 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
     }
   };
 
+  const handleShareChat = async () => {
+    try {
+      // In production, use the actual backend URL instead of hardcoded localhost
+      const resp = await fetch('http://localhost:5000/api/share-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, visibility: 'public' })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setShareUrl(data.share_url);
+        setIsShareModalOpen(true);
+      } else {
+        alert("Failed to share chat.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error sharing the chat.");
+    }
+  };
+
   return (
     <div className="ld-tutor-panel">
       <div className="ld-tutor-header">
@@ -32,14 +57,21 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
           <div>
             <h3>Eduface AI</h3>
             <div className="ld-tutor-status">
-              <span className="ld-status-dot"></span>
-              <span className="ld-status-text">Studio Connected</span>
+              STUDIO CONNECTED
             </div>
           </div>
         </div>
+        <div className="ld-tutor-header-actions">
+          <button className="ld-header-btn" title="Share Chat securely" onClick={handleShareChat}>
+            <Share2 size={16} />
+          </button>
+          <button className="ld-header-btn" title="Clear Chat messages" onClick={onClearChat}>
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
 
-      <div className="ld-tutor-messages" ref={chatEndRef}>
+      <div className="ld-tutor-messages">
         {messages.map((msg, idx) => (
           <div 
             key={idx} 
@@ -50,7 +82,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
             )}
             <div className="ld-chat-bubble">
               <div className="ld-chat-text">
-                {formatText(msg.content)}
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
             </div>
           </div>
@@ -58,14 +90,21 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
         {isTyping && (
           <div className="ld-chat-wrapper assistant">
             <span className="ld-chat-role">Eduface AI</span>
-            <div className="ld-chat-bubble is-typing">
-              <span className="ld-typing-dot"></span>
-              <span className="ld-typing-dot"></span>
-              <span className="ld-typing-dot"></span>
+            <div className="ld-typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </div>
         )}
+        <div ref={chatEndRef} />
       </div>
+
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        shareUrl={shareUrl} 
+      />
 
       <div className="ld-tutor-footer">
         <div className="ld-tutor-quick-actions">
