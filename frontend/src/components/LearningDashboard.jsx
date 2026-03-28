@@ -3,14 +3,20 @@ import {
   Play, Pause, MessageCircle, Maximize, Maximize2, Subtitles, Download, FileText, Music, LogOut, Lightbulb, Sparkles, Share2, Trash2 
 } from 'lucide-react';
 import TutorPanel from './dashboard/TutorPanel';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, X } from 'lucide-react';
 import '../styles/LearningDashboard.css';
 
 const API_BASE_URL = 'http://localhost:5000';
 
 const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) => {
+  const navigate = useNavigate();
   const [lessonContext, setLessonContext] = useState('');
   const [currentCaption, setCurrentCaption] = useState('');
   const [showCaptions, setShowCaptions] = useState(true);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [numQuestions, setNumQuestions] = useState(5);
+  const [difficulty, setDifficulty] = useState('medium');
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Hi! I'm Eduface AI. Ask me anything about this premium lesson." }
   ]);
@@ -95,22 +101,43 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
   };
 
   const getCleanDescription = (rawText) => {
-    if (!rawText) return "Extracting lesson highlights...";
-    // Remove technical metadata: [00:00], [SCENE START], FACE:, EYES:, HEAD:, HANDS:, BODY:, TIMING:, TEXT: "..."
+    if (!rawText) return "Analyzing lesson context...";
+    
     let clean = rawText
-      .replace(/\[\d{2}:\d{2}\]/g, '')
-      .replace(/\[SCENE START\]/g, '')
-      .replace(/FACE:.*?(?=EYES:|HEAD:|HANDS:|BODY:|TIMING:|TEXT:|\Z)/gs, '')
-      .replace(/EYES:.*?(?=HEAD:|HANDS:|BODY:|TIMING:|TEXT:|\Z)/gs, '')
-      .replace(/HEAD:.*?(?=HANDS:|BODY:|TIMING:|TEXT:|\Z)/gs, '')
-      .replace(/HANDS:.*?(?=BODY:|TIMING:|TEXT:|\Z)/gs, '')
-      .replace(/BODY:.*?(?=TIMING:|TEXT:|\Z)/gs, '')
-      .replace(/TIMING:.*?(?=TEXT:|\Z)/gs, '')
-      .replace(/TEXT:\s*"([^"]*)"/gs, '$1 ')
+      .replace(/\[.*?\]/g, '') // Remove all bracketed [SCENE START], [00:00]
+      .replace(/[A-Z]+:\s*("([^"]*)")?/g, (match, p1, p2) => p2 ? p2 + ' ' : '') // Clean TEXT: "..." or EYES: ...
       .replace(/\s+/g, ' ')
       .trim();
+      
+    // Find the actual start of the lesson meaning (skipping repeated title intro words)
+    const matchStart = clean.search(/(What is|How to|Why do|In this lesson|\b[A-Z][A-Za-z]+ is a\b|\b[A-Z][A-Za-z]+ is an\b)/i);
+    if (matchStart !== -1 && matchStart < 150) {
+      clean = clean.substring(matchStart);
+    } else {
+      // If none found, aggressively strip the first few repeated title words
+      const words = clean.split(' ');
+      if (words.length > 10) {
+        clean = words.slice(Math.min(words.length - 1, 6)).join(' '); 
+      }
+    }
     
-    return clean.length > 300 ? clean.substring(0, 300) + "..." : clean;
+    clean = clean.replace(/^(Hello everyone.*?today we will|Welcome to this lesson|Let's dive into|Moving on to)/i, '');
+    clean = clean.trim();
+    if (clean.length > 0) {
+       clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+    
+    if (clean.length > 220) {
+      clean = clean.substring(0, 220).trim();
+      const lastSentenceEnd = Math.max(clean.lastIndexOf('. '), clean.lastIndexOf('? '));
+      if (lastSentenceEnd > 100) {
+        clean = clean.substring(0, lastSentenceEnd + 1);
+      } else {
+        clean += '...';
+      }
+    }
+    
+    return clean || "Welcome to this premium lesson. Watch the video to get started.";
   };
 
   useEffect(() => {
@@ -138,7 +165,28 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
     <div className="ld-root">
       <header className="ld-header">
         <div className="ld-brand"><Sparkles size={20} /> <h2>Eduface Learning Console</h2></div>
-        <button onClick={resetForm} className="ld-exit-btn"><LogOut size={16} /> End Session</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => navigate('/quiz/setup', { state: { lessonContent: lessonContext } })} 
+            className="ld-action-btn" 
+            style={{ 
+              background: 'var(--ld-accent, #2563eb)', 
+              color: 'white', 
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              opacity: 0.95
+            }}
+            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+            onMouseOut={(e) => e.currentTarget.style.opacity = '0.95'}
+          >
+            Generate Quiz
+          </button>
+          <button onClick={resetForm} className="ld-exit-btn"><LogOut size={16} /> End Session</button>
+        </div>
       </header>
 
       <main className="ld-main">
@@ -205,8 +253,8 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
             </button>
           </div>
 
-          <div className="ld-info-card">
-            <h3><Lightbulb size={18} /> Overview</h3>
+          <div className="ld-overview-premium">
+            <h3><Lightbulb size={18} /> Lesson Overview</h3>
             <div className="ld-lesson-content">
                <p>{getCleanDescription(lessonContext)}</p>
             </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
-import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX, FiTrash2 } from 'react-icons/fi';
 import ThemeSelector from './ThemeSelector';
 import '../styles/PPTGenerator.css';
 
@@ -10,7 +10,7 @@ const PPTGenerator = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const generatedContent = location.state?.generatedContent || "";
+  const [generatedContent, setGeneratedContent] = useState(location.state?.generatedContent || "");
 
   const [fileName, setFileName] = useState("AI_Generated_Presentation");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,6 +22,32 @@ const PPTGenerator = () => {
   });
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('idle');
+  const [generatedPpt, setGeneratedPpt] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.generatedContent) {
+      setGeneratedContent(location.state.generatedContent);
+    } else {
+      const saved = localStorage.getItem('eduface_ppt_gen');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.generatedContent) setGeneratedContent(parsed.generatedContent);
+          if (parsed.fileName) setFileName(parsed.fileName);
+          if (parsed.generatedPpt) setGeneratedPpt(parsed.generatedPpt);
+          if (parsed.status) setStatus(parsed.status);
+        } catch (e) {}
+      }
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (generatedContent) {
+      localStorage.setItem('eduface_ppt_gen', JSON.stringify({
+        generatedContent, fileName, generatedPpt, status
+      }));
+    }
+  }, [generatedContent, fileName, generatedPpt, status]);
 
   useEffect(() => {
     setCustomizations(prev => ({ ...prev, theme: selectedTheme }));
@@ -35,7 +61,12 @@ const PPTGenerator = () => {
     setCustomizations(prev => ({ ...prev, [key]: value }));
   };
 
-  const [generatedPpt, setGeneratedPpt] = useState(null);
+  const handleClear = () => {
+    localStorage.removeItem('eduface_ppt_gen');
+    setGeneratedContent("");
+    setStatus('idle');
+    window.history.replaceState({}, document.title);
+  };
 
   const handleGeneratePPT = async () => {
     if (!generatedContent) {
@@ -122,9 +153,32 @@ const PPTGenerator = () => {
           {/* Left Section - Content Preview */}
           <div className="ppt-left-panel">
             <div className="ppt-preview-card">
-              <h3 className="ppt-card-title">Content Preview</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                <h3 className="ppt-card-title" style={{ marginBottom: 0 }}>Content Preview</h3>
+                <button
+                  onClick={handleClear}
+                  style={{
+                    background: 'transparent',
+                    border: '2px solid #ff4d4d',
+                    color: '#ff4d4d',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseOver={(e) => { e.target.style.background = 'rgba(255, 77, 77, 0.1)'; }}
+                  onMouseOut={(e) => { e.target.style.background = 'transparent'; }}
+                >
+                  <FiTrash2 size={16} /> Clear Content
+                </button>
+              </div>
               <div className="ppt-content-box">
-                <p className="ppt-preview-text">{generatedContent.substring(0, 2000)}...</p>
+                <p className="ppt-preview-text">{generatedContent ? generatedContent.substring(0, 2000) : "No content available."}...</p>
               </div>
               <div className="ppt-content-info">
                 <span className="ppt-info-badge">📄 {Math.ceil(generatedContent.length / 500)} pages</span>

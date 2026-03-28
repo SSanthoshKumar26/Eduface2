@@ -93,48 +93,4 @@ const ThemeSelector = ({ selectedTheme, onThemeSelect }) => {
   );
 };
 
-// Example usage
-export default function App() {
-  const [selectedTheme, setSelectedTheme] = useState('modern_blue');
-  
-  return (
-    <div style={{ 
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '40px'
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        padding: '30px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-      }}>
-        <h1 style={{ 
-          textAlign: 'center', 
-          color: '#333',
-          marginBottom: '30px',
-          fontSize: '32px'
-        }}>
-          🎯 Professional PPT Generator
-        </h1>
-        
-        <ThemeSelector 
-          selectedTheme={selectedTheme} 
-          onThemeSelect={setSelectedTheme} 
-        />
-        
-        <div style={{
-          marginTop: '30px',
-          padding: '20px',
-          backgroundColor: '#f0f4ff',
-          borderRadius: '8px',
-          border: '2px solid #667eea'
-        }}>
-          <strong>Selected Theme:</strong> {selectedTheme}
-        </div>
-      </div>
-    </div>
-  );
-}
+export default ThemeSelector;

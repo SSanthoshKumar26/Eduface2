@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Send, Sparkles, MessageSquare, Lightbulb, FileText, HelpCircle, X, Trash2, Share2 } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Send, Sparkles, Trash2, Share2, Mic, MicOff, AudioLines, MessageSquare, Lightbulb, FileText, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ShareModal from './ShareModal';
 
@@ -7,17 +7,66 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
   const chatEndRef = useRef(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  
+  // Voice Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const quickActions = [
-    { label: "Explain Concept", icon: <MessageSquare size={14} /> },
-    { label: "Show Example", icon: <Lightbulb size={14} /> },
-    { label: "Summarize Lesson", icon: <FileText size={14} /> },
-    { label: "Generate Quiz", icon: <HelpCircle size={14} /> }
-  ];
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+
+      recognitionRef.current.onresult = (event) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInput(transcript);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error("Speech Recognition Error:", event.error);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [setInput]);
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      alert("Voice recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      setInput(''); // Clear input for new voice prompt
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -25,6 +74,12 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
       onSendMessage();
     }
   };
+
+  const quickActions = [
+    { id: 'explain', label: "Explain Concept", icon: <MessageSquare size={13} />, prompt: "Can you explain the main concept of this lesson in simple terms?" },
+    { id: 'summarize', label: "Summarize", icon: <FileText size={13} />, prompt: "Please provide a concise summary of this lesson." },
+    { id: 'points', label: "Key Points", icon: <Lightbulb size={13} />, prompt: "What are the key takeaways from this video?" }
+  ];
 
   const handleShareChat = async () => {
     try {
@@ -50,16 +105,10 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
   return (
     <div className="ld-tutor-panel">
       <div className="ld-tutor-header">
-        <div className="ld-tutor-title-group">
-          <div className="ld-tutor-icon">
-            <Sparkles size={16} />
-          </div>
-          <div>
-            <h3>Eduface AI</h3>
-            <div className="ld-tutor-status">
-              STUDIO CONNECTED
-            </div>
-          </div>
+        <div className="ld-tutor-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sparkles size={14} className="ld-mini-sparkle" />
+          <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 600 }}>Eduface AI</h3>
+          <span className="ld-tutor-status" style={{ margin: 0, fontSize: '0.65rem' }}>STUDIO CONNECTED</span>
         </div>
         <div className="ld-tutor-header-actions">
           <button className="ld-header-btn" title="Share Chat securely" onClick={handleShareChat}>
@@ -107,37 +156,48 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
       />
 
       <div className="ld-tutor-footer">
-        <div className="ld-tutor-quick-actions">
-          {quickActions.map((action, idx) => (
+        <div className="ld-tutor-toolbar">
+          {quickActions.map((action) => (
             <button 
-              key={idx}
-              onClick={() => onSendMessage(action.label)}
+              key={action.id}
+              onClick={() => onSendMessage(action.prompt)}
               disabled={isTyping}
-              className="ld-quick-btn"
+              className="ld-toolbar-btn"
+              title={action.label}
             >
               {action.icon}
-              {action.label}
+              <span>{action.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="ld-tutor-input-area">
+        <div className={`ld-tutor-input-area ${isRecording ? 'recording' : ''}`}>
           <input 
             type="text" 
-            placeholder="Ask your tutor about this lesson..."
+            placeholder={isRecording ? "Listening..." : "Ask anything..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isTyping}
+            disabled={isTyping || isRecording}
             className="ld-chat-input"
           />
-          <button 
-            onClick={() => onSendMessage()}
-            disabled={isTyping || !input.trim()}
-            className="ld-chat-send"
-          >
-            <Send size={18} />
-          </button>
+          
+          <div className="ld-input-actions">
+            <button 
+              onClick={toggleRecording}
+              className={`ld-voice-btn ${isRecording ? 'active' : ''}`}
+              title={isRecording ? "Stop Recording" : "Start Voice Input"}
+            >
+              {isRecording ? <AudioLines size={20} className="pulse-animation" /> : <Mic size={20} />}
+            </button>
+            <button 
+              onClick={() => onSendMessage()}
+              disabled={isTyping || !input.trim() && !isRecording}
+              className="ld-chat-send"
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

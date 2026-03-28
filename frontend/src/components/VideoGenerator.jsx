@@ -116,6 +116,8 @@ const VideoGenerator = () => {
 
   const resetForm = () => {
     localStorage.removeItem('eduface_video_session');
+    localStorage.removeItem('eduface_content_gen');
+    localStorage.removeItem('eduface_ppt_gen');
     setVideoUrl(null); setScriptUrl(null); setAudioUrl(null); setJobId(null);
     setPptFile(null); setServerPptPath(null); setFaceImage(null); setFacePreview(null);
     setError(null); setSuccess(null);

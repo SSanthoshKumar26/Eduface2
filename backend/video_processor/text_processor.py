@@ -92,6 +92,13 @@ class TextProcessor:
         if not text: return ""
         # Remove URLs
         text = re.sub(r'http[s]?://\S+', '', text)
+        
+        # CRITICAL FIX: Add proper gaps and stoppages to headings and bullet points 
+        # so they don't continuously overflow into one giant spoken sentence.
+        # If a line doesn't end in punctuation, append a pause marker (...)
+        text = re.sub(r'(?<![.,?!;:])\s*\n', '... \n', text)
+        text = text.replace('\n', ' ')
+        
         # Handle common symbols
         text = text.replace('&', ' and ').replace('+', ' plus ').replace('@', ' at ')
         text = text.replace('_', ' ').replace('{', ' ').replace('}', ' ')
@@ -126,23 +133,96 @@ class TextProcessor:
                 clean_content = f"This slide covers {clean_title}."
                 
             # Create Scene Script via Conversational teaching LLM Prompt
-            sys_prompt = f"""You are an AI Teaching Narrator.
-Your goal is to convert PPT slide content into NATURAL, HUMAN-LIKE teaching speech.
-The narration must sound like a real teacher explaining concepts — NOT reading slides.
+            sys_prompt = f"""You are a professional teacher creating spoken lecture audio.
 
-STRICT RULES:
-1. DO NOT read bullet points directly.
-2. DO NOT start abruptly with the topic.
-3. ALWAYS begin with a conversational hook (e.g., “Let’s look at this…”, “Now here’s something interesting…”, “Alright, so here’s the idea…”, “Now, think about this for a moment…”).
-4. Use natural spoken language with flow between ideas.
-5. Sound engaging and human.
-6. Explanation style: Use simple language, add small pauses using commas and ellipses (...), and break long sentences naturally.
-7. Use engagement phrases like “you might notice…”, “what this means is…”, “in simple terms…”.
-8. Transition from previous ideas using phrases like “Now building on that…”, “Once we understand this…”, “The next thing to look at is…”.
+This output will be converted into audio using a TTS system.
+So it MUST sound natural, expressive, and human-like.
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. DO NOT repeat the same opening phrases (like "Alright") frequently
+2. Use VARIED and PROFESSIONAL openings such as:
+   - "Hello everyone..."
+   - "Let’s begin with this concept..."
+   - "Now, let’s take a closer look..."
+   - "Let’s understand this carefully..."
+   - "Here’s something important..."
+
+3. DO NOT read the slide content directly
+4. You MUST explain in your own words
+5. You MUST expand beyond the slide
+6. Add at least ONE real-world example
+7. Add teaching emphasis phrases like:
+   - "This is important..."
+   - "Focus on this part..."
+   - "Try to visualize this..."
+   - "Think about it this way..."
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+6. Avoid long paragraphs completely
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add example
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraph
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone...
+
+Let’s understand this concept carefully...
+
+This idea is very important...
+
+Now focus on this part...
+
+
+
+Think about it this way...
+
+Imagine a real-world situation...
+
+
+
+This makes the concept much clearer...
+
+---
+
+Slide Content:
+{clean_content}
+
+---
 
 OUTPUT FORMAT (STRICT):
 [SCENE START]
-TEXT: "[Insert the conversational, teacher-style narration here]"
+TEXT: "
+[Insert ONLY the teaching narration in this format]
+"
 FACE:
 - slight smile
 - attentive
@@ -156,14 +236,24 @@ BODY:
 - upright posture
 TIMING:
 - duration: [X]s (approx 1 second per 15 characters of text)
-
-Content to transform:
-{clean_content}
 """
             
-            # Failsafe default script
+            # Failsafe default script with varied natural openings
+            openings = [
+                "Hello everyone...\nToday we will be discussing this topic...\n\n",
+                "Moving on to our next point...\nLet's break this down...\n\n",
+                "Now, pay attention to this part...\nIt's quite important...\n\n",
+                "Let's look at another aspect of this...\n\n",
+                "To continue with our discussion...\n\n"
+            ]
+            opening = openings[i % len(openings)] if i > 0 else openings[0]
+            
+            formatted_failsafe = self.add_conversational_style(clean_content, slang_level).replace('. ', '...\n\n')
             slide_script = f"""[SCENE START]
-TEXT: "{self.add_conversational_style(clean_content, slang_level)}"
+TEXT: "
+{opening}
+{formatted_failsafe}
+"
 FACE:
 - slight smile
 - attentive
@@ -180,20 +270,20 @@ TIMING:
             
             try:
                 # Try to use Ollama API to generate
-                print(f"  🤖 Generating Director Script for Slide {i+1} via Ollama...")
+                print(f"  [AI] Generating Director Script for Slide {i+1} via Ollama...")
                 payload = {
                     "model": AI_MODEL,
                     "prompt": sys_prompt,
                     "stream": False,
                     "temperature": 0.7
                 }
-                response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=20)
+                response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=120)
                 if response.status_code == 200:
                     generated = response.json().get('response', '').strip()
                     if "[SCENE START]" in generated and "TEXT:" in generated:
                         slide_script = generated
             except Exception as e:
-                print(f"  ⚠️ LLM Script generation failed, using fallback: {e}")
+                print(f"  [WARNING] LLM Script generation failed, using fallback: {e}")
 
             scripts.append(slide_script)
 

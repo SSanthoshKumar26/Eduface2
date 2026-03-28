@@ -97,7 +97,9 @@
   box-shadow: 0 8px 32px rgba(0, 229, 255, 0.12),
               inset 0 1px 0 rgba(255, 255, 255, 0.5);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  height: 750px; /* Fixed height to match output */
+  box-sizing: border-box;
 }
 
 .cge-editor::after {
@@ -153,12 +155,13 @@
   background: var(--bg-light);
   color: var(--text-dark);
   border: 2px solid var(--border-light);
-  resize: vertical;
+  resize: none; /* Disabled manual resize to keep UI stable */
   padding: 1.75rem;
   font-size: 1rem;
   outline: none;
   width: 100%;
-  min-height: 200px;
+  flex: 1; /* Allow to take available space within fixed editor */
+  min-height: 150px;
   box-sizing: border-box;
   font-family: inherit;
   line-height: 1.7;
@@ -449,11 +452,12 @@
   padding: 2.75rem;
   box-shadow: 0 8px 32px rgba(0, 229, 255, 0.12),
               inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  min-height: 500px;
+  height: 750px; /* Force-fixed height */
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .cge-output-card::before {

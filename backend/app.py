@@ -413,7 +413,6 @@ CRITICAL INSTRUCTIONS:
     
     try:
         url = f"{OLLAMA_BASE_URL}/api/generate"
-        
         payload = {
             "model": AI_MODEL,
             "prompt": enhanced_prompt,
@@ -421,9 +420,10 @@ CRITICAL INSTRUCTIONS:
             "temperature": 0.7 if mode == "Creative" else (0.5 if mode == "Quick Response" else 0.6),
         }
         
-        print(f"🤖 Generating [{mode}] ({slide_count} slides) with {AI_MODEL} (LOCAL)...")
+        print(f"🤖 Generating [{mode}] ({slide_count} slides) with local {AI_MODEL}...")
         
-        response = requests.post(url, json=payload, timeout=120)
+        # Increased timeout to 300s to allow the 1B model to finish without throwing an error
+        response = requests.post(url, json=payload, timeout=300)
         
         if response.status_code == 200:
             result = response.json()
@@ -434,14 +434,14 @@ CRITICAL INSTRUCTIONS:
             error_msg = f"Ollama error: HTTP {response.status_code}"
             print(f"❌ {error_msg}")
             return f"[Error]: {error_msg}"
-    
+            
     except requests.exceptions.ConnectionError:
-        error_msg = f"Cannot connect to Ollama at {OLLAMA_BASE_URL}. Make sure 'ollama serve' is running."
+        error_msg = f"Cannot connect to Ollama at {OLLAMA_BASE_URL}."
         print(f"❌ {error_msg}")
         return f"[Error]: {error_msg}"
     
     except requests.exceptions.Timeout:
-        error_msg = f"{AI_MODEL} generation timed out (120s). Try a simpler prompt or Quick Response mode."
+        error_msg = f"Generation timed out (300s). Try a simpler prompt or Quick Response mode."
         print(f"❌ {error_msg}")
         return f"[Error]: {error_msg}"
     
@@ -449,7 +449,6 @@ CRITICAL INSTRUCTIONS:
         error_msg = str(e)
         print(f"❌ AI error: {error_msg}")
         return f"[Error]: {error_msg}"
-
 # ============ TEXT PROCESSING ============
 def clean_markdown(text):
     """Remove markdown formatting"""
@@ -538,22 +537,74 @@ def parse_markdown_content(text):
     return sections
 
 def group_into_slides(sections, max_slides=5):
-    """Group sections into slides"""
-    slides = []
+    """Smartly group sections into EXACTLY max_slides without empty slides"""
+    valid_sections = [s for s in sections if str(s.get('content', '')).strip()]
+    if not valid_sections:
+        return []
+        
+    raw_slides = []
     current_slide = []
     
-    for section in sections:
-        if section['type'] == 'h2':
+    for s in valid_sections:
+        if s['type'] in ['h1', 'h2']:
             if current_slide:
-                slides.append(current_slide)
-            current_slide = [section]
+                raw_slides.append(current_slide)
+            current_slide = [s]
         else:
-            current_slide.append(section)
-    
+            current_slide.append(s)
+            
     if current_slide:
-        slides.append(current_slide)
-    
-    return slides[:max_slides]
+        raw_slides.append(current_slide)
+        
+    clean_slides = []
+    for slide in raw_slides:
+        content_items = [x for x in slide if x['type'] in ['text', 'bullet', 'h3']]
+        if content_items:
+            clean_slides.append(slide)
+            
+    if not clean_slides:
+        clean_slides = [s for s in raw_slides if s]
+        
+    if not clean_slides:
+        return []
+
+    while len(clean_slides) > max_slides:
+        min_len = float('inf')
+        min_idx = 0
+        for i in range(len(clean_slides) - 1):
+            cl = len(clean_slides[i]) + len(clean_slides[i+1])
+            if cl < min_len:
+                min_len = cl
+                min_idx = i
+        merged = clean_slides[min_idx] + clean_slides[min_idx+1]
+        clean_slides[min_idx] = merged
+        del clean_slides[min_idx+1]
+
+    while len(clean_slides) < max_slides:
+        longest_idx = max(range(len(clean_slides)), key=lambda i: len([x for x in clean_slides[i] if x['type'] in ['text', 'bullet']]))
+        longest = clean_slides[longest_idx]
+        text_items = [x for x in longest if x['type'] in ['text', 'bullet']]
+        
+        if len(text_items) < 2:
+            break
+            
+        mid = len(longest) // 2
+        while mid > 0 and longest[mid-1]['type'] in ['h1', 'h2', 'h3']:
+            mid -= 1
+        if mid == 0:
+            mid = 1
+            
+        slide1 = longest[:mid]
+        slide2 = longest[mid:]
+        
+        header = next((x for x in slide1 if x['type'] in ['h1', 'h2']), None)
+        if header and not any(x['type'] in ['h1', 'h2'] for x in slide2):
+            slide2.insert(0, {'type': header['type'], 'content': f"{header['content']} (Cont.)"})
+            
+        clean_slides[longest_idx] = slide1
+        clean_slides.insert(longest_idx + 1, slide2)
+        
+    return clean_slides[:max_slides]
 
 # ============ IMAGE FUNCTIONS ============
 def fetch_unsplash_image(query):
@@ -855,6 +906,10 @@ def generate_ppt():
             
             # Font sizes
             font_config = calculate_dynamic_font_sizes(slide_sections, mode, image_added)
+            if customizations.get('font_size'):
+                font_size = int(customizations['font_size'])
+                font_config['body'] = font_size
+                font_config['h3'] = font_size + 2
             
             # Content area
             content_width = TEXT_WIDTH_WITH_IMAGE if image_added else TEXT_WIDTH_WITHOUT_IMAGE
@@ -1285,6 +1340,90 @@ def tutor_chat():
                 "content": f"{friendly_fallback}\n\nThis lesson covers specialized materials. Would you like me to explain a related key concept while I refresh my connection?"
             }
         }), 200
+
+# ============ EDUFACE QUIZ SYSTEM ============
+@app.route("/api/quiz", methods=["POST"])
+def manage_quiz():
+    '''Generates and evaluates quizzes using Groq'''
+    try:
+        data = request.json
+        lesson_content = data.get('lesson_content', '')
+        num_questions = data.get('num_questions', 5)
+        difficulty = data.get('difficulty', 'medium')
+        user_answers = data.get('user_answers', {})
+        
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            return jsonify({"success": False, "error": "GROQ_API_KEY not found"}), 500
+            
+        client = Groq(api_key=api_key)
+
+        prompt = f"""
+        ACT AS: 'Eduface Smart Assistant'
+        
+        INPUTS:
+        - Lesson Content: {lesson_content}
+        - Number of Questions: {num_questions}
+        - Difficulty: {difficulty}
+        - User's Provided Answers: {json.dumps(user_answers)}
+
+        MODE: {'EVALUATION' if user_answers else 'GENERATION'}
+
+        TASK (GENERATION):
+        If this is GENERATION mode, identify the core concepts from the Lesson Content.
+        Create EXACTLY {num_questions} high-quality MCQs at {difficulty} level.
+        Each question must have 4 options (A, B, C, D) and ONE correct answer.
+        Tag each question with a specific 'concept' found in the text.
+        Provide a meaningful 'explanation' for the correct answer.
+
+        TASK (EVALUATION):
+        If this is EVALUATION mode, grade the 'User's Provided Answers'.
+        Calculate total, correct, and accuracy.
+        Perform concept-wise analysis: for each unique concept found in the quiz, calculate accuracy and level (Strong >= 80%, Moderate 50-79%, Weak < 50%).
+        Identify specific Strengths and Weaknesses.
+        Provide actionable, non-generic Improvement Suggestions.
+
+        OUTPUT FORMAT: STRICT JSON ONLY. NO MARKDOWN.
+        {{
+          "quiz": [
+            {{
+              "id": 1,
+              "question": "...",
+              "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
+              "correct_answer": "A",
+              "concept": "...",
+              "difficulty": "{difficulty}",
+              "explanation": "..."
+            }}
+          ],
+          "evaluation": {{
+            "score": {{"total": 0, "correct": 0, "wrong": 0, "accuracy": "0%"}},
+            "concept_analysis": [
+              {{"concept": "...", "accuracy": "0%", "level": "Strong/Moderate/Weak"}}
+            ],
+            "strengths": ["..."],
+            "weaknesses": ["..."],
+            "suggestions": ["..."],
+            "learning_level": "Beginner/Intermediate/Advanced"
+          }}
+        }}
+        """
+
+        # Groq with Llama 3.3 70B
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "system", "content": "You are a professional educational assessment engine. Respond ONLY in valid JSON."},
+                      {"role": "user", "content": prompt}],
+            temperature=0.1, # Keep it deterministic for JSON
+            response_format={"type": "json_object"}
+        )
+        
+        quiz_data = json.loads(completion.choices[0].message.content)
+        return jsonify({"success": True, "data": quiz_data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ============ HEALTH CHECK ============
 @app.route("/api/health", methods=["GET"])

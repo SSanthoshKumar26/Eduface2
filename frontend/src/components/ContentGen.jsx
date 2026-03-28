@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FiSend, FiMic, FiPlus, FiLoader, FiArrowLeft, FiBook } from "react-icons/fi";
+import { FiSend, FiMic, FiPlus, FiLoader, FiArrowLeft, FiBook, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "../styles/ContentGen.css";
 
@@ -23,8 +23,23 @@ export default function ContentGen() {
   ];
 
   useEffect(() => {
+    const saved = localStorage.getItem('eduface_content_gen');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.text) setText(parsed.text);
+        if (parsed.mode) setMode(parsed.mode);
+        if (parsed.output) setOutput(parsed.output);
+      } catch (e) {}
+    }
     textareaRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (text || output) {
+      localStorage.setItem('eduface_content_gen', JSON.stringify({text, mode, output}));
+    }
+  }, [text, mode, output]);
 
   const generate = async (promptText, promptMode) => {
     setOutput("");
@@ -77,6 +92,13 @@ export default function ContentGen() {
     navigate("/");
   };
 
+  const handleClear = () => {
+    localStorage.removeItem('eduface_content_gen');
+    setText("");
+    setOutput("");
+    setMode("Quick Response");
+  };
+
   const handleGeneratePPT = () => {
     if (output.trim()) {
       navigate("/ppt-generator", { state: { generatedContent: output } });
@@ -92,6 +114,10 @@ export default function ContentGen() {
         <button className="cge-back-button" onClick={goHome}>
           <FiArrowLeft size={18} />
           Back to Home
+        </button>
+        <button className="cge-back-button" style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} onClick={handleClear}>
+          <FiTrash2 size={18} />
+          Clear Content
         </button>
       </div>
 

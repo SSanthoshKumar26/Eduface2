@@ -34,8 +34,8 @@ function Navbar() {
     const navItems = [
         { label: 'Home', path: '/' },
         { label: 'Content Generator', path: '/content-gen' },
-        { label: 'Video Generator', path: '/video-gen' },
         { label: 'PPT Generator', path: '/ppt-generator' },
+        { label: 'Video Generator', path: '/video-gen' },
     ];
 
     return (

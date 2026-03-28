@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   height: 70px;
-  z-index: 1000;
+  z-index: 5; /* reduced to ensure scrollbars stay above fixed navbar */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -839,7 +839,7 @@
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.9) 100%) !important;
   border: 1px solid rgba(248, 113, 113, 0.3) !important;
   color: #FFFFFF !important;
-  boxShadow: 0 8px 32px rgba(248, 113, 113, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(248, 113, 113, 0.2) !important;
 }
 
 .Toastify__toast--error .Toastify__progress-bar {
