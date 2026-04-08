@@ -108,6 +108,47 @@ class TextProcessor:
         # Collapse multiple spaces
         return re.sub(r'\s+', ' ', text).strip()
 
+    def generate_summary(self, slides_data):
+        """Generates a brief 2-3 sentence summary of the lesson."""
+        import os
+        import requests
+        
+        OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        AI_MODEL = os.getenv("OLLAMA_MODEL", "tinyllama")
+        
+        # Extract all content
+        full_content = " ".join([str(s.get('content', '')) + " " + str(s.get('notes', '')) for s in slides_data])
+        if len(full_content) < 50:
+            full_content = " ".join([str(s.get('title', '')) for s in slides_data])
+            
+        prompt = f"""Summarize the following lesson content into exactly 2-3 engaging, professional sentences. 
+Do NOT use bullet points. Do NOT use introductory phrases like "This lesson is about". 
+Just provide the summary text directly. Ensure it ends with a period.
+
+Content: 
+{full_content[:2000]}
+"""
+        
+        try:
+            payload = {
+                "model": AI_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "temperature": 0.5
+            }
+            response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=60)
+            if response.status_code == 200:
+                summary = response.json().get('response', '').strip()
+                if summary:
+                    return summary.strip('"').strip("'")
+        except Exception as e:
+            print(f"Summary generation failed: {e}")
+            
+        # Fallback summary
+        topics = [s.get('title', '') for s in slides_data if s.get('title')]
+        topics_str = ", ".join(topics[:3])
+        return f"This comprehensive lesson covers {topics_str if topics_str else 'the uploaded presentation'}. Learn the essential concepts and practical applications through this professional AI-led presentation."
+
     def format_for_speech_per_slide(self, slides_data, slang_level='medium'):
         """
         Returns a list of narration strings — one per slide.

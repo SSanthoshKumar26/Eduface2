@@ -55,7 +55,7 @@ class PPTExtractor:
             if sys.platform == 'win32':
                 import win32com.client
                 import pythoncom
-                print("  📊 Using MS PowerPoint to export slides (100% fidelity)...")
+                print("  [PROCESS] Using MS PowerPoint to export slides (100% fidelity)...")
                 pythoncom.CoInitialize()
                 powerpoint = win32com.client.Dispatch("PowerPoint.Application")
                 presentation = powerpoint.Presentations.Open(abs_ppt, ReadOnly=True, WithWindow=False)
@@ -72,10 +72,10 @@ class PPTExtractor:
                 pythoncom.CoUninitialize()
                 
                 if image_paths:
-                    print(f"  ✅ Exported {len(image_paths)} slides perfectly via PowerPoint")
+                    print(f"  [SUCCESS] Exported {len(image_paths)} slides perfectly via PowerPoint")
                     return sorted(image_paths)
         except Exception as com_err:
-            print(f"  ⚠️ PowerPoint COM export failed: {com_err}")
+            print(f"  [WARNING] PowerPoint COM export failed: {com_err}")
 
         # ── Attempt 2: LibreOffice headless ─────────────────────────────
         try:
@@ -92,19 +92,19 @@ class PPTExtractor:
                     break
 
             if lo_exe:
-                print(f"  📊 Using LibreOffice to export slides...")
+                print(f"  [PROCESS] Using LibreOffice to export slides...")
                 # Convert all arguments to string to avoid complex type inference issues (PathLike recursion)
                 subprocess.run(
-                    [str(lo_exe), '--headless', '--Ponvert-to', 'png', '--outdir', str(abs_out), str(abs_ppt)],
+                    [str(lo_exe), '--headless', '--convert-to', 'png', '--outdir', str(abs_out), str(abs_ppt)],
                     capture_output=True, text=True, timeout=120
                 )
                 base = os.path.splitext(os.path.basename(abs_ppt))[0]
                 exported = sorted(glob.glob(os.path.join(abs_out, f"{base}*.png")))
                 if exported:
-                    print(f"  ✅ Exported {len(exported)} slides via LibreOffice")
+                    print(f"  [SUCCESS] Exported {len(exported)} slides via LibreOffice")
                     return exported
         except Exception as lo_err:
-            print(f"  ⚠️  LibreOffice export failed: {lo_err}")
+            print(f"  [WARNING] LibreOffice export failed: {lo_err}")
 
         # ── Attempt 3: PIL renderer (always works) ──────────────────────
         try:
@@ -118,35 +118,65 @@ class PPTExtractor:
             out_w   = int(slide_w * scale)
             out_h   = int(slide_h * scale)
 
-            print(f"  📊 Using PIL renderer for slides ({out_w}×{out_h})...")
+            print(f"  [PROCESS] Using PIL renderer for slides ({out_w}×{out_h})...")
             for i, slide in enumerate(prs.slides):
-                # Background colour
+                # 1. Background colour extraction (Hierarchical)
+                bg_color = (255, 255, 255) # default white
                 try:
-                    fill = slide.background.fill
-                    bg_color = (
-                        fill.fore_color.rgb.r,
-                        fill.fore_color.rgb.g,
-                        fill.fore_color.rgb.b,
-                    )
-                except Exception:
-                    bg_color = (255, 255, 255)
+                    # Check slide background
+                    if hasattr(slide, 'background') and hasattr(slide.background, 'fill') and slide.background.fill.type == 1:
+                        c = slide.background.fill.fore_color.rgb
+                        bg_color = (c[0], c[1], c[2]) if type(c) == tuple else (c.r, c.g, c.b)
+                    # Check layout background
+                    elif hasattr(slide.slide_layout, 'background') and hasattr(slide.slide_layout.background, 'fill') and slide.slide_layout.background.fill.type == 1:
+                        c = slide.slide_layout.background.fill.fore_color.rgb
+                        bg_color = (c[0], c[1], c[2]) if type(c) == tuple else (c.r, c.g, c.b)
+                    # Check master background
+                    elif hasattr(slide.slide_master, 'background') and hasattr(slide.slide_master.background, 'fill') and slide.slide_master.background.fill.type == 1:
+                        c = slide.slide_master.background.fill.fore_color.rgb
+                        bg_color = (c[0], c[1], c[2]) if type(c) == tuple else (c.r, c.g, c.b)
+                except Exception as e:
+                    pass
 
+                # If the theme has a dark background but python-pptx can't find it, it will be white.
                 img  = Image.new('RGB', (out_w, out_h), bg_color)
                 draw = ImageDraw.Draw(img)
+
+                # Determine if background is "dark" to auto-adjust text color if missing
+                brightness = (bg_color[0] * 299 + bg_color[1] * 587 + bg_color[2] * 114) / 1000
+                is_dark_bg = brightness < 128
+                default_text_color = (245, 245, 245) if is_dark_bg else (20, 20, 20)
 
                 for shape in slide.shapes:
                     if not hasattr(shape, "text") or not shape.text.strip():
                         continue
                     try:
-                        x = int(shape.left / emu_per_px * scale)
-                        y = int(shape.top  / emu_per_px * scale)
+                        x = int(shape.left / emu_per_px * scale) if shape.left else 50
+                        y = int(shape.top  / emu_per_px * scale) if shape.top else 50
                         font_size = max(14, int(20 * scale))
+                        
+                        try:
+                            # Try to extract font color from the first run
+                            text_color = default_text_color
+                            if hasattr(shape, "text_frame") and shape.text_frame.paragraphs:
+                                p = shape.text_frame.paragraphs[0]
+                                if p.runs and p.runs[0].font.color and p.runs[0].font.color.type == 1:
+                                    c = p.runs[0].font.color.rgb
+                                    text_color = (c[0], c[1], c[2]) if type(c) == tuple else (c.r, c.g, c.b)
+                        except Exception:
+                            text_color = default_text_color
+
                         try:
                             font = ImageFont.truetype("arial.ttf", font_size)
                         except Exception:
                             font = ImageFont.load_default()
-                        draw.text((x + 10, y + 10), shape.text.strip(),
-                                  fill=(20, 20, 20), font=font)
+                            
+                        # Basic text wrapping
+                        import textwrap
+                        wrapped_text = "\n".join(textwrap.wrap(shape.text.strip(), width=int(80 * (1.0/scale))))
+                        draw.text((x + 10, y + 10), wrapped_text,
+                                  fill=text_color, font=font)
+
                     except Exception:
                         pass
 
@@ -160,9 +190,9 @@ class PPTExtractor:
                 canvas.save(img_path, 'PNG')
                 image_paths.append(img_path)
 
-            print(f"  ✅ Exported {len(image_paths)} slides via PIL")
+            print(f"  [SUCCESS] Exported {len(image_paths)} slides via PIL")
             return image_paths
 
         except Exception as pil_err:
-            print(f"  ⚠️  PIL renderer failed: {pil_err}")
+            print(f"  [WARNING] PIL renderer failed: {pil_err}")
             return []

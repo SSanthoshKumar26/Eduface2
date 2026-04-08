@@ -29,11 +29,11 @@ class FaceProcessor:
             faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
             
             if len(faces) == 0:
-                print("⚠️  No face detected – proceeding anyway (optimistic mode)")
+                print("[WARNING] No face detected – proceeding anyway (optimistic mode)")
             elif len(faces) > 1:
-                print(f"⚠️  {len(faces)} faces detected – using the largest one")
+                print(f"[WARNING] {len(faces)} faces detected – using the largest one")
             else:
-                print("✅ Face detected successfully")
+                print("[SUCCESS] Face detected successfully")
             
             return True, "OK"
         except Exception as e:
@@ -46,20 +46,20 @@ class FaceProcessor:
             if is_video:
                 import shutil
                 output_path = output_path.rsplit('.', 1)[0] + '.mp4'
-                print(f"  🎥 Video detected. Passing through to Wav2Lip: {file_path}")
+                print(f"  [INFO] Video detected. Passing through to Wav2Lip: {file_path}")
                 shutil.copy2(file_path, output_path)
                 return output_path
 
             # 1. Background Removal
             try:
                 from rembg import remove
-                print("  🎨 Removing image background...")
+                print("  [PROCESS] Removing image background...")
                 with open(file_path, 'rb') as i:
                     bg_removed_bytes = remove(i.read())
                 import io
                 img = Image.open(io.BytesIO(bg_removed_bytes)).convert("RGBA")
             except Exception as bg_err:
-                print(f"  ⚠️ Background removal failed or rembg not installed: {bg_err}")
+                print(f"  [WARNING] Background removal failed or rembg not installed: {bg_err}")
                 img = Image.open(file_path).convert('RGBA')
             
             # 2. Prevent arbitrary square cropping

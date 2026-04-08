@@ -1,5 +1,23 @@
 import os
+import sys
 import io
+
+# Fix terminal encoding issues on Windows
+try:
+    if sys.stdout.encoding != 'utf-8':
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+except:
+    pass
+
+# Pre-configure ffmpeg path for pydub to avoid RuntimeWarning
+# We must do this before importing video_processor
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+ffmpeg_dir = os.path.join(backend_dir, 'Wav2Lip')
+if os.path.exists(os.path.join(ffmpeg_dir, 'ffmpeg.exe')):
+    if ffmpeg_dir not in os.environ["PATH"]:
+        os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ["PATH"]
 import re
 import requests
 import uuid
@@ -26,7 +44,7 @@ try:
     VIDEO_GENERATION_ENABLED = True
 except ImportError:
     VIDEO_GENERATION_ENABLED = False
-    print("⚠️  Video generation modules not found. Video features will be disabled.")
+    print("[WARNING] Video generation modules not found. Video features will be disabled.")
 
 load_dotenv()
 
@@ -70,9 +88,9 @@ video_pipeline = None
 if VIDEO_GENERATION_ENABLED:
     try:
         video_pipeline = VideoPipeline(output_dir=OUTPUT_DIR)
-        print("✅ Video generation pipeline initialized")
+        print("[SUCCESS] Video generation pipeline initialized")
     except Exception as e:
-        print(f"⚠️  Could not initialize video pipeline: {e}")
+        print(f"[WARNING] Could not initialize video pipeline: {e}")
         VIDEO_GENERATION_ENABLED = False
 
 # ============ MODE CONFIGURATIONS ============
@@ -305,33 +323,33 @@ def startup_diagnostics():
     ollama_ok, models = check_ollama_connection()
     
     if ollama_ok:
-        print(f"✅ Ollama is running ({OLLAMA_BASE_URL})")
+        print(f"[SUCCESS] Ollama is running ({OLLAMA_BASE_URL})")
         if models:
-            print(f"📦 Available models: {models}")
+            print(f"[*] Available models: {models}")
             if AI_MODEL in models:
-                print(f"✅ {AI_MODEL} model found!")
+                print(f"[SUCCESS] {AI_MODEL} model found!")
             else:
-                print(f"⚠️  {AI_MODEL} not found. Run: ollama pull {AI_MODEL}")
+                print(f"[WARNING] {AI_MODEL} not found. Run: ollama pull {AI_MODEL}")
         else:
-            print(f"⚠️  No models found. Run: ollama pull {AI_MODEL}")
+            print(f"[WARNING] No models found. Run: ollama pull {AI_MODEL}")
     else:
-        print(f"❌ Ollama not running at {OLLAMA_BASE_URL}")
+        print(f"[ERROR] Ollama not running at {OLLAMA_BASE_URL}")
         print("   Start with: ollama serve")
     
-    print("\n📸 Image API Status:")
-    print(f"  {'✅' if UNSPLASH_API_KEY else '❌'} Unsplash API")
-    print(f"  {'✅' if PEXELS_API_KEY else '❌'} Pexels API")
-    print(f"  {'✅' if PIXABAY_API_KEY else '❌'} Pixabay API")
+    print("\n[STATUS] Image API Status:")
+    print(f"  {'[OK]' if UNSPLASH_API_KEY else '[MISSING]'} Unsplash API")
+    print(f"  {'[OK]' if PEXELS_API_KEY else '[MISSING]'} Pexels API")
+    print(f"  {'[OK]' if PIXABAY_API_KEY else '[MISSING]'} Pixabay API")
     
-    print("\n🎥 Video Generation Status:")
+    print("\n[STATUS] Video Generation Status:")
     if VIDEO_GENERATION_ENABLED:
-        print("  ✅ Video generation modules loaded")
-        print("  ✅ Video pipeline initialized")
+        print("  [SUCCESS] Video generation modules loaded")
+        print("  [SUCCESS] Video pipeline initialized")
     else:
-        print("  ❌ Video generation disabled (modules not found)")
+        print("  [MISSING] Video generation disabled (modules not found)")
     
-    print("\n✅ Server ready!")
-    print(f"✅ Running on: http://localhost:5000")
+    print("\n[SUCCESS] Server ready!")
+    print(f"[SUCCESS] Running on: http://localhost:5000")
     print("="*60 + "\n")
 
 startup_diagnostics()
@@ -386,7 +404,7 @@ def calculate_dynamic_font_sizes(slide_sections, mode, has_image):
 
 # ============ AI GENERATION ============
 def generate_with_ai(prompt: str, mode: str = "Creative", slide_count: int = 5) -> str:
-    """Generate content using local AI model via Ollama"""
+    """Generate content trying Groq first, then fallback to local AI model via Ollama"""
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Creative"])
     mode_instruction = mode_config.get("instructions", "")
     
@@ -410,7 +428,52 @@ CRITICAL INSTRUCTIONS:
 - Each ## section MUST be a separate slide
 - Focus on clear, structured markdown ONLY
 - Generate comprehensive content for ALL {slide_count} slides"""
+
+    # Try Groq API first
+    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if groq_api_key:
+        try:
+            print(f"🤖 Generating with Eduface AI Persona (Mode: {mode})...")
+            client = Groq(api_key=groq_api_key)
+            
+            system_prompt = """You are Eduface AI — an advanced conversational learning and content creation assistant.
+You operate as a REAL-TIME INTERACTIVE CHAT SYSTEM with a persistent working document.
+
+CORE MODES:
+1. CHAT MODE (conversation with user)
+2. DOCUMENT MODE (live structured content)
+
+Every response MUST have 2 parts:
+1. [CHAT] - A short, natural, conversational reply acknowledging the user (1-2 lines max).
+2. [DOCUMENT] - The full, updated, structured markdown content.
+
+RULES:
+- Maintain a persistent document. All updates modify the existing structure.
+- [DOCUMENT] SECTION MUST ONLY CONTAIN THE FINAL TOPIC CONTENT.
+- DO NOT include ANY conversational meta-talk in the [DOCUMENT] segment (e.g., Avoid: 'Here is your update...', 'Let me know if you need more...').
+- Put ALL conversational pleasantries, explanations, and follow-up questions exclusively in the [CHAT] segment.
+- If input is voice, the [CHAT] part should be warmer, but the [DOCUMENT] part must remain a clean, professional written asset.
+- Use structured markdown (Headings, Bullet points) in [DOCUMENT]."""
+
+            response = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Mode: {mode}\nUser Input: {prompt}"}
+                ],
+                model="llama-3.3-70b-versatile",
+                temperature=0.7,
+            )
+            
+            if response.choices and len(response.choices) > 0:
+                generated_text = response.choices[0].message.content.strip()
+                print(f"✅ Generation complete via Groq ({len(generated_text)} chars)\n")
+                return generated_text
+        except Exception as e:
+            print(f"[WARNING] Groq API failed: {str(e)}. Falling back to Ollama...")
+    else:
+        print("[INFO] No GROQ_API_KEY found. Falling back to Ollama...")
     
+    # Fallback to Ollama
     try:
         url = f"{OLLAMA_BASE_URL}/api/generate"
         payload = {
@@ -706,8 +769,12 @@ def generate_content():
     """Generate content using requested mode and model"""
     data = request.get_json()
     prompt = data.get("prompt", "")
+    context = data.get("context", "")
     mode = data.get("mode", "Creative")
-    slide_count = data.get("slide_count", 5) # New: accept slide count
+    slide_count = data.get("slide_count", 5)
+    
+    if context:
+        prompt = f"Existing document (for context):\n{context}\n\nUser's new request/update: {prompt}"
     
     if mode not in MODE_PROMPTS:
         mode = "Creative"
@@ -1182,6 +1249,7 @@ def generate_video():
                 "video_url": f"/api/download-video/{job_id}/final",
                 "script_url": f"/api/download-video/{job_id}/script",
                 "audio_url": f"/api/download-video/{job_id}/audio",
+                "summary_url": f"/api/download-video/{job_id}/summary",
                 "steps": result['steps'],
                 "job_id": job_id
             })
@@ -1212,7 +1280,7 @@ def download_video_file(job_id, file_type):
             return jsonify({"error": "Job not found"}), 404
         
         if file_type == 'final':
-            file_path = os.path.join(base_path, 'lipsync_video.mp4')
+            file_path = os.path.join(base_path, 'final_lesson.mp4')
             mimetype = 'video/mp4'
             download_name = f'{job_id}_video.mp4'
         elif file_type == 'script':
@@ -1266,6 +1334,10 @@ def download_video_file(job_id, file_type):
 
             mimetype = 'audio/wav'
             download_name = f'eduface_{job_id}_narration.wav'
+        elif file_type == 'summary':
+            file_path = os.path.join(base_path, 'summary.txt')
+            mimetype = 'text/plain'
+            download_name = f'{job_id}_summary.txt'
         else:
             return jsonify({"error": "Invalid file type"}), 400
         
@@ -1275,7 +1347,7 @@ def download_video_file(job_id, file_type):
         return send_file(
             file_path,
             mimetype=mimetype,
-            as_attachment=True,
+            as_attachment=(file_type != 'final'), # Video must stream inline, not download
             download_name=download_name
         )
     
@@ -1351,6 +1423,7 @@ def manage_quiz():
         num_questions = data.get('num_questions', 5)
         difficulty = data.get('difficulty', 'medium')
         user_answers = data.get('user_answers', {})
+        full_quiz = data.get('full_quiz', [])
         
         api_key = os.getenv("GROQ_API_KEY", "").strip()
         if not api_key:
@@ -1368,6 +1441,8 @@ def manage_quiz():
         - User's Provided Answers: {json.dumps(user_answers)}
 
         MODE: {'EVALUATION' if user_answers else 'GENERATION'}
+        QUIZ_POOL_SIZE: {len(full_quiz) if full_quiz else num_questions}
+        QUIZ_CONTENT: {json.dumps(full_quiz) if full_quiz else 'N/A'}
 
         TASK (GENERATION):
         If this is GENERATION mode, identify the core concepts from the Lesson Content.
@@ -1377,8 +1452,16 @@ def manage_quiz():
         Provide a meaningful 'explanation' for the correct answer.
 
         TASK (EVALUATION):
-        If this is EVALUATION mode, grade the 'User's Provided Answers'.
-        Calculate total, correct, and accuracy.
+        If this is EVALUATION mode, grade the 'User's Provided Answers' against the 'QUIZ_CONTENT' (if provided).
+        If 'QUIZ_CONTENT' is NOT provided, it's GENERATION mode.
+        CALCULATION RULE:
+        1. Correct: Number of answers in 'User's Provided Answers' that match correct_answer in 'QUIZ_CONTENT'.
+        2. Total: MUST be {len(full_quiz) if full_quiz else num_questions}.
+        3. Wrong: Total - Correct (EVERY question NOT in 'User's Provided Answers' is WRONG).
+        4. Accuracy: (Correct / Total) * 100.
+        Perform concept-wise analysis for ALL questions in the pool.
+        Identify specific Strengths and Weaknesses based on full completion.
+        Even if user only answers 1 question, total must be {len(full_quiz) if full_quiz else num_questions}.
         Perform concept-wise analysis: for each unique concept found in the quiz, calculate accuracy and level (Strong >= 80%, Moderate 50-79%, Weak < 50%).
         Identify specific Strengths and Weaknesses.
         Provide actionable, non-generic Improvement Suggestions.

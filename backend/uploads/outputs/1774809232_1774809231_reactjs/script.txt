@@ -1,0 +1,171 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+reactjs Introduction to Reactjs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:08] [SCENE START]
+TEXT: "
+Moving on to our next point...
+Let's break this down...
+
+
+Introduction to Reactjs What is Reactjs.......
+
+A JavaScript library for building user interfaces.......
+
+Used for developing reusable UI components.......
+
+Ideal for complex, interactive web applications.......
+
+Key Concepts.......
+
+Virtual DOM for efficient rendering.......
+
+Components can be functional or class-based.......
+
+State and props for managing component data
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 22s
+
+[00:39] I'll follow the guidelines to create a professional and natural-sounding spoken lecture audio.
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. DO NOT repeat the same opening phrases (like "Alright") frequently
+2. Use VARIED and PROFESSIONAL openings such as:
+   - "Hello everyone..."
+   - "Let’s begin with this concept..."
+   - "Now, let’s take a closer look..."
+   - "Let’s understand this carefully..."
+   - "Here’s something important..."
+
+3. DO NOT read the slide content directly
+4. You MUST explain in your own words
+5. You MUST expand beyond the slide
+6. Add at least ONE real-world example
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add example
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraph
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone, today we're going to explore a fundamental concept in computer science: ReactJS Components.
+
+This is important because it allows us to build reusable UI components that can be easily integrated into larger applications. Let's take a closer look at the different types of components available in ReactJS, including functional and class components.
+
+Functional components are simple, stateless components that don't have any side effects. They're perfect for creating reusable UI elements that can be used throughout an application. For example, we can create a counter component that displays the current count value.
+
+Class components, on the other hand, are complex, stateful components that manage their own state and behavior. They're perfect for building more sophisticated UI components with multiple features and interactions. For instance, we can use class components to implement a shopping cart system.
+
+Let's understand this carefully: when working with ReactJS Components, it's essential to keep track of the component's props, states, and side effects. This will help us build maintainable, efficient, and scalable codebases.
+
+This makes the concept much clearer when we see it in action. As an example, let's take a look at a simple CounterComponent that displays the current count value. We can create this component using functional components or class components.
+
+Imagine you're building a e-commerce website with a product catalog page. You need to display a list of products, each with its own unique features and pricing information. A ReactJS Component can help you achieve this by creating reusable UI elements that can be easily integrated into the application's layout.
+
+Think about it this way: when working with ReactJS Components, we must think about how our components will interact with each other and the larger application. This is crucial for building robust, maintainable codebases that scale to meet the needs of large-scale applications.
+
+This makes the concept much clearer...
+
+---
+
+Slide Content:
+Reactjs Components Component Types... Functional components for simple, stateless components... Class components for complex, stateful components... Higher-order components for code reuse and abstraction... Managing Component Data... State for storing component-specific data... Props for passing data from parent to child components... Context API for sharing data between components
+
+---
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "Hello everyone..."
+FACE: slight smile
+EYES: look straight at viewer
+HEAD: small nod
+HANDS: subtle gestures
+BODY: upright posture
+TIMING:
+- duration: 1s
+
+[00:41] [SCENE START]
+TEXT: "
+Let's look at another aspect of this...
+
+
+Reactjs Best Practices Development and Deployment.......
+
+Use a code bundler like Webpack or Rollup.......
+
+create a state management library like Redux or MobX.......
+
+Follow a consistent coding style and naming convention
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 14s

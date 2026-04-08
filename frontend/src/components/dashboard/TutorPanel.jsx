@@ -3,7 +3,7 @@ import { Send, Sparkles, Trash2, Share2, Mic, MicOff, AudioLines, MessageSquare,
 import ReactMarkdown from 'react-markdown';
 import ShareModal from './ShareModal';
 
-const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, onClearChat }) => {
+const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, onClearChat, facePreview }) => {
   const chatEndRef = useRef(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -105,10 +105,15 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
   return (
     <div className="ld-tutor-panel">
       <div className="ld-tutor-header">
-        <div className="ld-tutor-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={14} className="ld-mini-sparkle" />
-          <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 600 }}>Eduface AI</h3>
-          <span className="ld-tutor-status" style={{ margin: 0, fontSize: '0.65rem' }}>STUDIO CONNECTED</span>
+        <div className="ld-tutor-title-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="ld-pro-badge">
+            <Sparkles size={14} />
+          </div>
+          <h3 className="ld-brand-title">EDUFACE AI</h3>
+          <div className="ld-session-indicator">
+            <div className="ld-status-dot"></div>
+            <span>LIVE SESSION</span>
+          </div>
         </div>
         <div className="ld-tutor-header-actions">
           <button className="ld-header-btn" title="Share Chat securely" onClick={handleShareChat}>
@@ -127,7 +132,14 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
             className={`ld-chat-wrapper ${msg.role === 'user' ? 'user' : 'assistant'}`}
           >
             {msg.role === 'assistant' && (
-              <span className="ld-chat-role">Eduface AI</span>
+              <div className="ld-chat-identity">
+                <div className="ld-ai-core-avatar">
+                  <div className="ld-ai-core-pulse"></div>
+                  <Sparkles size={12} />
+                </div>
+                <span className="ld-chat-role">EDUFACE AI</span>
+                <span className="ld-chat-verified-badge">SYSTEM</span>
+              </div>
             )}
             <div className="ld-chat-bubble">
               <div className="ld-chat-text">
@@ -138,7 +150,14 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
         ))}
         {isTyping && (
           <div className="ld-chat-wrapper assistant">
-            <span className="ld-chat-role">Eduface AI</span>
+            <div className="ld-chat-identity">
+              <div className="ld-ai-core-avatar">
+                <div className="ld-ai-core-pulse"></div>
+                <Sparkles size={12} />
+              </div>
+              <span className="ld-chat-role">EDUFACE AI</span>
+              <span className="ld-chat-verified-badge">SYSTEM</span>
+            </div>
             <div className="ld-typing-indicator">
               <span></span>
               <span></span>

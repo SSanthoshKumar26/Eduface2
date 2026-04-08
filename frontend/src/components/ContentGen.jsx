@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FiSend, FiMic, FiPlus, FiLoader, FiArrowLeft, FiBook, FiTrash2 } from "react-icons/fi";
+import { Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ContentGen.css";
 
@@ -10,11 +11,24 @@ export default function ContentGen() {
   const [text, setText] = useState("");
   const [mode, setMode] = useState("Quick Response");
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [output, setOutput] = useState("");
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Hello! I'm your Eduface AI tutor. What would you like to build or learn about today?" }
+  ]);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
+  const chatEndRef = useRef(null);
   const navigate = useNavigate();
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const modes = [
     { key: "Quick Response", label: "⚡ Quick Response", desc: "Fast and concise" },
@@ -27,19 +41,17 @@ export default function ContentGen() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.text) setText(parsed.text);
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.output) setOutput(parsed.output);
+        if (parsed.messages) setMessages(parsed.messages);
       } catch (e) {}
     }
     textareaRef.current?.focus();
   }, []);
 
   useEffect(() => {
-    if (text || output) {
-      localStorage.setItem('eduface_content_gen', JSON.stringify({text, mode, output}));
-    }
-  }, [text, mode, output]);
+    localStorage.setItem('eduface_content_gen', JSON.stringify({ mode, output, messages }));
+  }, [mode, output, messages]);
 
   const generate = async (promptText, promptMode) => {
     setOutput("");
@@ -48,7 +60,11 @@ export default function ContentGen() {
       const res = await fetch("http://localhost:5000/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText, mode: promptMode })
+        body: JSON.stringify({ 
+          prompt: promptText, 
+          mode: promptMode,
+          context: output 
+        })
       });
       const raw = await res.text();
       if (!raw) throw new Error("Empty response");
@@ -58,9 +74,24 @@ export default function ContentGen() {
       } catch {
         throw new Error(raw);
       }
-      setOutput(data.output || "[No output]");
+      
+      const resText = data.output || "[No output]";
+      if (resText.includes("[CHAT]") && resText.includes("[DOCUMENT]")) {
+        const parts = resText.split("[DOCUMENT]");
+        const chatContent = parts[0].replace("[CHAT]", "").trim();
+        const docContent = parts[1].trim();
+        setMessages(prev => [...prev, { role: "assistant", text: chatContent }]);
+        setOutput(docContent);
+      } else {
+        if (resText.startsWith("[Error]")) {
+          setMessages(prev => [...prev, { role: "assistant", text: `⚠️ ${resText.replace("[Error]: ", "")}` }]);
+        } else {
+          setMessages(prev => [...prev, { role: "assistant", text: "I've updated the document for you." }]);
+          setOutput(resText);
+        }
+      }
     } catch (err) {
-      setOutput(`**Error:** ${err.message}\n\nPlease try again or check your connection.`);
+      setMessages(prev => [...prev, { role: "assistant", text: `⚠️ Error: ${err.message}` }]);
     } finally {
       setLoading(false);
     }
@@ -69,9 +100,47 @@ export default function ContentGen() {
   const sendText = () => {
     const prompt = text.trim();
     if (!prompt) return;
+    setMessages(prev => [...prev, { role: "user", text: prompt }]);
     setIsTyping(true);
-    generate(prompt, mode).finally(() => setIsTyping(false));
     setText("");
+    generate(prompt, mode).finally(() => setIsTyping(false));
+  };
+
+  const startListening = () => {
+    if (isListening) return; // Prevent multiple starts
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support the Web Speech API");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      setText(prev => prev ? prev + ' ' + speechResult : speechResult);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -123,70 +192,61 @@ export default function ContentGen() {
 
       {/* Main Grid Layout */}
       <div className="cge-main-wrapper">
-        {/* LEFT - EDITOR */}
-        <div className="cge-editor">
-          <div className="cge-editor-title">
-            <FiBook size={24} style={{ color: "var(--cyan-primary)" }} />
-            Create Your Content
+        {/* LEFT - CHAT CONVERSATION */}
+        <div className="cge-chat-section">
+          <div className="cge-chat-window">
+            <div className="cge-messages-container">
+              {messages.map((msg, index) => (
+                <div key={index} className={`cge-msg-row ${msg.role === 'user' ? 'user' : 'assistant'}`}>
+                  {msg.role === 'assistant' && <div className="cge-msg-avatar"><Bot size={20} color="white" /></div>}
+                  <div className="cge-msg-bubble">
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="cge-msg-row assistant">
+                  <div className="cge-msg-avatar"><Bot size={20} color="white" /></div>
+                  <div className="cge-msg-bubble is-typing">
+                    <span className="dot">.</span><span className="dot">.</span><span className="dot">.</span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
           </div>
 
-          <textarea
-            ref={textareaRef}
-            className="cge-textarea"
-            value={text}
-            placeholder="Enter your topic, title, or description here...&#10;Tip: Be specific for better results!"
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-
-          <div className="cge-controls">
-            <div className="cge-mode-section">
-              <label className="cge-mode-label">Content Style</label>
-              <div className="cge-dropdown">
-                <button className="cge-dd-toggle" onClick={toggleDropdown}>
-                  <span>{modes.find((m) => m.key === mode).label}</span>
-                  <span style={{ fontSize: "1.2rem" }}>▼</span>
-                </button>
-                {dropdownOpen && (
-                  <ul className="cge-dd-menu">
-                    {modes.map(({ key, label }) => (
-                      <li
-                        key={key}
-                        className="cge-dd-item"
-                        onClick={() => selectMode(key)}
-                      >
-                        {label}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+          <div className="cge-chat-input-area">
+            <div className="cge-input-wrapper">
+              <textarea
+                ref={textareaRef}
+                className="cge-chat-textarea"
+                value={text}
+                placeholder="Ask anything..."
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+              />
+              <button 
+                className={`cge-chat-icon-btn mic-btn ${isListening ? 'active' : ''}`} 
+                onClick={startListening}
+                title={isListening ? "Listening..." : "Dictate message"}
+              >
+                <FiMic />
+              </button>
+              <button
+                className={`cge-chat-icon-btn send-btn ${text.trim() && !loading ? 'active' : ''}`}
+                onClick={sendText}
+                disabled={!text.trim() || loading}
+              >
+                <FiSend />
+              </button>
             </div>
-
-            <div className="cge-actions">
-              {isTyping ? (
-                <div className="cge-loading-state">
-                  <FiLoader className="cge-spinner" />
-                  Generating...
-                </div>
-              ) : (
-                <>
-                  <button className="cge-icon-btn" disabled title="Add attachment (Coming soon)">
-                    <FiPlus />
-                  </button>
-                  <button className="cge-icon-btn" disabled title="Voice input (Coming soon)">
-                    <FiMic />
-                  </button>
-                  <button
-                    className="cge-submit-btn"
-                    onClick={sendText}
-                    disabled={!text.trim() || loading}
-                  >
-                    <FiSend />
-                    Generate
-                  </button>
-                </>
-              )}
+            
+            <div className="cge-chat-extras">
+              <div className="cge-mode-pill">
+                Mode: <strong>{modes.find((m) => m.key === mode).label}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -195,18 +255,19 @@ export default function ContentGen() {
         <div className="cge-output-section">
           <div className="cge-output-card">
             <div className="cge-output">
-              {loading ? (
+              {loading && !output && (
                 <div className="cge-output-loading">
                   <div className="cge-output-loading-icon">⚙️</div>
-                  <div className="cge-output-loading-text">Generating your content...</div>
+                  <div className="cge-output-loading-text">Building document...</div>
                 </div>
-              ) : output ? (
+              )}
+              {output ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
               ) : (
                 <div className="cge-placeholder">
-                  <div className="cge-placeholder-icon">✨</div>
-                  <div>Your generated content will appear here</div>
-                  <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>Fill in the topic and click Generate!</div>
+                  <div className="cge-placeholder-icon">📄</div>
+                  <div>Your Live Document</div>
+                  <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>Ask me anything on the left to start building!</div>
                 </div>
               )}
             </div>

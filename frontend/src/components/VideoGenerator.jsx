@@ -53,6 +53,7 @@ const VideoGenerator = () => {
   const [videoUrl, setVideoUrl] = useState(null);
   const [scriptUrl, setScriptUrl] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [summaryUrl, setSummaryUrl] = useState(null);
   const [jobId, setJobId] = useState(null);
 
   useEffect(() => {
@@ -63,7 +64,9 @@ const VideoGenerator = () => {
         setVideoUrl(session.videoUrl);
         setScriptUrl(session.scriptUrl);
         setAudioUrl(session.audioUrl);
+        setSummaryUrl(session.summaryUrl);
         setJobId(session.jobId);
+        setFacePreview(session.facePreview);
       } catch (e) {
         localStorage.removeItem('eduface_video_session');
       }
@@ -116,9 +119,7 @@ const VideoGenerator = () => {
 
   const resetForm = () => {
     localStorage.removeItem('eduface_video_session');
-    localStorage.removeItem('eduface_content_gen');
-    localStorage.removeItem('eduface_ppt_gen');
-    setVideoUrl(null); setScriptUrl(null); setAudioUrl(null); setJobId(null);
+    setVideoUrl(null); setScriptUrl(null); setAudioUrl(null); setSummaryUrl(null); setJobId(null);
     setPptFile(null); setServerPptPath(null); setFaceImage(null); setFacePreview(null);
     setError(null); setSuccess(null);
   };
@@ -154,13 +155,16 @@ const VideoGenerator = () => {
       setVideoUrl(`${baseUrl}${data.video_url}`);
       setScriptUrl(`${baseUrl}${data.script_url}`);
       setAudioUrl(`${baseUrl}${data.audio_url}`);
+      setSummaryUrl(`${baseUrl}${data.summary_url}`);
       setJobId(data.job_id);
 
       localStorage.setItem('eduface_video_session', JSON.stringify({
         videoUrl: `${baseUrl}${data.video_url}`,
         scriptUrl: `${baseUrl}${data.script_url}`,
         audioUrl: `${baseUrl}${data.audio_url}`,
-        jobId: data.job_id
+        summaryUrl: `${baseUrl}${data.summary_url}`,
+        jobId: data.job_id,
+        facePreview: facePreview
       }));
 
     } catch (err) {
@@ -175,7 +179,15 @@ const VideoGenerator = () => {
   return (
     <div className="vg-root-container">
       {videoUrl ? (
-        <LearningDashboard videoUrl={videoUrl} scriptUrl={scriptUrl} audioUrl={audioUrl} jobId={jobId} resetForm={resetForm} />
+        <LearningDashboard 
+          videoUrl={videoUrl} 
+          scriptUrl={scriptUrl} 
+          audioUrl={audioUrl} 
+          summaryUrl={summaryUrl}
+          jobId={jobId} 
+          facePreview={facePreview}
+          resetForm={resetForm} 
+        />
       ) : (
         <div className="container">
           <header className="vg-header">
@@ -235,7 +247,17 @@ const VideoGenerator = () => {
                 <div className="vg-form-group">
                   <label className="vg-label">Avatar Face Image <span className="vg-required">*</span></label>
                   <input type="file" className="vg-cyber-input" accept="image/*" onChange={handleFaceChange} />
-                  {facePreview && <div className="mt-2"><img src={facePreview} alt="Preview" style={{width: 80, borderRadius: '50%'}} /></div>}
+                  {facePreview && (
+                    <div className="vg-avatar-container">
+                      <div className="vg-avatar-preview-wrapper">
+                        <img src={facePreview} alt="Avatar Preview" className="vg-avatar-preview" />
+                        <div className="vg-avatar-badge">
+                          <CheckCircle2 size={12} />
+                        </div>
+                      </div>
+                      <span className="vg-avatar-label">Ready for Synthesis</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -245,7 +267,15 @@ const VideoGenerator = () => {
               <div className="vg-card-body">
                 <div className="vg-form-group">
                   <label className="vg-label">AI Voice Persona</label>
-                  <select className="vg-cyber-input" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)}>
+                  <select className="vg-cyber-input" value={selectedVoice} onChange={(e) => {
+                    const vid = e.target.value;
+                    setSelectedVoice(vid);
+                    // Sync backend engine preference based on voice prefix
+                    if (vid.startsWith('edge_')) setTtsEngine('edge');
+                    else if (vid.startsWith('elevenlabs_')) setTtsEngine('elevenlabs');
+                    else if (vid.startsWith('gtts_')) setTtsEngine('gtts');
+                    else if (vid.startsWith('pyttsx3_')) setTtsEngine('pyttsx3');
+                  }}>
                     {voices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </select>
                 </div>

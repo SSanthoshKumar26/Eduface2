@@ -1,0 +1,8 @@
+﻿Testing extraction for: uploads/ppts/1774803378_nextjs.pptx
+  [PROCESS] Using MS PowerPoint to export slides (100% fidelity)...
+  [SUCCESS] Exported 4 slides perfectly via PowerPoint
+Output images: 4
+E:\eduf\eduf\backend\uploads\outputs\test_slides\slide_000.png
+E:\eduf\eduf\backend\uploads\outputs\test_slides\slide_001.png
+E:\eduf\eduf\backend\uploads\outputs\test_slides\slide_002.png
+E:\eduf\eduf\backend\uploads\outputs\test_slides\slide_003.png

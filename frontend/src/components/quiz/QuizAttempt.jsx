@@ -52,7 +52,8 @@ const QuizAttempt = () => {
         lesson_content: lessonContent,
         num_questions: numQuestions,
         difficulty: difficulty,
-        user_answers: currentAnswers
+        user_answers: currentAnswers,
+        full_quiz: quiz
       });
       
       if (response.data.success) {

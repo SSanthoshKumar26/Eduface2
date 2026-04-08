@@ -71,7 +71,7 @@ export default function Logo({ size = "md" }) {
           opacity="0.6"
         />
       </svg>
-      <span className="logo-text">EduFace</span>
+      <span className="logo-text">EDUFACE AI</span>
     </div>
   );
 }

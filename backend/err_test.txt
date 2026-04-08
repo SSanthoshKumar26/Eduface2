@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "E:\eduf\eduf\backend\test_export.py", line 12, in <module>
+    final_vi.write_videofile(os.path.join(job_dir, "test_out_2.mp4"), fps=24, logger=None)
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\decorator.py", line 235, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\decorators.py", line 54, in requires_duration
+    return f(clip, *a, **k)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\decorator.py", line 235, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\decorators.py", line 135, in use_clip_fps_by_default
+    return f(clip, *new_a, **new_kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\decorator.py", line 235, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\decorators.py", line 22, in convert_masks_to_RGB
+    return f(clip, *a, **k)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\video\VideoClip.py", line 300, in write_videofile
+    ffmpeg_write_video(self, filename, fps, codec,
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\video\io\ffmpeg_writer.py", line 213, in ffmpeg_write_video
+    with FFMPEG_VideoWriter(filename, clip.size, fps, codec = codec,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ssanj\AppData\Local\Programs\Python\Python312\Lib\site-packages\moviepy\video\io\ffmpeg_writer.py", line 88, in __init__
+    '-r', '%.02f' % fps,
+          ~~~~~~~~^~~~~
+TypeError: must be real number, not NoneType

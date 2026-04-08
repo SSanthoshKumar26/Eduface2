@@ -42,11 +42,9 @@ const PPTGenerator = () => {
   }, [location.state]);
 
   useEffect(() => {
-    if (generatedContent) {
-      localStorage.setItem('eduface_ppt_gen', JSON.stringify({
-        generatedContent, fileName, generatedPpt, status
-      }));
-    }
+    localStorage.setItem('eduface_ppt_gen', JSON.stringify({
+      generatedContent, fileName, generatedPpt, status
+    }));
   }, [generatedContent, fileName, generatedPpt, status]);
 
   useEffect(() => {

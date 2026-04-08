@@ -4,11 +4,17 @@ import os
 class VideoAssembler:
     def __init__(self):
         pass
+
+    def _ensure_fps(self, clip, default=24):
+        if getattr(clip, 'fps', None) is None or clip.fps == 0:
+            return clip.set_fps(default)
+        return clip
     
     def add_background(self, video_path, output_path, bg_color=(245, 245, 245)):
         """Add a background color to video"""
         try:
             video = VideoFileClip(video_path)
+            video = self._ensure_fps(video, 25)
             
             # Create colored background
             bg = ColorClip(
@@ -16,9 +22,12 @@ class VideoAssembler:
                 color=bg_color,
                 duration=video.duration
             )
+            bg = self._ensure_fps(bg, 25)
             
             # Composite
-            final = CompositeVideoClip([bg, video])
+            final = CompositeVideoClip([bg, video]).set_fps(25)
+            final = self._ensure_fps(final, 25)
+            final.fps = getattr(final, 'fps', 25) or 25
             
             # Write output
             final.write_videofile(
@@ -43,6 +52,7 @@ class VideoAssembler:
         """Add a text watermark to video"""
         try:
             video = VideoFileClip(video_path)
+            video = self._ensure_fps(video, 25)
             
             # Create text clip
             txt_clip = TextClip(
@@ -53,9 +63,12 @@ class VideoAssembler:
                 stroke_color='black',
                 stroke_width=1
             ).set_position(('right', 'bottom')).set_duration(video.duration)
+            txt_clip = self._ensure_fps(txt_clip, 25)
             
             # Composite
-            final = CompositeVideoClip([video, txt_clip])
+            final = CompositeVideoClip([video, txt_clip]).set_fps(25)
+            final = self._ensure_fps(final, 25)
+            final.fps = getattr(final, 'fps', 25) or 25
             
             # Write output
             final.write_videofile(

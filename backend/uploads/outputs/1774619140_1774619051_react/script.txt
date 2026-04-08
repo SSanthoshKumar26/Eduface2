@@ -1,0 +1,31 @@
+[00:00] [SCENE START]
+TEXT: "react ChildComponent name "John""
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:02] [SCENE START]
+TEXT: "Overview ReactJS Overview What is ReactJS? A JavaScript library for building user interfaces Developed by Facebook and open-sourced in 2013 First released as a open-source project in October 2013 Key Features of ReactJS Single-page application SPA architecture Component-based approach to coding Virtual DOM for efficient rendering State management with React Context API Components and Props Composition vs Constraction Composition: breaking down complex components into smaller ones Example: using React's div as a container and input as its child Props Short for "properties" Passing data from parent to child component ChildComponent name "John" State Management Context API Global storage for state javascript const count, setCount useState 0 ; function increment setCount count plus 1 ; Example: using React Context API to manage application state ChildComponent count button onClick increment plus button ChildComponent"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 61s

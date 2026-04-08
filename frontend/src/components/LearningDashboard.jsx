@@ -9,17 +9,21 @@ import '../styles/LearningDashboard.css';
 
 const API_BASE_URL = 'http://localhost:5000';
 
-const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) => {
+const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, facePreview, resetForm }) => {
   const navigate = useNavigate();
   const [lessonContext, setLessonContext] = useState('');
+  const [lessonSummary, setLessonSummary] = useState('');
   const [currentCaption, setCurrentCaption] = useState('');
   const [showCaptions, setShowCaptions] = useState(true);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm Eduface AI. Ask me anything about this premium lesson." }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('eduface_chat_messages');
+    return saved ? JSON.parse(saved) : [
+      { role: 'assistant', content: "Hi! I'm Eduface AI. Ask me anything about this premium lesson." }
+    ];
+  });
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -32,7 +36,9 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
   const videoWrapperRef = useRef(null);
   
   const handleClearChat = () => {
-    setMessages([{ role: 'assistant', content: "Hi! I'm Eduface AI. Chat cleared! Let's start over." }]);
+    const defaultMsg = [{ role: 'assistant', content: "Hi! I'm Eduface AI. Chat cleared! Let's start over." }];
+    setMessages(defaultMsg);
+    localStorage.setItem('eduface_chat_messages', JSON.stringify(defaultMsg));
   };
   
   // Format time in MM:SS
@@ -102,62 +108,78 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
 
   const getCleanDescription = (rawText) => {
     if (!rawText) return "Analyzing lesson context...";
+    if (lessonSummary) return lessonSummary;
     
-    let clean = rawText
-      .replace(/\[.*?\]/g, '') // Remove all bracketed [SCENE START], [00:00]
-      .replace(/[A-Z]+:\s*("([^"]*)")?/g, (match, p1, p2) => p2 ? p2 + ' ' : '') // Clean TEXT: "..." or EYES: ...
+    // Extract only narrative text from the script format
+    const textMatches = [...rawText.matchAll(/TEXT:\s*"([^"]+)"/g)];
+    let combinedText = textMatches.length > 0 ? textMatches.map(m => m[1]).join(' ') : rawText;
+    
+    let clean = combinedText
+      .replace(/\[.*?\]/g, '') // Remove [SCENE START]
+      .replace(/[A-Z]+:\s*.*/g, '') // Remove KEY: value tags
+      .replace(/^\s*-.*$/gm, '') // Remove bullet direction lines (- smile)
+      .replace(/\.{3,}/g, ' ') // Remove pauses (...)
       .replace(/\s+/g, ' ')
       .trim();
       
-    // Find the actual start of the lesson meaning (skipping repeated title intro words)
-    const matchStart = clean.search(/(What is|How to|Why do|In this lesson|\b[A-Z][A-Za-z]+ is a\b|\b[A-Z][A-Za-z]+ is an\b)/i);
-    if (matchStart !== -1 && matchStart < 150) {
-      clean = clean.substring(matchStart);
-    } else {
-      // If none found, aggressively strip the first few repeated title words
-      const words = clean.split(' ');
-      if (words.length > 10) {
-        clean = words.slice(Math.min(words.length - 1, 6)).join(' '); 
-      }
-    }
+    // Remove tutorial/meta phrases
+    const metaPhrases = [
+      /Hello everyone/i, /Welcome to (this|our) (presentation|lesson)/i,
+      /Moving on to our next point/i, /Let's break this down/i,
+      /Focus on this part/i, /Today we will be discussing/i
+    ];
     
-    clean = clean.replace(/^(Hello everyone.*?today we will|Welcome to this lesson|Let's dive into|Moving on to)/i, '');
-    clean = clean.trim();
+    metaPhrases.forEach(p => { clean = clean.replace(p, ''); });
+    clean = clean.replace(/^\W+/, '').trim();
+    
     if (clean.length > 0) {
        clean = clean.charAt(0).toUpperCase() + clean.slice(1);
     }
     
-    if (clean.length > 220) {
-      clean = clean.substring(0, 220).trim();
-      const lastSentenceEnd = Math.max(clean.lastIndexOf('. '), clean.lastIndexOf('? '));
-      if (lastSentenceEnd > 100) {
-        clean = clean.substring(0, lastSentenceEnd + 1);
+    // Truncate to a clean sentence ending
+    const maxLength = 220;
+    if (clean.length > maxLength) {
+      clean = clean.substring(0, maxLength);
+      const lastSent = Math.max(clean.lastIndexOf('.'), clean.lastIndexOf('?'), clean.lastIndexOf('!'));
+      if (lastSent > 80) {
+        clean = clean.substring(0, lastSent + 1);
       } else {
-        clean += '...';
+        clean = clean.replace(/\s+\w+$/, '') + ".";
       }
+    } else if (clean.length > 5 && !/[.!?]$/.test(clean)) {
+      clean += ".";
     }
     
-    return clean || "Welcome to this premium lesson. Watch the video to get started.";
+    return clean || "Welcome to this premium lesson. Watch the synchronized AI presentation to explore the key concepts and practical applications.";
   };
 
   useEffect(() => {
     if (scriptUrl) {
       fetch(scriptUrl).then(res => res.text()).then(text => setLessonContext(text));
     }
-  }, [scriptUrl]);
+    if (summaryUrl) {
+      fetch(summaryUrl).then(res => res.text()).then(text => setLessonSummary(text));
+    }
+  }, [scriptUrl, summaryUrl]);
 
   const handleSendMessage = async (text = null) => {
     const userInput = text || chatInput;
     if (!userInput.trim()) return;
     const newMessages = [...messages, { role: 'user', content: userInput }];
-    setMessages(newMessages); setChatInput(''); setIsTyping(true);
+    setMessages(newMessages); 
+    localStorage.setItem('eduface_chat_messages', JSON.stringify(newMessages));
+    setChatInput(''); setIsTyping(true);
     try {
       const resp = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [{ role: 'system', content: `Context: ${lessonContext}` }, ...newMessages] })
       });
       const data = await resp.json();
-      if (data.success) setMessages([...newMessages, { role: 'assistant', content: data.message.content }]);
+      if (data.success) {
+        const updatedMessages = [...newMessages, { role: 'assistant', content: data.message.content }];
+        setMessages(updatedMessages);
+        localStorage.setItem('eduface_chat_messages', JSON.stringify(updatedMessages));
+      }
     } catch (e) { console.error(e); } finally { setIsTyping(false); }
   };
 
@@ -256,7 +278,7 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
           <div className="ld-overview-premium">
             <h3><Lightbulb size={18} /> Lesson Overview</h3>
             <div className="ld-lesson-content">
-               <p>{getCleanDescription(lessonContext)}</p>
+               <p>{lessonSummary || getCleanDescription(lessonContext)}</p>
             </div>
           </div>
         </div>
@@ -267,6 +289,7 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, jobId, resetForm }) 
               messages={messages} input={chatInput} setInput={setChatInput}
               onSendMessage={handleSendMessage} isTyping={isTyping} 
               formatText={(t) => t} onClearChat={handleClearChat}
+              facePreview={facePreview}
             />
           </div>
         </div>
