@@ -1,1 +1,0 @@
-Reactjs is a JavaScript library that enables the development of reusable UI components for building complex, interactive web applications. Components can be either functional or class-based and use state and props to manage their data. The React ecosystem also provides features such as Virtual DOM for efficient rendering and higher-order components for code reuse and abstraction.
