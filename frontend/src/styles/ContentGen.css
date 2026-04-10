@@ -442,7 +442,60 @@
 .cge-output-section {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.25rem;
+}
+
+.cge-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+.cge-output-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.cge-output-title .title-icon {
+  color: var(--cyan-primary);
+}
+
+.cge-toggle-group {
+  display: flex;
+  background: var(--bg-light);
+  padding: 0.4rem;
+  border-radius: 14px;
+  gap: 0.25rem;
+  border: 2px solid var(--border-light);
+}
+
+.cge-toggle-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-gray);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: var(--font-heading);
+}
+
+.cge-toggle-btn:hover {
+  color: var(--cyan-primary);
+}
+
+.cge-toggle-btn.active {
+  background: var(--bg-white);
+  color: var(--cyan-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .cge-output-card {
@@ -481,6 +534,28 @@
   color: var(--text-dark);
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cge-edit-area {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  resize: none;
+  font-weight: 500;
+}
+
+.markdown-render-area {
+  padding: 0 0.5rem;
 }
 
 .cge-output::-webkit-scrollbar {

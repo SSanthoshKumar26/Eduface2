@@ -161,7 +161,7 @@ const QuizResult = () => {
             <RefreshCcw size={18} /> Retake Quiz
           </button>
           <button className="qd-nav-btn" onClick={() => navigate('/quiz/detailed-review', { state: { detailedReviews, evaluation } })}>
-            <BookOpen size={18} /> Deep Concept Review
+            <BookOpen size={18} /> Static detailed Review
           </button>
         </div>
         

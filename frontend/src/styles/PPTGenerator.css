@@ -137,6 +137,37 @@
 /* ============================================
    MAIN CONTENT GRID
    ============================================ */
+.ppt-view-btn {
+  flex: 1;
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(129, 140, 248, 0.2) 100%);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 1rem;
+}
+
+.ppt-view-btn:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
+}
+
+.ppt-actions-wrapper {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
 .ppt-main-content {
   flex: 1;
 }
@@ -227,7 +258,88 @@
 .ppt-left-panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
+}
+
+.ppt-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+.ppt-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.ppt-header-title .title-icon {
+  color: var(--cyan-primary);
+}
+
+.ppt-toggle-group {
+  display: flex;
+  background: var(--bg-light);
+  padding: 0.4rem;
+  border-radius: 14px;
+  gap: 0.25rem;
+  border: 2px solid var(--border-light);
+}
+
+.ppt-present-btn-mini {
+  padding: 0.5rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ppt-present-btn-mini:hover:not(:disabled) {
+  background: #38bdf8;
+  color: white;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+  transform: translateY(-2px);
+}
+
+.ppt-present-btn-mini:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ppt-toggle-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-gray);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: var(--font-heading);
+}
+
+.ppt-toggle-btn:hover {
+  color: var(--cyan-primary);
+}
+
+.ppt-toggle-btn.active {
+  background: var(--bg-white);
+  color: var(--cyan-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .ppt-content-box {
@@ -252,9 +364,45 @@
   word-wrap: break-word;
 }
 
+.ppt-edit-area {
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  resize: none;
+  font-weight: 500;
+}
+
+.ppt-mini-clear {
+  background: transparent;
+  border: 1.5px solid #ff4d4d;
+  color: #ff4d4d;
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ppt-mini-clear:hover {
+  background: rgba(255, 77, 77, 0.1);
+}
+
 .ppt-content-info {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
+  width: 100%;
   margin-top: 1.5rem;
   position: relative;
   z-index: 1;

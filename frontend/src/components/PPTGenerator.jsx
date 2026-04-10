@@ -25,6 +25,7 @@ const PPTGenerator = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('idle');
   const [generatedPpt, setGeneratedPpt] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (location.state?.generatedContent) {
@@ -58,8 +59,24 @@ const PPTGenerator = () => {
   };
 
   const handleCustomizationChange = (key, value) => {
+    // If setting slide count, don't allow it to go below minimum required
+    if (key === 'slide_count') {
+      const minRequired = Math.ceil((generatedContent?.length || 0) / 600) || 3;
+      if (value < minRequired) {
+        setCustomizations(prev => ({ ...prev, [key]: minRequired }));
+        return;
+      }
+    }
     setCustomizations(prev => ({ ...prev, [key]: value }));
   };
+
+  const minSlides = Math.max(3, Math.ceil((generatedContent?.length || 0) / 600));
+
+  useEffect(() => {
+    if (customizations.slide_count < minSlides) {
+      setCustomizations(prev => ({ ...prev, slide_count: minSlides }));
+    }
+  }, [generatedContent, minSlides]);
 
   const handleClear = () => {
     localStorage.removeItem('eduface_ppt_gen');
@@ -153,36 +170,52 @@ const PPTGenerator = () => {
         <div className="ppt-grid-wrapper">
           {/* Left Section - Content Preview */}
           <div className="ppt-left-panel">
-            <div className="ppt-preview-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
-                <h3 className="ppt-card-title" style={{ marginBottom: 0 }}>Content Preview</h3>
-                <button
-                  onClick={handleClear}
-                  style={{
-                    background: 'transparent',
-                    border: '2px solid #ff4d4d',
-                    color: '#ff4d4d',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: 'bold',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => { e.target.style.background = 'rgba(255, 77, 77, 0.1)'; }}
-                  onMouseOut={(e) => { e.target.style.background = 'transparent'; }}
+            <div className="ppt-preview-header">
+              <div className="ppt-header-title">
+                <FiTrash2 className="title-icon" />
+                <span>Content Preview</span>
+              </div>
+              <div className="ppt-toggle-group">
+                <button 
+                  className={`ppt-toggle-btn ${!isEditing ? 'active' : ''}`}
+                  onClick={() => setIsEditing(false)}
                 >
-                  <FiTrash2 size={16} /> Clear Content
+                  Preview
+                </button>
+                <button 
+                  className={`ppt-toggle-btn ${isEditing ? 'active' : ''}`}
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit Content
                 </button>
               </div>
-              <div className="ppt-content-box">
-                <p className="ppt-preview-text">{generatedContent ? generatedContent.substring(0, 2000) : "No content available."}...</p>
+            </div>
+
+            <div className="ppt-preview-card">
+              <div style={{ display: 'none' }}>
+                <button onClick={handleClear}><FiTrash2 size={16} /> Clear</button>
               </div>
-              <div className="ppt-content-info">
-                <span className="ppt-info-badge">📄 {Math.ceil(generatedContent.length / 500)} pages</span>
+              
+              <div className="ppt-content-box">
+                {isEditing ? (
+                  <textarea
+                    className="ppt-edit-area"
+                    value={generatedContent}
+                    onChange={(e) => setGeneratedContent(e.target.value)}
+                    placeholder="Paste or refine your content here..."
+                  />
+                ) : (
+                  <p className="ppt-preview-text">
+                    {generatedContent ? generatedContent : "No content available. Paste content in Edit mode to begin."}
+                  </p>
+                )}
+              </div>
+              
+              <div className="ppt-content-info" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="ppt-info-badge">📄 {Math.ceil((generatedContent?.length || 0) / 500)} Estimated Slides</span>
+                <button onClick={handleClear} className="ppt-mini-clear">
+                  <FiTrash2 size={14} /> Reset
+                </button>
               </div>
             </div>
           </div>
@@ -200,6 +233,21 @@ const PPTGenerator = () => {
               <h3 className="ppt-card-title">Customization</h3>
               
               <div className="ppt-form-group">
+                <label className="ppt-form-label">Number of Slides</label>
+                <div className="ppt-slider-container">
+                  <input
+                    type="range"
+                    min={minSlides}
+                    max="20"
+                    value={customizations.slide_count}
+                    onChange={e => handleCustomizationChange('slide_count', parseInt(e.target.value))}
+                    className="ppt-slider"
+                  />
+                  <span className="ppt-slider-value">{customizations.slide_count} Slides</span>
+                </div>
+              </div>
+
+              <div className="ppt-form-group">
                 <label className="ppt-form-label">Font Size</label>
                 <div className="ppt-slider-container">
                   <input
@@ -212,18 +260,6 @@ const PPTGenerator = () => {
                   />
                   <span className="ppt-slider-value">{customizations.font_size}px</span>
                 </div>
-              </div>
-
-              <div className="ppt-form-group">
-                <label className="ppt-form-label">Number of Slides</label>
-                <input
-                  type="number"
-                  min="3"
-                  max="15"
-                  value={customizations.slide_count}
-                  onChange={e => handleCustomizationChange('slide_count', parseInt(e.target.value))}
-                  className="ppt-number-input"
-                />
               </div>
             </div>
 

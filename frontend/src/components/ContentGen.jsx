@@ -18,6 +18,7 @@ export default function ContentGen() {
     { role: "assistant", text: "Hello! I'm your Eduface AI tutor. What would you like to build or learn about today?" }
   ]);
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef(null);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
@@ -184,10 +185,12 @@ export default function ContentGen() {
           <FiArrowLeft size={18} />
           Back to Home
         </button>
-        <button className="cge-back-button" style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} onClick={handleClear}>
-          <FiTrash2 size={18} />
-          Clear Content
-        </button>
+        <div className="cge-header-right">
+          <button className="cge-back-button" style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} onClick={handleClear}>
+            <FiTrash2 size={18} />
+            Clear Session
+          </button>
+        </div>
       </div>
 
       {/* Main Grid Layout */}
@@ -253,6 +256,27 @@ export default function ContentGen() {
 
         {/* RIGHT - OUTPUT */}
         <div className="cge-output-section">
+          <div className="cge-output-header">
+            <div className="cge-output-title">
+              <FiBook className="title-icon" />
+              <span>Content Preview</span>
+            </div>
+            <div className="cge-toggle-group">
+              <button 
+                className={`cge-toggle-btn ${!isEditing ? 'active' : ''}`}
+                onClick={() => setIsEditing(false)}
+              >
+                Preview
+              </button>
+              <button 
+                className={`cge-toggle-btn ${isEditing ? 'active' : ''}`}
+                onClick={() => setIsEditing(true)}
+              >
+                Edit Content
+              </button>
+            </div>
+          </div>
+
           <div className="cge-output-card">
             <div className="cge-output">
               {loading && !output && (
@@ -261,14 +285,28 @@ export default function ContentGen() {
                   <div className="cge-output-loading-text">Building document...</div>
                 </div>
               )}
-              {output ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+              
+              {isEditing ? (
+                <textarea
+                  className="cge-edit-area"
+                  value={output}
+                  onChange={(e) => setOutput(e.target.value)}
+                  placeholder="Paste your content here or refine the AI's output..."
+                />
               ) : (
-                <div className="cge-placeholder">
-                  <div className="cge-placeholder-icon">📄</div>
-                  <div>Your Live Document</div>
-                  <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>Ask me anything on the left to start building!</div>
-                </div>
+                <>
+                  {output ? (
+                    <div className="markdown-render-area">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="cge-placeholder">
+                      <div className="cge-placeholder-icon">📄</div>
+                      <div>Your Live Document</div>
+                      <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>Ask me anything on the left to start building!</div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -135,43 +135,7 @@ THEMES = {
         },
         "fonts": {"title": "Calibri", "heading": "Calibri", "text": "Calibri"}
     },
-    "corporate_gray": {
-        "name": "Corporate Gray",
-        "colors": {
-            "background": (250, 250, 250),
-            "title_slide_bg": (70, 70, 70),
-            "title": (255, 255, 255),
-            "subtitle": (220, 220, 220),
-            "slide_title": (50, 50, 50),
-            "h2": (80, 80, 80),
-            "h3": (120, 120, 120),
-            "text": (60, 60, 60),
-            "bullet": (70, 70, 70),
-            "accent": (150, 150, 150),
-            "accent_light": (230, 230, 230),
-            "accent_dark": (40, 40, 40)
-        },
-        "fonts": {"title": "Arial", "heading": "Arial", "text": "Arial"}
-    },
-    "creative_green": {
-        "name": "Creative Green",
-        "colors": {
-            "background": (235, 245, 235),
-            "title_slide_bg": (34, 102, 36),
-            "title": (255, 255, 255),
-            "subtitle": (200, 230, 200),
-            "slide_title": (34, 102, 36),
-            "h2": (60, 130, 65),
-            "h3": (100, 150, 105),
-            "text": (50, 50, 50),
-            "bullet": (60, 60, 60),
-            "accent": (34, 102, 36),
-            "accent_light": (200, 240, 200),
-            "accent_dark": (20, 70, 25)
-        },
-        "fonts": {"title": "Segoe UI", "heading": "Segoe UI", "text": "Segoe UI"}
-    },
-    "elegant_purple": {
+    "modern_purple": {
         "name": "Elegant Purple",
         "colors": {
             "background": (240, 235, 250),
@@ -189,7 +153,25 @@ THEMES = {
         },
         "fonts": {"title": "Times New Roman", "heading": "Times New Roman", "text": "Times New Roman"}
     },
-    "vibrant_orange": {
+    "modern_green": {
+        "name": "Creative Green",
+        "colors": {
+            "background": (235, 245, 235),
+            "title_slide_bg": (34, 102, 36),
+            "title": (255, 255, 255),
+            "subtitle": (200, 230, 200),
+            "slide_title": (34, 102, 36),
+            "h2": (60, 130, 65),
+            "h3": (100, 150, 105),
+            "text": (50, 50, 50),
+            "bullet": (60, 60, 60),
+            "accent": (34, 102, 36),
+            "accent_light": (200, 240, 200),
+            "accent_dark": (20, 70, 25)
+        },
+        "fonts": {"title": "Segoe UI", "heading": "Segoe UI", "text": "Segoe UI"}
+    },
+    "modern_sunset": {
         "name": "Vibrant Orange",
         "colors": {
             "background": (255, 245, 235),
@@ -207,7 +189,7 @@ THEMES = {
         },
         "fonts": {"title": "Helvetica", "heading": "Helvetica", "text": "Helvetica"}
     },
-    "minimalist_black": {
+    "minimal_dark": {
         "name": "Minimalist Black",
         "colors": {
             "background": (20, 20, 20),
@@ -225,25 +207,43 @@ THEMES = {
         },
         "fonts": {"title": "Arial Black", "heading": "Arial Black", "text": "Arial"}
     },
-    "soft_pink": {
-        "name": "Soft Pink",
+    "minimal_light": {
+        "name": "Minimalist White",
         "colors": {
-            "background": (255, 245, 250),
-            "title_slide_bg": (180, 20, 100),
-            "title": (255, 255, 255),
-            "subtitle": (230, 180, 210),
-            "slide_title": (180, 20, 100),
-            "h2": (200, 60, 140),
-            "h3": (220, 100, 170),
-            "text": (80, 30, 50),
-            "bullet": (90, 40, 60),
-            "accent": (180, 20, 100),
-            "accent_light": (245, 210, 235),
-            "accent_dark": (130, 10, 70)
+            "background": (255, 255, 255),
+            "title_slide_bg": (240, 240, 240),
+            "title": (30, 30, 30),
+            "subtitle": (100, 100, 100),
+            "slide_title": (0, 0, 0),
+            "h2": (50, 50, 50),
+            "h3": (100, 100, 100),
+            "text": (60, 60, 60),
+            "bullet": (80, 80, 80),
+            "accent": (150, 150, 150),
+            "accent_light": (245, 245, 245),
+            "accent_dark": (50, 50, 50)
         },
-        "fonts": {"title": "Georgia", "heading": "Georgia", "text": "Georgia"}
+        "fonts": {"title": "Arial", "heading": "Arial", "text": "Arial"}
     },
-    "cool_teal": {
+    "corporate": {
+        "name": "Corporate Gray",
+        "colors": {
+            "background": (250, 250, 250),
+            "title_slide_bg": (70, 70, 70),
+            "title": (255, 255, 255),
+            "subtitle": (220, 220, 220),
+            "slide_title": (50, 50, 50),
+            "h2": (80, 80, 80),
+            "h3": (120, 120, 120),
+            "text": (60, 60, 60),
+            "bullet": (70, 70, 70),
+            "accent": (150, 150, 150),
+            "accent_light": (230, 230, 230),
+            "accent_dark": (40, 40, 40)
+        },
+        "fonts": {"title": "Arial", "heading": "Arial", "text": "Arial"}
+    },
+    "creative": {
         "name": "Cool Teal",
         "colors": {
             "background": (230, 248, 248),
@@ -260,24 +260,6 @@ THEMES = {
             "accent_dark": (0, 70, 70)
         },
         "fonts": {"title": "Verdana", "heading": "Verdana", "text": "Verdana"}
-    },
-    "warm_brown": {
-        "name": "Warm Brown",
-        "colors": {
-            "background": (250, 242, 232),
-            "title_slide_bg": (101, 67, 33),
-            "title": (255, 255, 255),
-            "subtitle": (220, 190, 160),
-            "slide_title": (101, 67, 33),
-            "h2": (140, 100, 60),
-            "h3": (170, 140, 100),
-            "text": (70, 55, 40),
-            "bullet": (85, 70, 55),
-            "accent": (101, 67, 33),
-            "accent_light": (240, 220, 190),
-            "accent_dark": (70, 45, 20)
-        },
-        "fonts": {"title": "Palatino Linotype", "heading": "Palatino Linotype", "text": "Palatino Linotype"}
     },
 }
 
@@ -1057,22 +1039,7 @@ def generate_ppt():
         # But wait, send_file is more convenient for immediate download.
         # How about we return the path in custom headers? Or just return JSON?
         
-        # Save to DB if userId provided
-        user_id = data.get('userId')
-        if user_id:
-            try:
-                db = get_db()
-                if db:
-                    db.ppts.insert_one({
-                        'userId': user_id,
-                        'filename': final_filename,
-                        'path': ppt_path,
-                        'title': title,
-                        'createdAt': time.time(),
-                        'type': 'generated'
-                    })
-            except Exception as dbe:
-                print(f"⚠️ Could not save PPT to DB: {dbe}")
+        # PPT generation complete. immediate file delivery follows.
 
         # Let's check if the client expects JSON
         if request.headers.get('Accept') == 'application/json':
@@ -1625,6 +1592,8 @@ def evaluate_quiz_detailed():
     except Exception as e:
         print(f"❌ EVALUATION ERROR: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 # ============ HEALTH CHECK ============
 @app.route("/api/health", methods=["GET"])
