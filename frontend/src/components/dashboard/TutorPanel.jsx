@@ -114,6 +114,10 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
             <div className="ld-status-dot"></div>
             <span>LIVE SESSION</span>
           </div>
+          <div className="ld-context-indicator">
+            <AudioLines size={12} />
+            <span>Lesson Context Active</span>
+          </div>
         </div>
         <div className="ld-tutor-header-actions">
           <button className="ld-header-btn" title="Share Chat securely" onClick={handleShareChat}>
@@ -193,7 +197,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
         <div className={`ld-tutor-input-area ${isRecording ? 'recording' : ''}`}>
           <input 
             type="text" 
-            placeholder={isRecording ? "Listening..." : "Ask anything..."}
+            placeholder={isRecording ? "Listening..." : "Ask about this lesson, concepts, or doubts..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

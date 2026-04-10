@@ -1,23 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Play, Pause, MessageCircle, Maximize, Maximize2, Subtitles, Download, FileText, Music, LogOut, Lightbulb, Sparkles, Share2, Trash2 
+  Play, Pause, Download, LogOut, Lightbulb, Sparkles, Maximize, PlusCircle, CheckCircle2, ChevronRight 
 } from 'lucide-react';
 import TutorPanel from './dashboard/TutorPanel';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, X } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import '../styles/LearningDashboard.css';
 
 const API_BASE_URL = 'http://localhost:5000';
 
-const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, facePreview, resetForm }) => {
+const LearningDashboard = ({ 
+  videoUrl, 
+  scriptUrl, 
+  audioUrl, 
+  summaryUrl, 
+  jobId, 
+  facePreview, 
+  resetForm, 
+  user, 
+  isSignedIn, 
+  pptName,
+  fromGallery = false
+}) => {
   const navigate = useNavigate();
   const [lessonContext, setLessonContext] = useState('');
   const [lessonSummary, setLessonSummary] = useState('');
-  const [currentCaption, setCurrentCaption] = useState('');
-  const [showCaptions, setShowCaptions] = useState(true);
-  const [showQuizModal, setShowQuizModal] = useState(false);
-  const [numQuestions, setNumQuestions] = useState(5);
-  const [difficulty, setDifficulty] = useState('medium');
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('eduface_chat_messages');
     return saved ? JSON.parse(saved) : [
@@ -32,6 +41,10 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isHoveringVideo, setIsHoveringVideo] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isChatVisible, setIsChatVisible] = useState(true);
+  
   const videoRef = useRef(null);
   const videoWrapperRef = useRef(null);
   
@@ -41,7 +54,6 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
     localStorage.setItem('eduface_chat_messages', JSON.stringify(defaultMsg));
   };
   
-  // Format time in MM:SS
   const formatTime = (time) => {
     if (isNaN(time)) return '0:00';
     const mins = Math.floor(time / 60);
@@ -50,19 +62,19 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
   };
 
   const handleTimeUpdate = () => {
-    if (!isScrubbing) {
+    if (!isScrubbing && videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
     }
   };
 
   const handleLoadedMetadata = () => {
-    setDuration(videoRef.current.duration);
+    if (videoRef.current) setDuration(videoRef.current.duration);
   };
 
   const handleScrubberChange = (e) => {
     const newTime = Number(e.target.value);
     setCurrentTime(newTime);
-    videoRef.current.currentTime = newTime;
+    if (videoRef.current) videoRef.current.currentTime = newTime;
   };
 
   const handleDownload = async (url, filename) => {
@@ -76,27 +88,22 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error("Download failed:", err);
-      // Fallback to direct link if fetch fails
       window.open(url, '_blank');
     }
   };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      if (videoWrapperRef.current.requestFullscreen) {
-        videoWrapperRef.current.requestFullscreen();
-      }
+      if (videoWrapperRef.current?.requestFullscreen) videoWrapperRef.current.requestFullscreen();
       setIsFullscreen(true);
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      if (document.exitFullscreen) document.exitFullscreen();
       setIsFullscreen(false);
     }
   };
 
   const togglePlay = () => {
+    if (!videoRef.current) return;
     if (videoRef.current.paused) {
       videoRef.current.play();
       setIsPlaying(true);
@@ -106,104 +113,112 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
     }
   };
 
+  const handleAddToGallery = async () => {
+    if (isSaving) return;
+    if (!isSignedIn || !user?.id) {
+       toast.error("Please sign in to save videos to your gallery.");
+       return;
+    }
+    if (!jobId) {
+       toast.error("Error: Lesson ID is missing. Please try generating the video again.");
+       return;
+    }
+
+    setIsSaving(true);
+    try {
+      const sessionToSave = { videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, facePreview };
+      const res = await axios.post(`${API_BASE_URL}/api/videos`, {
+        userId: user.id,
+        videoId: jobId,
+        videoUrl: videoUrl,
+        videoData: JSON.stringify(sessionToSave),
+        title: pptName || 'Generated Video Lesson',
+        createdAt: Date.now()
+      });
+      if (res.data.success) {
+         toast.success("Successfully added to your Premium Gallery! 🎬");
+         setIsSaved(true);
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add to gallery.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const getCleanDescription = (rawText) => {
     if (!rawText) return "Analyzing lesson context...";
-    if (lessonSummary) return lessonSummary;
-    
-    // Extract only narrative text from the script format
     const textMatches = [...rawText.matchAll(/TEXT:\s*"([^"]+)"/g)];
-    let combinedText = textMatches.length > 0 ? textMatches.map(m => m[1]).join(' ') : rawText;
-    
-    let clean = combinedText
-      .replace(/\[.*?\]/g, '') // Remove [SCENE START]
-      .replace(/[A-Z]+:\s*.*/g, '') // Remove KEY: value tags
-      .replace(/^\s*-.*$/gm, '') // Remove bullet direction lines (- smile)
-      .replace(/\.{3,}/g, ' ') // Remove pauses (...)
-      .replace(/\s+/g, ' ')
-      .trim();
-      
-    // Remove tutorial/meta phrases
-    const metaPhrases = [
-      /Hello everyone/i, /Welcome to (this|our) (presentation|lesson)/i,
-      /Moving on to our next point/i, /Let's break this down/i,
-      /Focus on this part/i, /Today we will be discussing/i
-    ];
-    
-    metaPhrases.forEach(p => { clean = clean.replace(p, ''); });
-    clean = clean.replace(/^\W+/, '').trim();
-    
-    if (clean.length > 0) {
-       clean = clean.charAt(0).toUpperCase() + clean.slice(1);
-    }
-    
-    // Truncate to a clean sentence ending
-    const maxLength = 220;
-    if (clean.length > maxLength) {
-      clean = clean.substring(0, maxLength);
-      const lastSent = Math.max(clean.lastIndexOf('.'), clean.lastIndexOf('?'), clean.lastIndexOf('!'));
-      if (lastSent > 80) {
-        clean = clean.substring(0, lastSent + 1);
-      } else {
-        clean = clean.replace(/\s+\w+$/, '') + ".";
-      }
-    } else if (clean.length > 5 && !/[.!?]$/.test(clean)) {
-      clean += ".";
-    }
-    
-    return clean || "Welcome to this premium lesson. Watch the synchronized AI presentation to explore the key concepts and practical applications.";
+    let clean = textMatches.length > 0 ? textMatches.map(m => m[1]).join(' ') : rawText;
+    clean = clean.replace(/\[.*?\]/g, '').replace(/[A-Z]+:\s*.*/g, '').replace(/\s+/g, ' ').trim();
+    return clean; // Removed truncation to ensure full visibility
   };
 
   useEffect(() => {
-    if (scriptUrl) {
-      fetch(scriptUrl).then(res => res.text()).then(text => setLessonContext(text));
+    if (scriptUrl) fetch(scriptUrl).then(res => res.text()).then(t => setLessonContext(t));
+    if (summaryUrl) fetch(summaryUrl).then(res => res.text()).then(t => setLessonSummary(t));
+    
+    // FETCH LATEST METADATA (including potential renames)
+    if (isSignedIn && user?.id && jobId) {
+      axios.get(`${API_BASE_URL}/api/videos/${user.id}`)
+        .then(res => {
+          if (res.data.success) {
+            const videoData = res.data.videos.find(v => v.videoId === jobId);
+            if (videoData) {
+              setIsSaved(true);
+              // Update local state if the title has changed in the DB
+              if (videoData.title && videoData.title !== pptName) {
+                // We'll use a local state for the display title to handle renames
+                setDisplayTitle(videoData.title);
+              }
+            }
+          }
+        })
+        .catch(err => console.error("Error syncing video metadata", err));
     }
-    if (summaryUrl) {
-      fetch(summaryUrl).then(res => res.text()).then(text => setLessonSummary(text));
-    }
-  }, [scriptUrl, summaryUrl]);
+  }, [scriptUrl, summaryUrl, isSignedIn, user?.id, jobId, pptName]);
+
+  const [displayTitle, setDisplayTitle] = useState(pptName || 'Generated Video Lesson');
+
+  useEffect(() => {
+    if (pptName) setDisplayTitle(pptName);
+  }, [pptName]);
 
   const handleSendMessage = async (text = null) => {
-    const userInput = text || chatInput;
-    if (!userInput.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: userInput }];
+    const input = text || chatInput;
+    if (!input.trim()) return;
+    const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages); 
-    localStorage.setItem('eduface_chat_messages', JSON.stringify(newMessages));
     setChatInput(''); setIsTyping(true);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'system', content: `Context: ${lessonContext}` }, ...newMessages] })
+      const resp = await axios.post(`${API_BASE_URL}/api/chat`, {
+        messages: [{ role: 'system', content: `Context: ${lessonContext}` }, ...newMessages]
       });
-      const data = await resp.json();
-      if (data.success) {
-        const updatedMessages = [...newMessages, { role: 'assistant', content: data.message.content }];
-        setMessages(updatedMessages);
-        localStorage.setItem('eduface_chat_messages', JSON.stringify(updatedMessages));
+      if (resp.data.success) {
+        setMessages([...newMessages, { role: 'assistant', content: resp.data.message.content }]);
       }
     } catch (e) { console.error(e); } finally { setIsTyping(false); }
   };
 
   return (
     <div className="ld-root">
-      <header className="ld-header">
-        <div className="ld-brand"><Sparkles size={20} /> <h2>Eduface Learning Console</h2></div>
+          <header className="ld-header">
+        <div className="ld-brand">
+          <Sparkles size={20} /> 
+          <h2>Eduface AI</h2>
+          {displayTitle && (
+            <>
+              <span className="ld-header-separator">|</span>
+              <span className="ld-video-title-header">{displayTitle}</span>
+            </>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
             onClick={() => navigate('/quiz/setup', { state: { lessonContent: lessonContext } })} 
             className="ld-action-btn" 
-            style={{ 
-              background: 'var(--ld-accent, #2563eb)', 
-              color: 'white', 
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: 0.95
-            }}
-            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-            onMouseOut={(e) => e.currentTarget.style.opacity = '0.95'}
+            style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600' }}
           >
             Generate Quiz
           </button>
@@ -211,7 +226,7 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
         </div>
       </header>
 
-      <main className="ld-main">
+      <main className={`ld-main ${!isChatVisible ? 'chat-hidden' : ''}`}>
         <div className="ld-left-col">
           <div 
             ref={videoWrapperRef}
@@ -223,32 +238,17 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
               {isPlaying ? <Pause size={64} fill="currentColor" /> : <Play size={64} fill="currentColor" />}
             </div>
             <video 
-              ref={videoRef} 
-              src={videoUrl} 
-              className="ld-video" 
-              onClick={togglePlay}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onEnded={() => setIsPlaying(false)}
+              ref={videoRef} src={videoUrl} className="ld-video" 
+              onClick={togglePlay} onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata} onEnded={() => setIsPlaying(false)}
             />
             
-            {/* Custom YouTube-style Scrubber */}
             <div className={`ld-video-controls ${isHoveringVideo || !isPlaying ? 'visible' : ''}`} onClick={e => e.stopPropagation()}>
               <div className="ld-scrubber-container">
                 <input 
-                  type="range" 
-                  min="0" 
-                  max={duration || 100} 
-                  value={currentTime} 
-                  onChange={handleScrubberChange}
-                  onMouseDown={() => setIsScrubbing(true)}
-                  onMouseUp={() => setIsScrubbing(false)}
-                  onTouchStart={() => setIsScrubbing(true)}
-                  onTouchEnd={() => setIsScrubbing(false)}
-                  className="ld-scrubber"
-                  style={{ '--progress': `${(currentTime / (duration || 1)) * 100}%` }}
+                  type="range" min="0" max={duration || 100} value={currentTime} 
+                  onChange={handleScrubberChange} onMouseDown={() => setIsScrubbing(true)} onMouseUp={() => setIsScrubbing(false)}
+                  className="ld-scrubber" style={{ '--progress': `${(currentTime / (duration || 1)) * 100}%` }}
                 />
               </div>
               <div className="ld-controls-row">
@@ -256,23 +256,43 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
                   <button onClick={togglePlay} className="ld-play-pause-btn">
                     {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
                   </button>
-                  <div className="ld-time-display">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </div>
+                  <div className="ld-time-display">{formatTime(currentTime)} / {formatTime(duration)}</div>
                 </div>
                 <div className="ld-controls-right">
-                  <button onClick={toggleFullscreen} className="ld-play-pause-btn">
-                    <Maximize size={18} />
-                  </button>
+                  <button onClick={toggleFullscreen} className="ld-play-pause-btn"><Maximize size={18} /></button>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="ld-actions">
+          <div className="ld-actions" style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
             <button onClick={() => handleDownload(videoUrl, `eduface_${jobId}_video.mp4`)} className="ld-action-btn">
               <Download size={16} /> Save Video
             </button>
+            {isSignedIn && user && !fromGallery && !isSaved && (
+              <button 
+                onClick={handleAddToGallery}
+                disabled={isSaving}
+                className="ld-action-btn"
+                style={{ background: '#4f46e5', border: 'none', color: '#fff' }}
+              >
+                <PlusCircle size={16} /> {isSaving ? 'Adding...' : 'Add to My Gallery'}
+              </button>
+            )}
+            {isSaved && !fromGallery && (
+               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                 <div className="ld-saved-badge">
+                   <CheckCircle2 size={16} /> Saved to Gallery
+                 </div>
+                 <button 
+                   onClick={() => navigate('/video-gallery')}
+                   className="ld-action-btn"
+                   style={{ background: 'transparent', border: '1px solid var(--ld-accent)', color: 'var(--ld-accent)', flex: 'none' }}
+                 >
+                   View in Gallery
+                 </button>
+               </div>
+            )}
           </div>
 
           <div className="ld-overview-premium">
@@ -283,16 +303,33 @@ const LearningDashboard = ({ videoUrl, scriptUrl, audioUrl, summaryUrl, jobId, f
           </div>
         </div>
 
-        <div className="ld-right-col">
-          <div className="ld-chat-container">
-            <TutorPanel 
-              messages={messages} input={chatInput} setInput={setChatInput}
-              onSendMessage={handleSendMessage} isTyping={isTyping} 
-              formatText={(t) => t} onClearChat={handleClearChat}
-              facePreview={facePreview}
-            />
+        {isChatVisible ? (
+          <div className="ld-right-col">
+            <button 
+              className="ld-chat-toggle-hide" 
+              onClick={() => setIsChatVisible(false)}
+              title="Collapse AI Assistant"
+            >
+              <ChevronRight size={18} />
+            </button>
+            <div className="ld-chat-container">
+              <TutorPanel 
+                messages={messages} input={chatInput} setInput={setChatInput}
+                onSendMessage={handleSendMessage} isTyping={isTyping} 
+                formatText={(t) => t} onClearChat={handleClearChat}
+                facePreview={facePreview}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <button 
+            className="ld-chat-toggle-show animate-pulse-glow" 
+            onClick={() => setIsChatVisible(true)}
+          >
+            <Sparkles size={20} />
+            <span>Open AI Assistant</span>
+          </button>
+        )}
       </main>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
 import { 
   FileVideo, 
   Upload, 
@@ -56,22 +57,50 @@ const VideoGenerator = () => {
   const [summaryUrl, setSummaryUrl] = useState(null);
   const [jobId, setJobId] = useState(null);
 
-  useEffect(() => {
-    const savedSession = localStorage.getItem('eduface_video_session');
-    if (savedSession) {
-      try {
-        const session = JSON.parse(savedSession);
-        setVideoUrl(session.videoUrl);
-        setScriptUrl(session.scriptUrl);
-        setAudioUrl(session.audioUrl);
-        setSummaryUrl(session.summaryUrl);
-        setJobId(session.jobId);
-        setFacePreview(session.facePreview);
-      } catch (e) {
-        localStorage.removeItem('eduface_video_session');
+  const { user, isSignedIn } = useUser();
+
+    useEffect(() => {
+    // 1. Priority: Check for explicit video data passed from Gallery (location.state)
+    if (location.state?.videoUrl) {
+      setVideoUrl(location.state.videoUrl);
+      setScriptUrl(location.state.scriptUrl);
+      setAudioUrl(location.state.audioUrl);
+      setSummaryUrl(location.state.summaryUrl);
+      setJobId(location.state.jobId);
+      setFacePreview(location.state.facePreview);
+    } 
+    // 2. Secondary: Check for recently generated session in localStorage
+    else if (isSignedIn && user?.id) {
+      const savedSession = localStorage.getItem('eduface_video_session');
+      if (savedSession) {
+        try {
+          const session = JSON.parse(savedSession);
+          // HARD MATCH: Only load if the session userId matches the current logged-in user
+          if (session.userId === user.id) {
+            setVideoUrl(session.videoUrl);
+            setScriptUrl(session.scriptUrl);
+            setAudioUrl(session.audioUrl);
+            setSummaryUrl(session.summaryUrl);
+            setJobId(session.jobId);
+            setFacePreview(session.facePreview);
+          } else {
+            // Data leakage protection: Wipe old user's session from browser
+            localStorage.removeItem('eduface_video_session');
+            localStorage.removeItem('eduface_chat_messages');
+          }
+        } catch (e) {
+          localStorage.removeItem('eduface_video_session');
+        }
       }
     }
+    // 3. Security: If logged out, clear any existing session states for protection
+    else if (!isSignedIn) {
+      setVideoUrl(null);
+      localStorage.removeItem('eduface_video_session');
+      localStorage.removeItem('eduface_chat_messages');
+    }
 
+    // Handle PPT file passing from Content Generator
     if (location.state?.passedPpt) {
       const { path, name } = location.state.passedPpt;
       setServerPptPath(path);
@@ -118,10 +147,12 @@ const VideoGenerator = () => {
   };
 
   const resetForm = () => {
-    localStorage.removeItem('eduface_video_session');
-    setVideoUrl(null); setScriptUrl(null); setAudioUrl(null); setSummaryUrl(null); setJobId(null);
     setPptFile(null); setServerPptPath(null); setFaceImage(null); setFacePreview(null);
     setError(null); setSuccess(null);
+    setVideoUrl(null);
+    // Clear local session storage on "End Session" so it doesn't reload
+    localStorage.removeItem('eduface_video_session');
+    localStorage.removeItem('eduface_chat_messages');
   };
 
   const handleGenerate = async () => {
@@ -134,6 +165,9 @@ const VideoGenerator = () => {
       const formData = new FormData();
       if (!serverPptPath) formData.append('ppt', pptFile);
       formData.append('face', faceImage);
+      if (isSignedIn && user) {
+        formData.append('userId', user.id);
+      }
 
       const uploadRes = await axios.post(`${API_BASE_URL}/api/upload-files`, formData);
       if (!uploadRes.data.success) throw new Error(uploadRes.data.error);
@@ -152,21 +186,25 @@ const VideoGenerator = () => {
 
       const baseUrl = API_BASE_URL;
       const data = generateRes.data;
-      setVideoUrl(`${baseUrl}${data.video_url}`);
-      setScriptUrl(`${baseUrl}${data.script_url}`);
-      setAudioUrl(`${baseUrl}${data.audio_url}`);
-      setSummaryUrl(`${baseUrl}${data.summary_url}`);
-      setJobId(data.job_id);
-
-      localStorage.setItem('eduface_video_session', JSON.stringify({
+      
+      const sessionToSave = {
         videoUrl: `${baseUrl}${data.video_url}`,
         scriptUrl: `${baseUrl}${data.script_url}`,
         audioUrl: `${baseUrl}${data.audio_url}`,
         summaryUrl: `${baseUrl}${data.summary_url}`,
         jobId: data.job_id,
-        facePreview: facePreview
-      }));
+        facePreview: facePreview,
+        userId: user.id // Store identity token within session
+      };
 
+      localStorage.setItem('eduface_video_session', JSON.stringify(sessionToSave));
+      
+      // Update states so props are passed correctly to LearningDashboard
+      setScriptUrl(sessionToSave.scriptUrl);
+      setAudioUrl(sessionToSave.audioUrl);
+      setSummaryUrl(sessionToSave.summaryUrl);
+      setJobId(sessionToSave.jobId);
+      setVideoUrl(sessionToSave.videoUrl); // Open dashboard
     } catch (err) {
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -177,7 +215,7 @@ const VideoGenerator = () => {
   };
 
   return (
-    <div className="vg-root-container">
+    <>
       {videoUrl ? (
         <LearningDashboard 
           videoUrl={videoUrl} 
@@ -187,9 +225,12 @@ const VideoGenerator = () => {
           jobId={jobId} 
           facePreview={facePreview}
           resetForm={resetForm} 
+          user={user}
+          isSignedIn={isSignedIn}
+          pptName={pptFile ? pptFile.name : 'Generated Video Lesson'}
         />
       ) : (
-        <div className="container">
+        <div className="vg-root-container">
           <header className="vg-header">
             <h1 className="vg-title">Eduface Video Studio</h1>
             <p className="vg-subtitle">Transform your presentation into a professional AI-led video lesson.</p>
@@ -283,7 +324,6 @@ const VideoGenerator = () => {
                 <div className="vg-form-group">
                   <label className="vg-label">Educational Tone</label>
                   <select className="vg-cyber-input" value={slangLevel} onChange={(e) => setSlangLevel(e.target.value)}>
-
                     <option value="none">Professional</option>
                     <option value="medium">Conversational</option>
                   </select>
@@ -301,7 +341,7 @@ const VideoGenerator = () => {
             </div>
           </div>
 
-          <div className="vg-button-wrapper">
+          <div className="vg-button-wrapper" style={{ marginBottom: '4rem' }}>
             <button onClick={handleGenerate} disabled={loading || !pptFile || !faceImage} className="vg-cyber-button">
               {loading ? <RefreshCcw className="vg-spin" size={18} /> : <Video size={18} />}
               {loading ? 'Processing...' : 'Generate AI Lesson'}
@@ -312,7 +352,7 @@ const VideoGenerator = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -1,0 +1,43 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+java Java Overview
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1s
+
+[00:06] [SCENE START]
+TEXT: "
+Moving on to our next point...
+Let's break this down...
+
+
+Java Overview What is Java? A high-level, object-oriented programming language Developed by Sun Microsystems now Oracle Corporation Designed to have a single inheritance hierarchy Key Features Platform-independent: runs on any platform with a Java Virtual Machine JVM Object-oriented: modular design, encapsulation, and polymorphism Easy to learn: extensive use of annotations for readability Large standard library: comprehensive set of APIs and tools Benefits Rapid development: Java's architecture allows for fast prototyping and testing Scalability: suitable for large-scale applications with many threads Security: built-in security features, such as memory management and class loading Example Use Cases Android app development Enterprise software development using frameworks like Spring and Hibernate Web development using Java Servlets and JSPs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 56s

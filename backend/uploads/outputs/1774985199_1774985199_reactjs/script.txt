@@ -1,0 +1,162 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+reactjs Introduction to Reactjs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:08] I'll follow the guidelines and produce a high-quality spoken lecture audio. Here's my attempt:
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. Do not repeat the same opening phrases frequently.
+2. Use varied and professional openings such as:
+   - "Hello everyone, today we're going to explore..."
+   - "Let's dive into this concept with clarity..."
+   - "Now, let's take a closer look at..."
+   - "Let's understand this carefully, because it's essential..."
+   - "Here's something important to consider..."
+
+3. Do not read the slide content directly.
+4. Explain in your own words.
+5. Expand beyond the slide.
+6. Add real-world examples.
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence must be on a new line.
+2. Each line must be 5-10 words max.
+3. Add "..." at the end of most lines.
+4. Add an empty line between sentences to create a natural pause.
+5. Avoid long paragraphs.
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (only once).
+- Introduce the concept.
+- Explain step by step.
+- Add an example.
+- Reinforce key idea.
+- Smooth ending.
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraphs.
+- Repetitive phrases.
+- Direct reading.
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone, today we're going to explore the concept of ReactJS and its importance in building user interfaces. It's a JavaScript library for developing reusable UI components that can be used for complex, interactive web applications. Used for developing complex, interactive web applications. Key concepts include virtual DOM for efficient rendering, functional or class-based components, and state and props for managing component data.
+
+Imagine you're working on a project with multiple pages. You want to make sure everything is properly linked and updated correctly. This is where ReactJS comes in - it helps you manage this complexity efficiently by allowing you to create reusable UI components that can be easily integrated into your web application.
+
+Now, let's dive deeper into the world of functional components. They're a type of component that uses a pure function as its side effect. These functions return the same output regardless of their input values. Think about it this way - if you have a calculator, how would it handle different inputs? It wouldn't change the result based on the input type.
+
+As you can see from the code snippet below, we're creating a simple functional component that displays a greeting message. We use the `useMemo` hook to memoize the function, which means React will only re-run it when the props change.
+
+[SCENE START]
+TEXT: "One of the key benefits of using functional components is that they can be easily reusable across multiple pages."
+FACE:
+- slightly leaning forward
+- attentive eyes
+EYES:
+- looking at viewer
+HEAD:
+- small nod
+HANDS:
+- gentle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1.5s (approx. 20 characters per line)
+
+---
+
+Slide Content:
+
+Introduction to ReactJS What is Reactjs... A JavaScript library for building user interfaces... Used for developing reusable UI components... Ideal for complex, interactive web applications...
+
+Virtual DOM for efficient rendering... Components can be functional or class-based... State and props for managing component data
+
+---
+
+OUTPUT FORMAT (STRICT):
+
+[SCENE START]
+TEXT: "
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: [X]s (approx. 1 second per 15 characters of text)
+"
+
+[00:15] [SCENE START]
+TEXT: "
+Now, pay attention to this part...
+It's quite important...
+
+
+Reactjs Components Component Types.......
+
+Functional components for simple, stateless components.......
+
+Class components for complex, stateful components.......
+
+Higher-order components for code reuse and abstraction.......
+
+Managing Component Data.......
+
+State for storing component-specific data.......
+
+Props for passing data from parent to child components.......
+
+Context API for sharing data between components
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 25s

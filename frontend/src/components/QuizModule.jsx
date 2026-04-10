@@ -9,6 +9,7 @@ const QuizModule = ({ lessonContent }) => {
   const [quizData, setQuizData] = useState(null);
   const [userAnswers, setUserAnswers] = useState({});
   const [evaluation, setEvaluation] = useState(null);
+  const [detailedReviews, setDetailedReviews] = useState([]);
   const [numQuestions, setNumQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState('medium');
 
@@ -57,6 +58,28 @@ const QuizModule = ({ lessonContent }) => {
         setEvaluation(data.data.evaluation);
         if (data.data.quiz) {
             setQuizData(data.data.quiz);
+        }
+
+        // 2. Fetch Detailed per-question review
+        try {
+          const reviewResponse = await fetch(`${API_BASE_URL}/api/quiz/evaluate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              questions: (data.data.quiz || quizData).map(q => ({
+                question: q.question,
+                options: q.options,
+                correctAnswer: q.correct_answer,
+                userAnswer: userAnswers[q.id]
+              }))
+            })
+          });
+          const reviewData = await reviewResponse.json();
+          if (reviewData.success) {
+            setDetailedReviews(reviewData.evaluations);
+          }
+        } catch (reviewErr) {
+          console.error("Error fetching detailed reviews", reviewErr);
         }
       }
     } catch (e) {
@@ -196,16 +219,49 @@ const QuizModule = ({ lessonContent }) => {
           </div>
 
           <div className="quiz-review">
-            <h4>Review Answers</h4>
+            <h4><BarChart2 size={16}/> AI Learning Review</h4>
+            <p className="review-intro">Deep analysis of your performance across each concept.</p>
+            
             {quizData.map((q, idx) => {
               const uAns = userAnswers[q.id];
               const isCorrect = uAns === q.correct_answer;
+              const review = detailedReviews[idx];
+
               return (
                 <div key={q.id} className={`quiz-review-card ${isCorrect ? 'correct' : 'wrong'}`}>
-                  <h5>{idx + 1}. {q.question}</h5>
-                  <p>Your Answer: {q.options[uAns]} {isCorrect ? '✅' : '❌'}</p>
-                  {!isCorrect && <p>Correct Answer: {q.options[q.correct_answer]}</p>}
-                  <p className="quiz-explanation"><em>Explanation:</em> {q.explanation}</p>
+                  <header className="review-card-header">
+                    <span className="review-badge">{isCorrect ? 'Correct' : 'Needs Review'}</span>
+                    <h5>{idx + 1}. {q.question}</h5>
+                  </header>
+                  
+                  <div className="review-choices">
+                    <div className="choice-row">
+                      <span className="choice-label">Your Selection:</span>
+                      <span className={`choice-value ${!isCorrect ? 'text-error' : 'text-success'}`}>
+                         {q.options[uAns]} {!isCorrect && <XCircle size={14} />}
+                      </span>
+                    </div>
+                    {!isCorrect && (
+                      <div className="choice-row">
+                        <span className="choice-label">Correct Answer:</span>
+                        <span className="choice-value text-success">
+                          {q.options[q.correct_answer]} <CheckCircle size={14} />
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="quiz-review-details">
+                    <span className="review-label">Tutor Explanation:</span>
+                    <p className="review-text">{review ? review.explanation : q.explanation}</p>
+                    
+                    {review && review.mistakeExplanation && !isCorrect && (
+                      <div className="mistake-analysis">
+                         <span className="review-label">Misconception Detection:</span>
+                         <p className="review-text">{review.mistakeExplanation}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

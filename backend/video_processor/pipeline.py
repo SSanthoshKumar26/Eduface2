@@ -238,6 +238,18 @@ class VideoPipeline:
                 f.write(summary_text)
             results['summary_path'] = summary_path
 
+            # Calculate total characters in final script for logging
+            total_script_chars = 0
+            for s in scripts:
+                # Extract spoken text from [SCENE START] blocks
+                spoken = self.tts_engine._extract_text_from_script(s)
+                total_script_chars += len(spoken)
+
+            print(f"\n📝 SCRIPT GENERATION COMPLETE")
+            print(f"   Number of slides: {len(slides_data)}")
+            print(f"   Final script character count: {total_script_chars}")
+            print(f"   (Includes intros, transitions, and ending messages)")
+
             script_path = os.path.join(job_dir, 'script.txt')
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write('\n\n--- SLIDE BREAK ---\n\n'.join(scripts))
@@ -277,20 +289,24 @@ class VideoPipeline:
             current_time = 0.0
             script_ts    = []
 
+            # Pre-load face mask to avoid re-loading for every slide
+            face_mask_obj = None
+            try:
+                temp_face = ImageClip(processed_face)
+                if temp_face.mask:
+                    face_mask_obj = temp_face.mask
+                temp_face.close()
+            except Exception as e:
+                print(f"  [WARN] Pre-loading face mask failed: {e}")
+
             for i, ls_vid in enumerate(lipsync_videos):
                 # ── Load avatar clip ──
                 avatar = VideoFileClip(ls_vid)
 
-                # Fix missing FPS from Wav2Lip output BEFORE doing anything else
+                # Fix missing FPS from Wav2Lip output efficiently without re-encoding to file
                 if getattr(avatar, 'fps', None) is None or avatar.fps == 0:
-                    print(f"  [FPS-FIX] {ls_vid} has no FPS — rewriting at {DEFAULT_FPS}fps...")
-                    tmp_fixed = ls_vid.replace('.mp4', '_fpsfixed.mp4')
-                    avatar.set_fps(DEFAULT_FPS).write_videofile(
-                        tmp_fixed, fps=DEFAULT_FPS,
-                        codec='libx264', audio_codec='aac', logger=None)
-                    avatar.close()
-                    shutil.move(tmp_fixed, ls_vid)
-                    avatar = VideoFileClip(ls_vid)
+                    avatar.fps = DEFAULT_FPS
+                    avatar = avatar.set_fps(DEFAULT_FPS)
 
                 avatar   = _force_fps(avatar)
                 duration = float(avatar.duration or 0.0)
@@ -306,9 +322,18 @@ class VideoPipeline:
 
                 # ── Background ──
                 if i < len(slide_images) and os.path.exists(slide_images[i]):
-                    bg = (ImageClip(slide_images[i])
-                          .set_duration(duration)
-                          .resize((VIDEO_W, VIDEO_H)))
+                    slide_clip = (ImageClip(slide_images[i])
+                                  .set_duration(duration))
+                    # Calculate scale to fit within VIDEO_W, VIDEO_H keeping aspect ratio
+                    slide_w, slide_h = slide_clip.size
+                    scale = min(VIDEO_W / slide_w, VIDEO_H / slide_h)
+                    new_w, new_h = int(slide_w * scale), int(slide_h * scale)
+                    slide_resized = slide_clip.resize((new_w, new_h))
+                    
+                    # Place it properly over a dark background to letterbox
+                    base_bg = (ColorClip((VIDEO_W, VIDEO_H), color=(30, 30, 45))
+                               .set_duration(duration))
+                    bg = CompositeVideoClip([base_bg, slide_resized.set_position("center")])
                 else:
                     bg = (ColorClip((VIDEO_W, VIDEO_H), color=(30, 30, 45))
                           .set_duration(duration))
@@ -323,24 +348,16 @@ class VideoPipeline:
                 ay = VIDEO_H - avatar.h - AVATAR_MARGIN
 
                 # ── Apply Transparency Mask ──
-                # Wav2Lip outputs video with a black background (stripping alpha).
-                # We restore transparency by using the mask from the original processed face.
                 try:
-                    # Load the PNG and extract its alpha channel as a mask
-                    temp_face = ImageClip(processed_face)
-                    if temp_face.mask:
-                        face_mask = temp_face.mask.set_duration(duration)
-                        # Resize mask to match current avatar size
-                        face_mask = face_mask.resize(height=avatar.h, width=avatar.w)
-                        avatar = avatar.set_mask(face_mask)
-                        print(f"  [MASK] Alpha transparency mask applied to avatar {i}")
+                    if face_mask_obj:
+                        # Resize cached mask to match current avatar size
+                        m = face_mask_obj.set_duration(duration)
+                        m = m.resize(height=avatar.h, width=avatar.w)
+                        avatar = avatar.set_mask(m)
                     else:
-                        # Fallback for images without alpha: use color mask
                         avatar = avatar.fx(vfx.mask_color, color=[0,0,0], thr=10, s=5)
-                        print(f"  [MASK] No alpha found, used black-color mask for avatar {i}")
-                    temp_face.close()
                 except Exception as me:
-                    print(f"  [WARN] Could not apply transparency mask: {me}")
+                    print(f"  [WARN] Mask application failed: {me}")
 
                 # ── Compose ──
                 comp = CompositeVideoClip(
@@ -363,8 +380,8 @@ class VideoPipeline:
             self._log(95, "Finalizing export")
 
             print(f"  [EXPORT] Found {len(final_clips)} composite clips. Starting concatenation...")
-            final_video = concatenate_videoclips(final_clips, method="compose")
-            final_video.fps = float(DEFAULT_FPS)
+            # 'chain' is MUCH faster than 'compose' for clips of identical size
+            final_video = concatenate_videoclips(final_clips, method="chain")
             final_video = _force_fps(final_video, DEFAULT_FPS)
             
             print(f"  [EXPORT] Final video assembled. Total duration: {final_video.duration:.2f}s, FPS: {final_video.fps}")
@@ -382,8 +399,10 @@ class VideoPipeline:
             # ── Export ──────────────────────────────────────────────────
             output_file = os.path.join(job_dir, 'final_lesson.mp4')
             
-            print(f"  [EXPORT] Exporting final video at {DEFAULT_FPS} FPS...")
-            # Guarantee fps is not None inside moviepy by setting it one more time AND passing it positionally
+            self._log(98, "COMPILING FINAL VIDEO (ENCODING)...")
+            print(f"  [EXPORT] Saving high-quality lesson MP4: {output_file}")
+            print(f"  [EXPORT] This may take a minute based on lesson length...")
+            
             final_video.fps = float(DEFAULT_FPS)
             final_video.write_videofile(
                 output_file,
@@ -393,11 +412,19 @@ class VideoPipeline:
                 audio_fps=44100,
                 preset='ultrafast',
                 audio_codec='aac',
-                logger=None,
-                threads=4
+                logger='bar',      # RE-ENABLED: Show progress bar in console as requested
+                threads=8,         
+                bitrate="8000k"    
             )
-            print(f"  ✅ SUCCESS: Video exported to {output_file}")
-
+            
+            # --- FINAL STEP ---
+            self._log(100, "GENERATION COMPLETE!")
+            print(f"\n{'*' * 60}")
+            print(f"🌟 SUCCESS: EDUFACE VIDEO LESSON GENERATED 🌟")
+            print(f"📍 LOCATION: {output_file}")
+            print(f"🕒 DURATION: {final_video.duration:.2f} seconds")
+            print(f"{'*' * 60}\n")
+            
             # ── Cleanup ──────────────────────────────────────────
             for c in final_clips:
                 try: c.close()
@@ -408,8 +435,6 @@ class VideoPipeline:
             results['status']                      = 'completed'
             results['final_video']                 = output_file
             results['steps']['finalization']       = 'completed'
-
-            self._log(100, "GENERATION COMPLETE! Video available at: " + output_file)
 
         except Exception as e:
             import traceback

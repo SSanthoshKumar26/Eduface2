@@ -1,0 +1,278 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+nextjs NextJS
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 0s
+
+[00:07] I'd be happy to help you with the spoken lecture audio. Here's a revised version that follows the strict guidelines:
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. DO NOT repeat the same opening phrases (like "Alright") frequently
+2. Use VARIED and PROFESSIONAL openings such as:
+   - "Hello everyone..."
+   - "Let’s begin with this concept..."
+   - "Now, let’s take a closer look..."
+   - "Let’s understand this carefully..."
+   - "Here’s something important..."
+
+3. DO NOT read the slide content directly
+4. You MUST explain in your own words
+5. You MUST expand beyond the slide
+6. Add at least ONE real-world example
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add example
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraph
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone, welcome to today's lecture. Let’s dive into the world of Next.js.
+
+This is a popular React-based framework for building server-side rendered, static, and performance-optimized web applications. It provides a comprehensive set of features for building fast, scalable, and maintainable applications.
+
+Key Features: Server-side rendering for improved SEO and performance, Static site generation for fast page loads, Automatic code splitting for optimized bundle sizes, Built-in support for internationalization and localization, Extensive plugin ecosystem for customization.
+
+Imagine you're creating an e-commerce website. You want to showcase products in a visually appealing way. That's where Next.js comes in. With its server-side rendering capabilities, you can render the entire page on the server, reducing the load on your client-side server.
+
+Now let’s take a closer look at one of Next.js’ key features: Static site generation. This feature allows you to generate static HTML files from your React components, which can be served directly by the server without any additional processing.
+
+Let’s understand this carefully, because this is an important concept. Focus on this part, and I'll provide more information shortly. Think about it this way, imagine having a library of reusable components that can be easily integrated into your application.
+
+This makes the concept much clearer. You see how easy it is to use Next.js for building fast and scalable web applications? With its robust set of features, you can create complex applications with ease.
+
+---
+
+Slide Content:
+NextJS NextJS is a popular React-based framework for building server-side rendered, static, and performance-optimized web applications. It provides a comprehensive set of features for building fast, scalable, and maintainable applications. Key Features... Server-side rendering for improved SEO and performance... Static site generation for fast page loads... Automatic code splitting for optimized bundle sizes... Built-in support for internationalization and localization... Extensive plugin ecosystem for customization
+
+---
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "Imagine you're creating an e-commerce website. You want to showcase products in a visually appealing way."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1s
+
+[00:14] I'll follow the guidelines and provide a sample output that meets the requirements.
+
+**Hello everyone...**
+
+Let's dive into this concept carefully. This idea is very important for our future projects, as it will help us create robust and scalable web applications.
+
+[SCENE START]
+TEXT: "
+This concept involves setting up a NextJS project from scratch."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+
+[INSERT SPEECH]
+
+Now, let's walk through the step-by-step process of creating a new NextJS project. We'll use the npx create-next-app command to get started.
+
+[SCENE START]
+TEXT: "
+To start, we need to choose a template or set up from scratch."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+
+Imagine we're building a new e-commerce platform for a fictional company. We want to create a modern and responsive website with dynamic routing.
+
+[SCENE START]
+TEXT: "
+We'll install required dependencies, configure project settings, and start the development server."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+
+Now that we have our project set up, let's create some routes for our application. We'll use the pages directory to create a route for our root URL.
+
+[SCENE START]
+TEXT: "
+We can also use dynamic routing for parameterized routes."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+
+Let's create an index page for our root route.
+
+[SCENE START]
+TEXT: "
+And finally, let's use the Link component for client-side navigation."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+
+[END SCENE]
+
+Remember, this is just a sample output and you should expand on it to fit your specific needs. Additionally, make sure to adjust the timing and pacing of the narration to match the desired flow.
+
+Also, keep in mind that the TTS system's limitations may affect the natural flow and expression of the spoken words. You may need to fine-tune the output to achieve a more natural and human-like tone.
+
+I hope this sample output helps you create engaging and effective spoken lectures!
+
+[00:19] I'll provide a sample lecture audio in the desired format. Here it is:
+
+[SCENE START]
+TEXT: "Hello everyone, today we're going to explore an essential concept in modern web development - State Management. This might seem complex, but stick with me, and I'll break it down step by step."
+FACE: smile
+EYES: look straight at the viewer
+HEAD: nod
+HANDS: subtle gestures towards notes on screen
+BODY: upright posture
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+This is important. State Management is crucial for building robust and maintainable applications.
+TEXT: "Imagine you're building a blog, and you want to make sure all the user's data is synced across all their devices."
+FACE: slightly nodding
+EYES: fixed on the speaker
+HEAD: small gesture towards an imaginary device
+HANDS: holding up a smartphone
+BODY: slight lean forward
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+This is where State Management comes in. It's about managing the global state of your application, and it's not just about storing data, but also about updating that data when something changes.
+TEXT: "For example, let's say you're using React, and you have a component like a login form."
+FACE: looking down at notes
+EYES: slightly tilted downwards
+HEAD: nodding slowly
+HANDS: gently fidgeting with notes
+BODY: relaxed posture
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+In this example, the State Management system would handle the login form's state and update it when the user submits the form."
+TEXT: "One popular library for managing state in React is Redux. It provides a simple way to manage global state, and it's highly scalable."
+FACE: looking up
+EYES: focused on the speaker
+HEAD: small gesture towards an imaginary screen with code
+HANDS: waving at the screen
+BODY: standing straight with confidence
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+Another popular option is MobX, which provides a simpler way to manage state in React. It's also highly scalable and flexible."
+TEXT: "When building larger applications, it's essential to understand how State Management works under the hood. This might seem daunting, but trust me, once you grasp it, you'll be able to build more complex applications."
+FACE: slightly leaning forward
+EYES: fixed on the speaker
+HEAD: nodding slowly
+HANDS: holding up a tablet with code open
+BODY: eyes lighting up with interest
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+This is important. Understanding State Management will help you build more maintainable and scalable applications."
+TEXT: "In conclusion, State Management is a crucial aspect of modern web development, and it's essential to understand its principles and best practices."
+FACE: looking straight at the viewer
+EYES: fixed on the speaker
+HEAD: small nod
+HANDS: relaxed posture with fingers on hips
+BODY: standing tall with confidence
+TIMING:
+- Duration: 1 second per 15 characters of text
+
+[SCENE END]
+TEXT: "Thank you for your attention, and I hope this explanation has helped clarify State Management."
+FACE: slight smile
+EYES: looking straight at the viewer
+HEAD: small nod
+HANDS: relaxed gesture towards notes on screen

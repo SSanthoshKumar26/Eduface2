@@ -11,24 +11,69 @@ class PPTExtractor:
         self.presentation = Presentation(ppt_path)
 
     def extract_text(self):
-        """Extract all text content from PPT slides"""
+        """Extract all text content from PPT slides including tables, groups, and paragraph-level detail"""
         slides_content = []
         for slide_num, slide in enumerate(self.presentation.slides, 1):
             slide_text = []
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    text = shape.text.strip()
-                    if text:
-                        slide_text.append(text)
+
+            def _process_shape(shape):
+                # 1. Handle shapes with text frames (most text)
+                if hasattr(shape, "text_frame") and shape.text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        text = paragraph.text.strip()
+                        if text:
+                            slide_text.append(text)
+                
+                # 2. Handle tables specifically
+                elif shape.has_table:
+                    for row in shape.table.rows:
+                        for cell in row.cells:
+                            # Extract text from every paragraph in every cell
+                            for paragraph in cell.text_frame.paragraphs:
+                                text = paragraph.text.strip()
+                                if text:
+                                    slide_text.append(text)
+                
+                # 3. Handle groups (Recursive)
+                elif shape.shape_type == 6: # Group shape
+                    for subshape in shape.shapes:
+                        _process_shape(subshape)
+                
+                # 4. Handle Graphic Frames (SmartArt, Charts, etc.)
+                elif shape.has_chart:
+                    try:
+                        if shape.chart.has_title:
+                            slide_text.append(shape.chart.chart_title.text_frame.text)
+                    except: pass
+                
+                # 5. Fallback for other text-bearing shapes
+                elif hasattr(shape, "text") and shape.text.strip():
+                    slide_text.append(shape.text.strip())
+
+            # Sort shapes by top/left position to maintain logical reading order
+            sorted_shapes = sorted(slide.shapes, key=lambda s: (s.top if hasattr(s, 'top') else 0, s.left if hasattr(s, 'left') else 0))
+            
+            for shape in sorted_shapes:
+                _process_shape(shape)
+
             notes = ""
             if slide.has_notes_slide:
                 notes_slide = slide.notes_slide
                 if notes_slide.notes_text_frame:
                     notes = notes_slide.notes_text_frame.text
+
+            # Deduplicate while preserving order (some shapes might double-report text)
+            seen = set()
+            distinct_text = []
+            for t in slide_text:
+                if t not in seen:
+                    distinct_text.append(t)
+                    seen.add(t)
+
             slides_content.append({
                 'slide_number': slide_num,
-                'title': slide_text[0] if slide_text else f"Slide {slide_num}",
-                'content': ' '.join(slide_text),
+                'title': distinct_text[0] if distinct_text else f"Slide {slide_num}",
+                'content': '\n'.join(distinct_text),
                 'notes': notes.strip()
             })
         return slides_content

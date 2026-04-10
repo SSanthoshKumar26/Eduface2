@@ -561,3 +561,73 @@ select.vg-cyber-input option {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* ============================================
+   PREMIUM VIDEO GALLERY STYLING
+   ============================================ */
+.vg-history-card {
+  max-width: 1100px;
+  margin: 0 auto 100px;
+  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vg-refresh-mini {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vg-refresh-mini:hover {
+  background: var(--cyan-primary);
+  color: #000;
+  border-color: var(--cyan-primary);
+  transform: rotate(180deg);
+}
+
+.vg-mini-action {
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vg-mini-action:hover {
+  background: var(--glass-surface-hover);
+  color: var(--cyan-primary);
+  border-color: var(--cyan-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+}
+
+.vg-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .vg-grid { grid-template-columns: 1fr; }
+  .vg-history-card .vg-card-body {
+     grid-template-columns: 1fr !important;
+  }
+}

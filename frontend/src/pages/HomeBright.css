@@ -342,7 +342,7 @@ p {
 
 .steps-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
 }
 
@@ -408,8 +408,8 @@ p {
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
 }
 
 .feature-card {
@@ -645,9 +645,18 @@ p {
     padding: 0 1.5rem;
   }
 
-  .features-grid,
-  .steps-grid,
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
   .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
 
@@ -701,6 +710,12 @@ p {
   .feature-card,
   .benefit-item {
     padding: 1.5rem;
+  }
+
+  .features-grid,
+  .steps-grid,
+  .benefits-grid {
+    grid-template-columns: 1fr;
   }
 
   .hero-buttons {

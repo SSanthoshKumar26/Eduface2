@@ -1,0 +1,65 @@
+Hey everyone! Welcome. Let's get started. EDUFACE: AN AI-POWERED PERSONALIZED LEARNING PLATFORM FOR ACCESSIBLE AND ENGAGING LEARNING Department of Computer Science and Engineering Team Members 1.Suresh Bharathi B 22ucs009 2.Sam Prasith R 22ucs027 3.Santhosh Kumar S 22ucs133 Project Guide Dr... A... Meenakshi, M.E., Ph.D Professor and Head of Department TECHNOVISION 2K26
+
+--- SLIDE BREAK ---
+
+Moving on. Motivation for the Project Providing quality education remains a challenge, especially for students in rural and economically weaker regions with limited access to teachers and learning resources... Traditional materials such as textbooks, PDFs, and PowerPoint slides are static and often fail to engage different learning styles... Advancements in Artificial Intelligence, Natural Language Processing, and Computer Vision provide new opportunities to improve digital education... EduFace aims to transform traditional study materials into interactive AI-generated video lessons with virtual instructors, making learning more engaging, accessible, and personalized.
+
+--- SLIDE BREAK ---
+
+Moving on. Project Proposal Document Project Description EduFace is an AI-powered platform that converts study materials such as notes or PowerPoint slides into interactive educational videos using a virtual AI instructor with voice narration and lip synchronization... Project Objective To develop an AI-based system that generates personalized educational videos automatically... To summarize learning materials using transformer-based language models... To generate natural speech narration using neural text-to-speech technology... To create realistic avatars with accurate lip synchronization... To provide a user-friendly platform for automated learning content creation.
+
+--- SLIDE BREAK ---
+
+Moving on. Online learning platforms Digital classrooms Remote education systems Self-learning platforms for students Educational content creation tools Application Innovation Integration of AI content generation, speech synthesis, facial animation, and automated video rendering into a single educational system.Applications
+
+--- SLIDE BREAK ---
+
+Moving on. Literature Survey
+
+--- SLIDE BREAK ---
+
+Moving on. Design Document Work Breakdown Structure A... Development Plan Deliverable The development of the EduFace system follows a modular architecture consisting of multiple stages... AI-based content generation module Automatic PowerPoint slide generation module Neural text-to-speech narration system AI avatar generation using facial image Lip synchronization using Wav2Lip model Final video rendering system using multimedia processing tools
+
+--- SLIDE BREAK ---
+
+Moving on. GANTT CHART
+
+--- SLIDE BREAK ---
+
+Moving on. B... Design Project Requirements Hardware Requirements Intel Core i5 AMD Ryzen 5 Processor Minimum 8 GB RAM 16 GB recommended NVIDIA GPU optional for AI acceleration Software Requirements ReactJS Frontend Interface Flask Framework Backend API Ollama for Local AI Model Execution Wav2Lip Deep Learning Model OpenCV and MediaPipe for Computer Vision MoviePy and FFmpeg for Video Rendering These technologies collectively support the development of a scalable AI-powered educational platform.
+
+--- SLIDE BREAK ---
+
+Moving on. System Design Description The EduFace system follows a web-based architecture integrating multiple AI modules to automatically generate educational videos... Frontend: A React-based interface where users upload learning materials and a facial image of the AI teacher... Backend: A Flask server that manages system operations and handles communication between different modules... AI Modules: Mistral Ollama Generates educational content Text-to-Speech Produces voice narration Wav2Lip Synchronizes lip movements with speech OpenCV MediaPipe Performs facial detection and processing Multimedia Processing:MoviePy and FFmpeg combine slides, narration audio, and the animated avatar to generate the final educational video.
+
+--- SLIDE BREAK ---
+
+Moving on. C... Acceptance Plan The system was evaluated using multiple academic topics to ensure proper functionality... Testing Parameters Accuracy of AI-generated educational content Quality of automatically generated talk slides Naturalness of speech narration Precision of lip synchronization Overall video rendering performance Validation Process Upload learning materials or topic prompts Verify AI-generated educational content Validate slide formatting and structure Check synchronization accuracy between speech and avatar Evaluate final video output quality Successful completion of these tests confirms system reliability.
+
+--- SLIDE BREAK ---
+
+Moving on. D... Results
+
+--- SLIDE BREAK ---
+
+Moving on. D... Results
+
+--- SLIDE BREAK ---
+
+Moving on. D... Results
+
+--- SLIDE BREAK ---
+
+Moving on. D... Results
+
+--- SLIDE BREAK ---
+
+Moving on. D... Results
+
+--- SLIDE BREAK ---
+
+Moving on. References 1 A... Vaswani, N... Shazeer, N... Parmar, et al., Attention Is All You Need, Proceedings of the 31st Conference on Neural Information Processing Systems NeurIPS , pp... 5998 6008, 2017... 2 J... Devlin, M... Chang, K... Lee, and K... Toutanova, BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, Proceedings of NAACL-HLT, pp... 4171 4186, 2019... 3 T... Brown, B... Mann, N... Ryder, et al., Language Models are Few-Shot Learners, Proceedings of the 34th Conference on Neural Information Processing Systems NeurIPS , 2020... 4 A... van den Oord, S... Dieleman, H... Zen, et al., WaveNet: A Generative Model for Raw Audio, Proc... Speech Synthesis Workshop, 2016.
+
+--- SLIDE BREAK ---
+
+Alright, for our final point. This slide covers Thank You. And that wraps things up. Thanks for watching!

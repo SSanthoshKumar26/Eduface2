@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   height: 70px;
-  z-index: 5; /* reduced to ensure scrollbars stay above fixed navbar */
+  z-index: 2000; /* Scaled up to ensure it stays on top of all dashboard elements */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,29 +260,31 @@
 .sign-in-button {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1.2rem;
-  background: linear-gradient(45deg, #00D2FF, #3A0CA3);
+  gap: 0.6rem;
+  padding: 0.6rem 1.4rem;
+  background: linear-gradient(135deg, #00D2FF 0%, #3A0CA3 100%);
   color: white;
-  border: none;
-  border-radius: 14px;
-  font-weight: 500;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
-  box-shadow:
-    0 3px 12px rgba(0, 210, 255, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  min-height: 36px;
+  box-shadow: 
+    0 4px 15px rgba(0, 210, 255, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  min-height: 42px;
+  letter-spacing: 0.02em;
 }
 
 .sign-in-button svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
 }
 
 .sign-in-button::before {
@@ -292,24 +294,34 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.15),
-      transparent);
-  transition: left 0.6s ease;
+  background: linear-gradient(
+    90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  transition: left 0.7s ease;
 }
 
 .sign-in-button:hover {
-  background: linear-gradient(45deg, #00F5FF, #7209B7);
-  transform: translateY(-1px) scale(1.03);
-  box-shadow:
-    0 6px 20px rgba(0, 210, 255, 0.35),
-    0 3px 10px rgba(58, 12, 163, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #00F5FF 0%, #7209B7 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 8px 25px rgba(0, 210, 255, 0.4),
+    0 0 20px rgba(58, 12, 163, 0.3);
+  border-color: rgba(0, 210, 255, 0.5);
+}
+
+.sign-in-button:hover svg {
+  transform: translateX(3px) rotate(-10deg);
 }
 
 .sign-in-button:hover::before {
   left: 100%;
+}
+
+.sign-in-button:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* User Button Styling */

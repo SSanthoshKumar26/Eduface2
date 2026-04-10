@@ -1,0 +1,33 @@
+[SCENE START]
+TEXT: "mysql Generated in Creative mode"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Overview MySQL Overview Introduction What is MySQL? Types of databases relational, NoSQL Brief history and evolution Database Fundamentals Data Types Integers - INT, BIGINT Strings - CHAR, VARCHAR, TEXT Dates and Times - DATE, TIME, DATETIME Records and Tables Records: individual data items Tables: collections of related records Querying MySQL Data SELECT Statement Basic syntax: SELECT column1, column2 FROM table name; Filtering with WHERE clause Grouping and aggregating with GROUP BY clause Database Management Creating a New Database Syntax: CREATE DATABASE database name; Overwriting an existing database - not supported Managing Databases Using the MySQL Workbench or command line Renaming databases - using RENAME DATABASE database name; Indexing and Optimizing Indexing Data Creating indexes on columns used in WHERE, GROUP BY, etc. Benefits of indexing - improved query performance"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 59s

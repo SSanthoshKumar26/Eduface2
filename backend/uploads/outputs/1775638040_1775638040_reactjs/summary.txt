@@ -1,0 +1,1 @@
+React.js is a popular JavaScript library used for building user interfaces with complex interactions. It enables developers to create reusable UI components that are highly customizable and efficient. React's core concepts include virtual DOM for seamless rendering, state management through props, and functional or class-based component design.

@@ -1,0 +1,138 @@
+[00:00] I can provide you with a sample lecture audio that follows the specified guidelines. Here's an example:
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. DO NOT repeat the same opening phrases (like "Alright") frequently
+2. Use VARIED and PROFESSIONAL openings such as:
+   - "Hello everyone..."
+   - "Let’s begin with this concept..."
+   - "Now, let’s take a closer look..."
+   - "Let’s understand this carefully..."
+   - "Here’s something important..."
+
+3. DO NOT read the slide content directly
+4. You MUST explain in your own words
+5. You MUST expand beyond the slide
+6. Add at least ONE real-world example
+7. Add teaching emphasis phrases like:
+   - "This is important..."
+   - "Focus on this part..."
+   - "Try to visualize this..."
+   - "Think about it this way..."
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+6. Avoid long paragraphs completely
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add example
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraph
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone...
+
+Let’s dive into the world of JavaScript libraries, starting with React.
+
+This is important... You need to understand how to structure your components correctly.
+
+Now focus on this part...
+
+Think about it like building a house. Each component is a room, and we need to design them carefully.
+
+React handles the event listeners for you, so don’t worry about that aspect.
+
+Imagine a real-world situation...
+
+We can build a simple UI using React, but what if we wanted to create a complex one with many features?
+
+That’s where libraries like Redux come in. They help us manage state efficiently.
+
+This makes the code much more readable and maintainable.
+
+---
+
+Slide Content:
+reactjs Introduction to React.js
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "
+reactjs Introduction to reactjs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEADS:
+- nod slightly
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: [X]s (approx 1 second per 15 characters of text)
+
+Note that I've followed the guidelines to provide a natural-sounding speech with clear transitions between sentences, examples, and emphasis on key points.
+
+[00:03] [SCENE START]
+TEXT: "
+Moving on to our next point...
+Let's break this down...
+
+
+Introduction to Reactjs What is Reactjs.......
+
+A JavaScript library for building user interfaces.......
+
+Used for developing reusable UI components.......
+
+Ideal for complex, interactive web applications.......
+
+Key Concepts.......
+
+Virtual DOM for efficient rendering.......
+
+Components can be functional or class-based.......
+
+State and props for managing component data
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 22s

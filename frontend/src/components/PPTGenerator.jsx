@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
+import { useUser } from '@clerk/clerk-react';
 import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX, FiTrash2 } from 'react-icons/fi';
 import ThemeSelector from './ThemeSelector';
 import '../styles/PPTGenerator.css';
@@ -10,6 +11,7 @@ const PPTGenerator = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { user } = useUser();
   const [generatedContent, setGeneratedContent] = useState(location.state?.generatedContent || "");
 
   const [fileName, setFileName] = useState("AI_Generated_Presentation");
@@ -85,6 +87,7 @@ const PPTGenerator = () => {
         content: generatedContent,
         title: fileName,
         filename: fileName,
+        userId: user?.id,
         customizations: {
           ...customizations,
           theme: selectedTheme

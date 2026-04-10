@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Menu, X, LogOut, LogIn } from 'lucide-react';
+import { SignedIn, SignedOut, SignInButton, UserButton, SignOutButton } from "@clerk/clerk-react";
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { toast } from 'react-toastify';
@@ -36,6 +37,8 @@ function Navbar() {
         { label: 'Content Generator', path: '/content-gen' },
         { label: 'PPT Generator', path: '/ppt-generator' },
         { label: 'Video Generator', path: '/video-gen' },
+        { label: 'My Video Library', path: '/video-gallery' },
+        { label: 'My Dashboard', path: '/quiz/result' },
     ];
 
     return (
@@ -63,6 +66,24 @@ function Navbar() {
                     {/* Theme Toggle */}
                     <div className="navbar-actions">
                         <ThemeToggle />
+                        <SignedOut>
+                            <SignInButton mode="modal">
+                                <button className="sign-in-button">
+                                    <LogIn size={18} />
+                                    <span>Sign In</span>
+                                </button>
+                            </SignInButton>
+                        </SignedOut>
+                        <SignedIn>
+                            <div className="user-actions">
+                                <UserButton afterSignOutUrl="/" />
+                                <SignOutButton>
+                                    <button className="sign-out-button" title="Sign Out">
+                                        <LogOut size={18} />
+                                    </button>
+                                </SignOutButton>
+                            </div>
+                        </SignedIn>
                     </div>
                 </div>
 
@@ -87,6 +108,25 @@ function Navbar() {
                         </div>
                         <div className="mobile-actions">
                             <ThemeToggle />
+                            <SignedOut>
+                                <SignInButton mode="modal">
+                                    <button className="sign-in-button">
+                                        <LogIn size={18} />
+                                        <span>Sign In</span>
+                                    </button>
+                                </SignInButton>
+                            </SignedOut>
+                            <SignedIn>
+                                <div className="mobile-user-actions">
+                                    <UserButton afterSignOutUrl="/" />
+                                    <SignOutButton>
+                                        <button className="mobile-sign-out-button">
+                                            <LogOut size={18} />
+                                            <span>Logout</span>
+                                        </button>
+                                    </SignOutButton>
+                                </div>
+                            </SignedIn>
                         </div>
                     </div>
                 )}

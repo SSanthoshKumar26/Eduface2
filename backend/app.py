@@ -1057,6 +1057,23 @@ def generate_ppt():
         # But wait, send_file is more convenient for immediate download.
         # How about we return the path in custom headers? Or just return JSON?
         
+        # Save to DB if userId provided
+        user_id = data.get('userId')
+        if user_id:
+            try:
+                db = get_db()
+                if db:
+                    db.ppts.insert_one({
+                        'userId': user_id,
+                        'filename': final_filename,
+                        'path': ppt_path,
+                        'title': title,
+                        'createdAt': time.time(),
+                        'type': 'generated'
+                    })
+            except Exception as dbe:
+                print(f"⚠️ Could not save PPT to DB: {dbe}")
+
         # Let's check if the client expects JSON
         if request.headers.get('Accept') == 'application/json':
             return jsonify({
@@ -1142,6 +1159,23 @@ def upload_files():
             path = os.path.join(target_dir, filename)
             ppt_file.save(path)
             response_data["ppt_path"] = path
+
+            # Save to DB if userId provided
+            user_id = request.form.get('userId')
+            if user_id:
+                try:
+                    db = get_db()
+                    if db:
+                        db.ppts.insert_one({
+                            'userId': user_id,
+                            'filename': ppt_file.filename,
+                            'path': path,
+                            'title': ppt_file.filename,
+                            'createdAt': time.time(),
+                            'type': 'uploaded'
+                        })
+                except Exception as dbe:
+                    print(f"⚠️ Could not save uploaded PPT to DB: {dbe}")
             
         if face_file:
             target_dir = globals().get('FACE_UPLOAD_DIR', UPLOAD_FOLDER)
@@ -1459,12 +1493,14 @@ def manage_quiz():
         2. Total: MUST be {len(full_quiz) if full_quiz else num_questions}.
         3. Wrong: Total - Correct (EVERY question NOT in 'User's Provided Answers' is WRONG).
         4. Accuracy: (Correct / Total) * 100.
-        Perform concept-wise analysis for ALL questions in the pool.
-        Identify specific Strengths and Weaknesses based on full completion.
-        Even if user only answers 1 question, total must be {len(full_quiz) if full_quiz else num_questions}.
-        Perform concept-wise analysis: for each unique concept found in the quiz, calculate accuracy and level (Strong >= 80%, Moderate 50-79%, Weak < 50%).
-        Identify specific Strengths and Weaknesses.
-        Provide actionable, non-generic Improvement Suggestions.
+        
+        ADVANCED AI LEARNING ANALYST LAYER (Crucial):
+        Analyze the quiz data and identify deep patterns in HOW the student learns and makes mistakes:
+        - Conceptual Understanding: Which core topics are definitively weak or strong.
+        - Error Patterns: Track repeated mistakes in similar questions. Differentiate fundamental misunderstandings vs careless errors.
+        - Thinking Behavior: Is the user rushing? Overthinking? Guessing based on distractor choices?
+        
+        Perform concept-wise analysis for ALL unique concepts to determine accuracy per concept.
 
         OUTPUT FORMAT: STRICT JSON ONLY. NO MARKDOWN.
         {{
@@ -1484,9 +1520,14 @@ def manage_quiz():
             "concept_analysis": [
               {{"concept": "...", "accuracy": "0%", "level": "Strong/Moderate/Weak"}}
             ],
-            "strengths": ["..."],
-            "weaknesses": ["..."],
-            "suggestions": ["..."],
+            "learning_insights": [
+              "Insight 1 about thinking behaviour",
+              "Insight 2 about error patterns",
+              "Insight 3 about conceptual depth"
+            ],
+            "strengths": ["Strength 1", "Strength 2"],
+            "weaknesses": ["Weakness 1", "Weakness 2"],
+            "suggestions": ["Behavioral advice", "Specific practice needed"],
             "learning_level": "Beginner/Intermediate/Advanced"
           }}
         }}
@@ -1506,6 +1547,83 @@ def manage_quiz():
     except Exception as e:
         import traceback
         traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/quiz/evaluate", methods=["POST"])
+def evaluate_quiz_detailed():
+    """Generates high-quality per-question reviews for a completed quiz"""
+    try:
+        data = request.json
+        questions = data.get('questions', [])
+        
+        if not questions:
+            return jsonify({"success": False, "error": "Missing quiz data"}), 400
+            
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            return jsonify({"success": False, "error": "GROQ_API_KEY not found"}), 500
+            
+        client = Groq(api_key=api_key)
+
+        prompt = f"""
+        You are an expert AI tutor and learning coach.
+        Analyze the following student quiz results and provide a structured, educational review for each question.
+
+        QUIZ DATA (JSON):
+        {json.dumps(questions)}
+
+        INSTRUCTIONS:
+        For EACH question:
+        1. Determine correctness (Result: Correct/Incorrect).
+        2. If CORRECT:
+           - Start with: "Your answer is correct!"
+           - Explain WHY the correct answer is right in extreme depth (200-300 words).
+           - Provide advanced professional insights, historical context, or complex real-world use cases.
+           - Ensure the explanation is highly elaborated and teaches the concept thoroughly.
+        3. If INCORRECT:
+           - Start with: "Your answer is incorrect."
+           - State the correct answer clearly.
+           - Explain WHY the correct answer is right and critically analyze why the student's answer was logically flawed (200-300 words).
+           - Provide deep technical details to correct the misconception entirely.
+        4. ADDITIONAL RESOURCES:
+           - Provide an array of exactly 2 "additionalResources".
+           - These must NOT be generic. They must be highly specialized, conceptual, and heavily differentiated from other questions.
+           - Format strictly as: "Advanced Concept Name - Detailed 2-sentence description of exactly what technical details to study to master this specific niche edge-case."
+
+        TONE: Encouraging, highly professional, deeply analytical, and academic SaaS-level.
+        GOAL: Provide a premium, university-level technical breakdown equivalent to a senior engineer's review.
+
+        OUTPUT FORMAT: STRICT JSON ONLY. NO MARKDOWN.
+        {{
+          "evaluations": [
+            {{
+              "question": "...",
+              "userAnswer": "...",
+              "correctAnswer": "...",
+              "result": "...",
+              "explanation": "...",
+              "mistakeExplanation": "...",
+              "additionalResources": ["...", "..."]
+            }}
+          ]
+        }}
+        """
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a professional AI tutor and learning coach. Respond ONLY in valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(completion.choices[0].message.content)
+        return jsonify({"success": True, "evaluations": result.get("evaluations", [])})
+        
+    except Exception as e:
+        print(f"❌ EVALUATION ERROR: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 # ============ HEALTH CHECK ============
@@ -1589,6 +1707,167 @@ def get_shared_chat(chat_id):
     except Exception as e:
         return jsonify({'success': False, 'error': 'Failed to load chat'}), 500
 
+# ==========================================
+# MongoDB User & Video Sync Endpoints
+# ==========================================
+try:
+    from db import get_db
+except ImportError:
+    get_db = lambda: None
+
+@app.route('/api/users', methods=['POST'])
+def sync_user():
+    try:
+        data = request.json
+        if not data or not data.get('clerkId'):
+            return jsonify({'success': False, 'error': 'clerkId is required'}), 400
+            
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        clerk_id = data['clerkId']
+        user_data = {
+            'name': data.get('name', ''),
+            'email': data.get('email', ''),
+            'profileImage': data.get('profileImage', ''),
+            'lastLogin': time.time()
+        }
+        
+        # update or insert
+        db.users.update_one(
+            {'clerkId': clerk_id},
+            {
+                '$set': user_data,
+                '$setOnInsert': {'createdAt': time.time()}
+            },
+            upsert=True
+        )
+        
+        return jsonify({'success': True, 'message': 'User synced successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/videos', methods=['POST'])
+def save_video():
+    try:
+        data = request.json
+        print(f"📥 SAVE VIDEO REQUEST: {data}")
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        u_id = data.get('userId')
+        v_id = data.get('videoId')
+        
+        if not u_id or not v_id:
+            print(f"❌ REJECTED: userId={u_id}, videoId={v_id}")
+            return jsonify({'success': False, 'error': 'userId and videoId required'}), 400
+            
+        # check if video already exists
+        existing = db.videos.find_one({'videoId': v_id})
+        if existing:
+            print(f"ℹ️ Video {v_id} already in gallery")
+            return jsonify({'success': True, 'message': 'Video already exists'})
+            
+        video_data = {
+            'userId': data['userId'],
+            'videoId': data['videoId'],
+            'videoUrl': data.get('videoUrl', ''),
+            'videoData': data.get('videoData', ''),
+            'title': data.get('title', 'Generated Video'),
+            'createdAt': data.get('createdAt', time.time())
+        }
+        
+        db.videos.insert_one(video_data)
+        return jsonify({'success': True, 'message': 'Video saved to DB'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/videos/<clerk_id>', methods=['GET'])
+def get_user_videos(clerk_id):
+    try:
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        videos = list(db.videos.find({'userId': clerk_id}).sort('createdAt', -1))
+        
+        # Convert ObjectId to string for JSON serialization
+        for v in videos:
+            v['_id'] = str(v['_id'])
+            
+        return jsonify({
+            'success': True,
+            'videos': videos
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+from bson.objectid import ObjectId
+
+@app.route('/api/videos/<video_id>', methods=['PUT'])
+def rename_video(video_id):
+    try:
+        data = request.json
+        new_title = data.get('title')
+        if not new_title:
+            return jsonify({'success': False, 'error': 'New title is required'}), 400
+            
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        result = db.videos.update_one(
+            {'_id': ObjectId(video_id)},
+            {'$set': {'title': new_title}}
+        )
+        
+        if result.modified_count == 0:
+            return jsonify({'success': False, 'error': 'Video not found or title unchanged'}), 404
+            
+        return jsonify({'success': True, 'message': 'Video renamed successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/videos/<video_id>', methods=['DELETE'])
+def delete_video(video_id):
+    try:
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        # Optional: delete physical files from storage if needed. 
+        # For now, just delete DB record to remove from gallery.
+        result = db.videos.delete_one({'_id': ObjectId(video_id)})
+        
+        if result.deleted_count == 0:
+            return jsonify({'success': False, 'error': 'Video not found'}), 404
+            
+        return jsonify({'success': True, 'message': 'Video deleted successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/ppts/<clerk_id>', methods=['GET'])
+def get_user_ppts(clerk_id):
+    try:
+        db = get_db()
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not connected'}), 500
+            
+        ppts = list(db.ppts.find({'userId': clerk_id}).sort('createdAt', -1))
+        
+        # Convert ObjectId to string
+        for p in ppts:
+            p['_id'] = str(p['_id'])
+            
+        return jsonify({
+            'success': True,
+            'ppts': ppts
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ============ START SERVER ============
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)

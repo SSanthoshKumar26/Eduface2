@@ -1,0 +1,324 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+reactjs Introduction to Reactjs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:08] [SCENE START]
+TEXT: "
+Moving on to our next point...
+Let's break this down...
+
+
+Introduction to Reactjs What is Reactjs.......
+
+A JavaScript library for building user interfaces.......
+
+Used for developing reusable UI components.......
+
+Ideal for complex, interactive web applications.......
+
+Key Concepts.......
+
+Virtual DOM for efficient rendering.......
+
+Components can be functional or class-based.......
+
+State and props for managing component data
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 22s
+
+[00:39] I'd be happy to help you with creating a spoken lecture audio output in the desired format. Here's my attempt at converting your input into an engaging and natural-sounding speech:
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. Use varied and professional openings such as:
+   - "Good morning everyone..."
+   - "Welcome back to our discussion..."
+   - "Let’s dive right in..."
+
+2. DO NOT repeat the same opening phrases frequently
+3. Use VARIED and PROFESSIONAL openings like:
+   - "Today we're going to explore..."
+   - "As we continue with this concept..."
+   - "Now, let's break it down step by step..."
+
+4. DO NOT read the slide content directly
+5. Explain in your own words
+6. Expand beyond the slide
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add real-world examples
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraphs
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone...
+
+Let's dive right in to this concept...
+
+This is very important, so pay attention...
+
+We'll start with a simple example...
+
+Think about how we use ReactJS components...
+
+For instance, let's take a look at functional components...
+
+These are great for small, stateless components...
+
+Class components are more suitable for complex ones...
+
+Higher-order components come in handy for code reuse and abstraction...
+
+State is essential for storing component-specific data...
+
+Props allow us to pass data from parent to child components...
+
+Context API helps share data between components...
+
+ReactJS Components
+
+Component Types
+
+Functional components for simple, stateless components Functional components for complex, stateful components Higher-order components for code reuse and abstraction Managing Component Data State for storing component-specific data Props for passing data from parent to child components Context API for sharing data between components
+
+---
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "
+Let’s dive right in to this concept...
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1 second
+- with a pause after each sentence
+
+[SCENE END]
+TEXT: "
+This is very important, so pay attention...
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1 second
+
+[SCENE START]
+TEXT: "
+We'll start with a simple example..."
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 0.5 seconds
+- pause after the first sentence
+
+[SCENE END]
+TEXT: "
+Think about how we use ReactJS components..."
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1 second
+
+[SCENE START]
+TEXT: "
+For instance, let's take a look..."
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 0.5 seconds
+
+[SCENE END]
+TEXT: "
+Let's use a simple example..."
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1 second
+
+---
+
+Slide Content remains the same as before.
+
+Please let me know if this meets your requirements or if you need any further adjustments.
+
+[00:42] I'll follow the guidelines to create a spoken lecture audio that sounds natural, expressive, and human-like. Here's my attempt:
+
+[SCENE START]
+TEXT: "Hello everyone... Today we're going to explore one of the most crucial aspects of building scalable and maintainable software systems - React.js best practices."
+
+FACE: [slightly relaxed, with a hint of enthusiasm] 
+EYES: Directly on the viewer
+HEAD: Small nod
+HANDS: Gentle gestures as the narrator speaks
+
+[TEXT]:
+"This is important... Knowing how to build efficient and effective frontend applications is key to success in the tech industry. And React.js is one of the most popular front-end libraries for building complex UI components."
+
+[FACE]:
+[A small smile plays on the narrator's lips]
+EYES: Directly on the viewer
+HEAD: Slight tilt upwards, as if considering a question
+HANDS: Flicking through notes or gestures as the narrator speaks
+
+[TEXT]:
+"Now let's take a closer look at some of the key best practices... One of the most important is to use a code bundler like Webpack or Rollup. This helps to reduce the size of your production bundle and improve performance."
+
+[FACE]:
+[A slight nod, as if acknowledging a point]
+EYES: Directly on the viewer
+HEAD: Subtle eyebrow raise
+HANDS: Gentle tapping on the shoulder, as if asking for clarification
+
+[TEXT]:
+"Another crucial aspect is implementing a state management library like Redux or MobX. This allows you to manage complex state in your application and make it easier to maintain."
+
+[FACE]:
+[A slight pause, as if considering an example]
+EYES: Directly on the viewer
+HEAD: Small nod
+HANDS: Flicking through notes or gestures as the narrator speaks
+
+[TEXT]:
+"Think about it this way... Imagine you're building a complex e-commerce application. Without proper state management, your frontend would become a tangled mess of state changes and re-renders."
+
+[FACE]:
+[A slight smile plays on the narrator's lips]
+EYES: Directly on the viewer
+HEAD: Small nod
+HANDS: Gentle gestures as the narrator speaks
+
+[TEXT]:
+"By following these best practices, you can build scalable and maintainable React applications that will serve your users well."
+
+[FACE]:
+[A final pause, before a brief smile]
+EYES: Directly on the viewer
+HEAD: Slight nod
+HANDS: Gentle release of hands, as if concluding the lecture]
+
+[SCENE END]
+TEXT: 
+[ Fade to silence ]

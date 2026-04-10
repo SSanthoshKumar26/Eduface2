@@ -57,11 +57,32 @@ const QuizAttempt = () => {
       });
       
       if (response.data.success) {
-        navigate('/quiz/result', {
-          state: {
-            evaluation: response.data.data.evaluation
-          }
-        });
+        const evaluation = response.data.data.evaluation;
+        
+        // Fetch detailed evaluations
+        try {
+          const detailResponse = await axios.post(`${API_BASE_URL}/api/quiz/evaluate`, {
+            questions: quiz.map(q => ({
+              question: q.question,
+              options: q.options,
+              correctAnswer: q.correct_answer,
+              userAnswer: currentAnswers[q.id]
+            }))
+          });
+          
+          navigate('/quiz/result', {
+            state: {
+              evaluation,
+              detailedReviews: detailResponse.data.success ? detailResponse.data.evaluations : null,
+              lessonContent
+            }
+          });
+        } catch (detailError) {
+          console.error("Detailed evaluation failed", detailError);
+          navigate('/quiz/result', {
+            state: { evaluation, lessonContent }
+          });
+        }
       }
     } catch (error) {
       console.error("Quiz submission failed", error);

@@ -18,6 +18,7 @@ import {
   Clock,
   Shield,
   Check,
+  Cpu,
 } from "lucide-react";
 import "./HomeBright.css";
 
@@ -42,9 +43,9 @@ export default function Home() {
 
   const features = [
     {
-      icon: Sparkles,
-      title: "AI Content Magic",
-      desc: "Generate complete lessons from any topic in seconds",
+      icon: Cpu,
+      title: "AI Narrative Engine",
+      desc: "Generate comprehensive lessons from any topic in seconds",
       color: "#00E5FF",
     },
     {
@@ -60,10 +61,16 @@ export default function Home() {
       color: "#00B8D4",
     },
     {
-      icon: Clock,
-      title: "Lightning Fast",
-      desc: "From topic to video in under 3 minutes",
+      icon: TrendingUp,
+      title: "AI Learning Analyst",
+      desc: "Deep analysis of your thinking patterns and mistakes",
       color: "#009DB3",
+    },
+    {
+      icon: Brain,
+      title: "Concept Mastery",
+      desc: "Track understanding across every educational topic",
+      color: "#6366f1",
     },
   ];
 
@@ -79,7 +86,7 @@ export default function Home() {
       num: "02",
       title: "Generate Content",
       desc: "AI creates comprehensive slides instantly",
-      icon: Sparkles,
+      icon: Cpu,
       color: "#26C6DA",
     },
     {
@@ -89,6 +96,13 @@ export default function Home() {
       icon: Video,
       color: "#00B8D4",
     },
+    {
+      num: "04",
+      title: "Deep Analysis",
+      desc: "AI Tutor reviews your concept mastery",
+      icon: TrendingUp,
+      color: "#6366f1",
+    },
   ];
 
   return (
@@ -97,7 +111,7 @@ export default function Home() {
       <section className="hero-section" ref={heroRef}>
         <div className="hero-wrapper">
           <div className="hero-left">
-            <div className="hero-badge">✨ Just Launched</div>
+            <div className="hero-badge">Professional AI Platform</div>
 
             <h1 className="hero-title">
               Create
@@ -119,10 +133,6 @@ export default function Home() {
                 <Rocket size={22} />
                 Start Creating Free
                 <ArrowRight size={22} />
-              </button>
-              <button className="btn-secondary">
-                <Play size={22} />
-                Watch Demo (45s)
               </button>
             </div>
           </div>
@@ -176,7 +186,7 @@ export default function Home() {
       {/* Features - FULL WIDTH */}
       <section className="features-section" id="features">
         <div className="section-container">
-          <h2 className="section-title">Why Teachers ❤️ EduFace</h2>
+          <h2 className="section-title">Why Educators Choose EduFace</h2>
           <p className="section-subtitle">Everything you need to create professional content instantly</p>
 
           <div className="features-grid">
@@ -240,10 +250,10 @@ export default function Home() {
         <div className="section-container">
           <div className="footer-content">
             <div className="footer-brand">
-              <Sparkles size={28} className="brand-icon" />
+              <Cpu size={28} className="brand-icon" />
               <span>EduFace</span>
             </div>
-            <p>&copy; 2026 EduFace AI. Made with ❤️ for teachers everywhere.</p>
+            <p>&copy; 2026 EduFace AI. Empowering educators worldwide through neural synthesis.</p>
           </div>
         </div>
       </footer>

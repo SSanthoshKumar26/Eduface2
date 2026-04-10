@@ -152,179 +152,114 @@ Content:
     def format_for_speech_per_slide(self, slides_data, slang_level='medium'):
         """
         Returns a list of narration strings — one per slide.
-        Each string is the spoken script for that slide only.
+        Ensures NO word is skipped and NO titles are repeated twice.
         """
         import os
         import requests
+        try:
+            from groq import Groq
+        except ImportError:
+            Groq = None
         
+        groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
         OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         AI_MODEL = os.getenv("OLLAMA_MODEL", "tinyllama")
         
         scripts = []
         total = len(slides_data)
+        
         for i, slide in enumerate(slides_data):
-            
+            title = slide.get('title', '').strip()
             content = slide.get('notes') or slide.get('content', '')
-            content = content.strip()
+            content = content.replace('\r', '').strip()
             
             clean_content = self._clean_for_speech(content)
-            if len(clean_content) < 10:
-                title = slide.get('title', f"Slide {i+1}")
-                clean_title = self._clean_for_speech(title)
-                clean_content = f"This slide covers {clean_title}."
-                
-            # Create Scene Script via Conversational teaching LLM Prompt
-            sys_prompt = f"""You are a professional teacher creating spoken lecture audio.
+            
+            def _normalize(s): return re.sub(r'[^a-zA-Z0-9]', '', s).lower()
+            norm_title = _normalize(title)
+            if clean_content and norm_title:
+                norm_content_start = _normalize(clean_content[:len(title) + 20])
+                if norm_title in norm_content_start:
+                    clean_content = clean_content.replace(title, '', 1).strip()
 
-This output will be converted into audio using a TTS system.
-So it MUST sound natural, expressive, and human-like.
+            if not clean_content or len(clean_content) < 5:
+                clean_content = f"On this slide, we focus on {title}."
+            
+            is_first_slide = (i == 0)
+            is_last_slide = (i == total - 1)
+            
+            sys_prompt = f"""You are the EDUFACE VERBATIM NARRATOR. 
 
----
+### ‼️ CRITICAL RULES for SLIDE {i+1} ‼️
+1. **NO INTRODUCTIONS**: { 'You MUST start with "Welcome to this lesson."' if is_first_slide else 'DO NOT say "Welcome", "Hello", or "Hi". Slide 1 is already finished. Start IMMEDIATELY with a transition like "Moving on to..." or "Continuing with..."'}
+2. **ZERO SUMMARIZATION**: You are narrating the FULL text. You must not skip a single bullet point or detail.
+3. **CONTENT ANCHOR**: If the slide has content, you MUST explain it. You cannot just output transition text.
 
-STRICT RULES (MANDATORY):
-
-1. DO NOT repeat the same opening phrases (like "Alright") frequently
-2. Use VARIED and PROFESSIONAL openings such as:
-   - "Hello everyone..."
-   - "Let’s begin with this concept..."
-   - "Now, let’s take a closer look..."
-   - "Let’s understand this carefully..."
-   - "Here’s something important..."
-
-3. DO NOT read the slide content directly
-4. You MUST explain in your own words
-5. You MUST expand beyond the slide
-6. Add at least ONE real-world example
-7. Add teaching emphasis phrases like:
-   - "This is important..."
-   - "Focus on this part..."
-   - "Try to visualize this..."
-   - "Think about it this way..."
-
----
-
-SPEECH FORMATTING RULES (VERY IMPORTANT):
-
-1. Each sentence MUST be on a NEW LINE
-2. Each line must be SHORT (5–10 words MAX)
-3. Add "..." at the end of most lines
-4. Add EMPTY LINE between sentences (VERY IMPORTANT)
-5. This empty line creates a natural pause in speech
-6. Avoid long paragraphs completely
-
----
-
-STRUCTURE:
-
-- Start with a professional greeting (ONLY ONCE)
-- Introduce the concept
-- Explain step by step
-- Add example
-- Reinforce key idea
-- Smooth ending
-
----
-
-BAD OUTPUT (DO NOT DO):
-- Long paragraph
-- Repetitive phrases
-- Direct reading
-
----
-
-GOOD OUTPUT STYLE (STRICTLY FOLLOW):
-
-Hello everyone...
-
-Let’s understand this concept carefully...
-
-This idea is very important...
-
-Now focus on this part...
-
-
-
-Think about it this way...
-
-Imagine a real-world situation...
-
-
-
-This makes the concept much clearer...
-
----
-
-Slide Content:
+### 📜 SLIDE DATA
+**TITLE**: {title}
+**BODY**:
 {clean_content}
 
----
+### 📤 OUTPUT REQUIREMENTS
+- **Start text**: { '"Welcome to this lesson."' if is_first_slide else '"Continuing to our next topic, ' + title + '."' }
+- **Body text**: Convert every single point from the BODY section into professional, flowing spoken sentences. DO NOT SHORTEN.
+- **Verification**: Ensure the output word count is consistent with the input density.
 
-OUTPUT FORMAT (STRICT):
 [SCENE START]
-TEXT: "
-[Insert ONLY the teaching narration in this format]
-"
-FACE:
-- slight smile
-- attentive
-EYES:
-- look straight at viewer
-HEAD:
-- small nod
-HANDS:
-- subtle gestures
-BODY:
-- upright posture
-TIMING:
-- duration: [X]s (approx 1 second per 15 characters of text)
+TEXT: "[Insert the FULL script here. Maintain absolute fidelity to the input body.]"
+FACE: - slight smile
+TIMING: - duration: [1s per 10 characters]
 """
             
-            # Failsafe default script with varied natural openings
-            openings = [
-                "Hello everyone...\nToday we will be discussing this topic...\n\n",
-                "Moving on to our next point...\nLet's break this down...\n\n",
-                "Now, pay attention to this part...\nIt's quite important...\n\n",
-                "Let's look at another aspect of this...\n\n",
-                "To continue with our discussion...\n\n"
-            ]
-            opening = openings[i % len(openings)] if i > 0 else openings[0]
+            failsafe_opening = "Welcome to this lesson. " if is_first_slide else "Now let's continue. "
+            failsafe_text = f"{failsafe_opening}{title}... {clean_content}."
+            if is_last_slide:
+                failsafe_text += " Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
             
-            formatted_failsafe = self.add_conversational_style(clean_content, slang_level).replace('. ', '...\n\n')
+            calc_duration = max(8, len(failsafe_text) // 10)
+            
             slide_script = f"""[SCENE START]
-TEXT: "
-{opening}
-{formatted_failsafe}
-"
-FACE:
-- slight smile
-- attentive
-EYES:
-- look straight at viewer
-HEAD:
-- small nod
-HANDS:
-- subtle gestures
-BODY:
-- upright posture
-TIMING:
-- duration: {len(clean_content)//15}s"""
+TEXT: "{failsafe_text}"
+FACE: - slight smile
+TIMING: - duration: {calc_duration}s"""
             
             try:
-                # Try to use Ollama API to generate
-                print(f"  [AI] Generating Director Script for Slide {i+1} via Ollama...")
-                payload = {
-                    "model": AI_MODEL,
-                    "prompt": sys_prompt,
-                    "stream": False,
-                    "temperature": 0.7
-                }
-                response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=120)
-                if response.status_code == 200:
-                    generated = response.json().get('response', '').strip()
-                    if "[SCENE START]" in generated and "TEXT:" in generated:
+                print(f"  [AI] Narrating Slide {i+1}/{total}: '{title[:30]}...' ({len(clean_content)} chars)")
+                generated = None
+                
+                # Priority 1: Groq API for flawless rule adherence
+                if groq_api_key and Groq:
+                    try:
+                        client = Groq(api_key=groq_api_key)
+                        response = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=[
+                                {"role": "system", "content": sys_prompt},
+                                {"role": "user", "content": f"Generate the narration for Slide {i+1}."}
+                            ],
+                            temperature=0.2
+                        )
+                        if response.choices and len(response.choices) > 0:
+                            generated = response.choices[0].message.content.strip()
+                    except Exception as ge:
+                        print(f"  [WARN] Groq generation failed: {ge}. Falling back to Ollama.")
+                
+                if not generated:
+                    payload = {
+                        "model": AI_MODEL,
+                        "prompt": sys_prompt,
+                        "stream": False,
+                        "temperature": 0.2
+                    }
+                    response = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=120)
+                    if response.status_code == 200:
+                        generated = response.json().get('response', '').strip()
+                
+                if generated and "[SCENE START]" in generated and "TEXT:" in generated:
+                    if len(generated) > 50:
                         slide_script = generated
             except Exception as e:
-                print(f"  [WARNING] LLM Script generation failed, using fallback: {e}")
+                print(f"  [AI Fallback] Slide {i+1}: {e}")
 
             scripts.append(slide_script)
 
