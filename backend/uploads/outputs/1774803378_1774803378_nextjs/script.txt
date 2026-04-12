@@ -1,0 +1,144 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+nextjs NextJS
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 0s
+
+[00:07] [SCENE START]
+TEXT: "
+Moving on to our next point...
+Let's break this down...
+
+
+NextJS NextJS is a popular React-based framework for building server-side rendered, static, and performance-optimized web applications.....
+
+It provides a comprehensive set of features for building fast, scalable, and maintainable applications.....
+
+Key Features.......
+
+Server-side rendering for improved SEO and performance.......
+
+Static site generation for fast page loads.......
+
+Automatic code splitting for optimized bundle sizes.......
+
+Built-in support for internationalization and localization.......
+
+Extensive plugin ecosystem for customization
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 34s
+
+[00:49] [SCENE START]
+TEXT: "
+Now, pay attention to this part...
+It's quite important...
+
+
+Setting Up a NextJS Project Creating a New Project.......
+
+Use the npx create-next-app command to create a new project.......
+
+Choose a template or start from scratch.......
+
+Install required dependencies and plugins.......
+
+Configure project settings and environment variables.......
+
+Start the development server with npm run dev.......
+
+Page Routing.......
+
+Use the pages directory to create routes for your application.......
+
+Create index pages for root routes.......
+
+Use dynamic routing for parameterized routes.......
+
+Use the Link component for client-side navigation.......
+
+Use the useRouter hook for programmatic navigation
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 38s
+
+[01:37] [SCENE START]
+TEXT: "
+Let's look at another aspect of this...
+
+
+State Management and Data Fetching Data Fetching Strategies.......
+
+Use getStaticProps for static site generation.......
+
+Use getServerSideProps for server-side rendering.......
+
+Use useEffect for client-side data fetching.......
+
+Use the useContext hook for state management.......
+
+Use a library like Redux or MobX for complex state management.......
+
+Deployment Options.......
+
+Deploy to Vercel for automatic optimization and scaling.......
+
+Deploy to a custom server for more control.......
+
+Use a CDN for improved performance and caching.......
+
+Optimize images and assets for reduced bundle sizes.......
+
+Use the next build command to generate a production-ready build
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 41s

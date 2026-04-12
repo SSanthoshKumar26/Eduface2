@@ -1,0 +1,29 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. net... ... Introduction to Networking."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+[00:05] [SCENE START]
+TEXT: "Now let's continue. Introduction to Networking... ... Networking refers to the process of connecting devices, such as computers, servers, and other hardware, to share resources, exchange data, and communicate with each other. A network can be as simple as two devices connected by a cable or as complex...."
+FACE: - slight smile
+TIMING: - duration: 30s
+
+[00:27] [SCENE START]
+TEXT: "Now let's continue. Types of Networks... ... Local Area Network LAN : A LAN connects devices in a limited geographical area, such as a home, office building, or campus.."
+FACE: - slight smile
+TIMING: - duration: 16s
+
+[00:40] [SCENE START]
+TEXT: "Now let's continue. Types of Networks (Cont.)... Types of Networks Cont. ... Wide Area Network WAN : A WAN connects devices over a larger geographical area, such as a city or country. Wireless Network WLAN : A WLAN connects devices wirelessly, using radio waves or infrared signals. Virtual Private Network VPN : A VPN is a network that uses encryption and other security measures to create a secure and private connection between devices over the internet.."
+FACE: - slight smile
+TIMING: - duration: 45s
+
+[01:16] [SCENE START]
+TEXT: "Now let's continue. Network Topologies... ... Bus Topology: A bus topology is a network configuration in which all devices are connected to a single cable or backbone. Star Topology: A star topology is a network configuration in which all devices are connected to a central device or hub. Ring Topology: A ring topology is a network configuration in which devices are connected in a circular configuration, with each device connected to its two neighbors. Mesh Topology: A mesh topology is a network configuration in which each device is connected to every other device.."
+FACE: - slight smile
+TIMING: - duration: 57s
+
+[01:55] [SCENE START]
+TEXT: "Now let's continue. Network Devices... ... Router: A router is a device that connects multiple networks together and routes traffic between them. Switch: A switch is a device that connects multiple devices within a network and forwards data packets between them. Hub: A hub is a device that connects multiple devices within a network and broadcasts incoming data to all connected devices. Modem: A modem is a device that connects a network to the internet via a broadband connection.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 56s

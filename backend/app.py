@@ -1,6 +1,26 @@
 import os
+import subprocess
+import sys
+
+def install_and_import(package):
+    try:
+        __import__(package)
+    except ImportError:
+        print(f"[*] Installing {package} for premium features (this may take a minute)...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--quiet", "--no-input"])
+        except:
+            pass
+
+# Auto-install PDF/DOCX exporters if missing
+try: install_and_import('fpdf2')
+except: pass
+
+try: install_and_import('python-docx')
+except: pass
 import sys
 import io
+import threading
 
 # Fix terminal encoding issues on Windows
 try:
@@ -1184,6 +1204,20 @@ def generate_video():
         ppt_path = data.get('ppt_path')
         face_path = data.get('face_path')
         audio_path = data.get('audio_path')
+        u_id = data.get('userId')
+
+        # Generate JOB ID early for tracking
+        job_id = f"{int(time.time())}_{os.path.splitext(os.path.basename(ppt_path))[0]}"
+        
+        # PERSIST active job to user profile if signed in
+        if u_id:
+            try:
+                db_conn = get_db()
+                if db_conn is not None:
+                    db_conn.users.update_one({'clerkId': u_id}, {'$set': {'lastActiveJob': job_id}})
+                    print(f"🔗 Linked Job {job_id} to User {u_id}")
+            except Exception as dbe:
+                print(f"⚠️ Failed to link job to user: {dbe}")
         
         if not ppt_path or not face_path:
             return jsonify({
@@ -1219,47 +1253,68 @@ def generate_video():
             'audio_path': audio_path
         }
         
-        print(f"\n🎥 Starting video generation...")
-        print(f"   PPT: {ppt_path}")
-        print(f"   Face: {face_path}")
-        print(f"   Options: {options}")
-        
-        # ADD THIS: More detailed error logging
-        try:
-            result = video_pipeline.process(ppt_path, face_path, options)
-        except Exception as pipeline_error:
-            print(f"❌ Pipeline Error Details:")
-            print(f"   Error Type: {type(pipeline_error).__name__}")
-            print(f"   Error Message: {str(pipeline_error)}")
-            import traceback
-            print(f"   Full Traceback:\n{traceback.format_exc()}")
-            
-            # Return detailed error to frontend
-            return jsonify({
-                "success": False,
-                "error": f"Audio generation failed: {str(pipeline_error)}",
-                "error_type": type(pipeline_error).__name__,
-                "details": traceback.format_exc()
-            }), 500
-        
-        if result['status'] == 'completed':
-            job_id = os.path.basename(os.path.dirname(result['final_video']))
-            
-            return jsonify({
-                "success": True,
-                "video_url": f"/api/download-video/{job_id}/final",
-                "script_url": f"/api/download-video/{job_id}/script",
-                "audio_url": f"/api/download-video/{job_id}/audio",
-                "summary_url": f"/api/download-video/{job_id}/summary",
-                "steps": result['steps'],
-                "job_id": job_id
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "error": result.get('error', 'Unknown error'),
-                "steps": result.get('steps', {})
-            }), 500
+        # Function to run in background
+        def run_pipeline():
+            try:
+                # Process the video
+                video_pipeline.process(ppt_path, face_path, options, job_id=job_id)
+                
+                # PERSIST TO DATABASE upon completion
+                if u_id:
+                    try:
+                        db = get_db()
+                        if db is not None:
+                            # Construct video data for gallery
+                            video_title = os.path.splitext(os.path.basename(ppt_path))[0]
+                            video_url = f"/api/download-video/{job_id}/final"
+                            
+                            session_data = {
+                                "videoUrl": video_url,
+                                "scriptUrl": f"/api/download-video/{job_id}/script",
+                                "audioUrl": f"/api/download-video/{job_id}/audio",
+                                "summary_url": f"/api/download-video/{job_id}/summary",
+                                "jobId": job_id,
+                                "userId": u_id,
+                                "title": video_title
+                            }
+                            
+                            video_doc = {
+                                'userId': u_id,
+                                'videoId': job_id,
+                                'videoUrl': video_url,
+                                'videoData': json.dumps(session_data),
+                                'title': video_title,
+                                'createdAt': time.time()
+                            }
+                            
+                            # Check if already exists to avoid duplicates
+                            if not db.videos.find_one({'videoId': job_id}):
+                                db.videos.insert_one(video_doc)
+                                print(f"✅ Video {job_id} auto-saved to User {u_id}'s gallery from backend")
+                                
+                                # Also clear the active job marker from the user profile
+                                db.users.update_one({'clerkId': u_id}, {'$unset': {'lastActiveJob': ""}})
+                    except Exception as db_err:
+                        print(f"⚠️ Backend auto-save failed: {db_err}")
+
+            except Exception as e:
+                print(f"❌ BACKGROUND PIPELINE ERROR: {e}")
+                # Save error to file so status poller can see it
+                try:
+                    with open(os.path.join(f'uploads/outputs/{job_id}', 'error.txt'), 'w') as f:
+                        f.write(str(e))
+                except: pass
+
+        # Start processing in thread
+        thread = threading.Thread(target=run_pipeline)
+        thread.start()
+
+        return jsonify({
+            "success": True,
+            "status": "processing",
+            "job_id": job_id,
+            "message": "Video generation started in background"
+        })
     
     except Exception as e:
         print(f"❌ Video generation error: {str(e)}")
@@ -1354,6 +1409,82 @@ def download_video_file(job_id, file_type):
     
     except Exception as e:
         print(f"❌ Download error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/video-status/<job_id>", methods=["GET"])
+def get_video_status(job_id):
+    """Check the status of a video generation job"""
+    try:
+        base_path = f'uploads/outputs/{job_id}'
+        if not os.path.exists(base_path):
+            return jsonify({"status": "not_found"}), 404
+        
+        # Check for error file
+        if os.path.exists(os.path.join(base_path, 'error.txt')):
+            with open(os.path.join(base_path, 'error.txt'), 'r') as f:
+                error_msg = f.read()
+            return jsonify({
+                "status": "error",
+                "error": error_msg
+            })
+        
+        # Determine progress based on file existence
+        progress = 0
+        step = "Initializing"
+        
+        if os.path.exists(os.path.join(base_path, 'slides')):
+            progress = 15
+            step = "Extracting PPT"
+        
+        if os.path.exists(os.path.join(base_path, 'script.txt')):
+            progress = 35
+            step = "Generated Script"
+            
+        if any(f.startswith('audio_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
+            progress = 50
+            step = "Generating Audio"
+            
+        if any(f.startswith('lipsync_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
+            progress = 75
+            step = "Syncing Animation"
+            
+        if os.path.exists(os.path.join(base_path, 'final_lesson.mp4')):
+            progress = 100
+            step = "Completed"
+            return jsonify({
+                "status": "completed",
+                "progress": 100,
+                "step": step,
+                "video_url": f"/api/download-video/{job_id}/final",
+                "script_url": f"/api/download-video/{job_id}/script",
+                "audio_url": f"/api/download-video/{job_id}/audio",
+                "summary_url": f"/api/download-video/{job_id}/summary",
+                "job_id": job_id
+            })
+            
+        return jsonify({
+            "status": "processing",
+            "progress": progress,
+            "step": step
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/active-job/<user_id>", methods=["GET"])
+def get_user_active_job(user_id):
+    """Retrieve the last active job for a user"""
+    try:
+        db = get_db()
+        if db is None:
+            return jsonify({"error": "Database not connected"}), 500
+            
+        user = db.users.find_one({'clerkId': user_id})
+        if not user or 'lastActiveJob' not in user:
+            return jsonify({"jobId": None})
+            
+        return jsonify({"jobId": user['lastActiveJob']})
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 # ============ EDUFACE AI CHATBOT ============
@@ -1594,6 +1725,207 @@ def evaluate_quiz_detailed():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+
+@app.route("/api/export-notes", methods=["POST"])
+def export_study_notes():
+    """Generates and exports professional academic notes as PDF or Word"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        lesson_content = data.get('lesson_content', '')
+        style = data.get('style', 'EXPLANATIVE')
+        depth = data.get('depth', 'INTERMEDIATE')
+        include_examples = data.get('includeExamples', True)
+        include_key_points = data.get('includeKeyPoints', True)
+        export_format = data.get('format', 'PDF').upper()
+
+        if not lesson_content:
+            return jsonify({"success": False, "error": "Missing lesson content"}), 400
+
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            return jsonify({"success": False, "error": "GROQ_API_KEY not found"}), 500
+
+        client = Groq(api_key=api_key)
+
+        # 1. Generate the Note Content using the elite prompt
+        prompt = f"""
+        ACT AS: 'Elite academic writer, senior instructional designer, and domain expert'
+        DOCUMENT TYPE: Premium Academic Study Guide
+        
+        INPUT SOURCE (Lesson Transcript/Content):
+        {lesson_content}
+
+        USER REQUIREMENTS:
+        - STYLE: {style} (EXPLANATIVE = deep paragraphs, BULLET = structured hierarchy, HINTS = dense keywords)
+        - DEPTH: {depth} (BASIC = conceptual clarity, INTERMEDIATE = comprehensive coverage, ADVANCED = technical/in-depth analysis)
+        - INCLUDE EXAMPLES: {'YES' if include_examples else 'NO'}
+        - INCLUDE KEY POINTS: {'YES' if include_key_points else 'NO'}
+
+        🎯 CORE OBJECTIVE:
+        Transform the input source into a HIGH-FIDELITY, TEXTBOOK-QUALITY study guide. 
+        DO NOT provide a 'script' or 'summary'. Generate the ACTUAL EDUCATIONAL CONTENT.
+        Use formal, academic language. Ensure every complex concept in the source is unpacked and explained clearly based on the requested depth.
+
+        STRUCTURE SPECIFICATIONS:
+        1. TITLE: High-level academic heading.
+        2. OVERVIEW: A master-level synthesis of the topic.
+        3. CHAPTERS: Breakdown of the content into logical, deep-dive academic chapters.
+        4. EXAMPLES: (If requested) Concrete applications or case studies.
+        5. CONCLUSION: Final knowledge consolidation.
+
+        🚫 RESTRICTIONS:
+        - NO meta-talk (e.g., 'Here is your notes')
+        - NO markdown symbols
+        - NO placeholders
+
+        OUTPUT FORMAT: Valid JSON only.
+        {{
+          "title": "...",
+          "full_text": "A single, massive string of perfectly formatted text suitable for a document. Use newlines (\\n) for spacing. Include all sections, headers, and bullet points as specified above."
+        }}
+        """
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a professional textbook author. Your goal is to produce deep, high-value educational documentation. Respond ONLY in valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4,
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(completion.choices[0].message.content)
+        title = result.get('title', 'Academic Study Guide')
+        final_text = result.get('full_text', 'Significant educational content could not be synthesized.')
+
+        # 2. Format as Document
+        output = io.BytesIO()
+        mimetype = 'text/plain'
+        filename = f"{title.replace(' ', '_')}.txt"
+        
+        if export_format == "PDF":
+            try:
+                # Optimized PDF handling with fpdf2/fpdf support
+                try: from fpdf import FPDF
+                except ImportError: from fpdf2 import FPDF
+                
+                class PDF(FPDF):
+                    def header(self):
+                        try: self.set_font('Arial', 'B', 15)
+                        except: self.set_font('helvetica', 'B', 15)
+                        self.cell(0, 10, title, 0, 1, 'C')
+                        self.ln(8)
+                
+                pdf = PDF()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                pdf.add_page()
+                try: pdf.set_font('Arial', '', 11)
+                except: pdf.set_font('helvetica', '', 11)
+                
+                # Pre-process text to avoid encoding errors while preserving structure
+                pdf.multi_cell(0, 8, final_text.encode('latin-1', 'replace').decode('latin-1'))
+                
+                raw_out = pdf.output(dest='S')
+                # Handle fpdf vs fpdf2 output return types
+                if isinstance(raw_out, (bytearray, bytes)):
+                    output.write(raw_out)
+                else:
+                    output.write(raw_out.encode('latin-1'))
+                    
+                mimetype, filename = 'application/pdf', f"Study_Notes_{title.replace(' ', '_')}.pdf"
+                
+            except Exception as e:
+                # Try ReportLab as second option
+                try:
+                    from reportlab.lib.pagesizes import letter
+                    from reportlab.pdfgen import canvas
+                    c = canvas.Canvas(output, pagesize=letter)
+                    c.setFont("Helvetica-Bold", 16)
+                    c.drawCentredString(300, 750, title)
+                    c.setFont("Helvetica", 10)
+                    textobject = c.beginText(50, 720)
+                    for line in final_text.split('\n'):
+                        textobject.textLine(line)
+                    c.drawText(textobject)
+                    c.showPage()
+                    c.save()
+                    mimetype, filename = 'application/pdf', f"{title.replace(' ', '_')}.pdf"
+                except:
+                    print(f"⚠️ All PDF Libs Missing: {e}")
+                    # Final fallback to beautifully formatted plain text
+                    header = f"{'='*50}\n{title.upper()}\n{'='*50}\n\n"
+                    output.write((header + final_text).encode('utf-8'))
+                    mimetype, filename = 'text/plain', f"{title.replace(' ', '_')}.txt"
+        
+        else: # WORD (DOCX)
+            try:
+                try: from docx import Document; from docx.shared import Pt
+                except ImportError: from python_docx import Document; from docx.shared import Pt
+                
+                doc = Document()
+                # Set Title
+                title_run = doc.add_heading(title, 0).runs[0]
+                title_run.font.size = Pt(20)
+                
+                # Split content into sections
+                lines = final_text.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if not line: continue
+                    
+                    # Logic to find headers
+                    if line.isupper() and len(line) < 80:
+                        doc.add_heading(line, level=1)
+                    elif line.startswith('SECTION') or line.startswith('CHAPTER'):
+                        doc.add_heading(line, level=1)
+                    else:
+                        p = doc.add_paragraph(line)
+                        p.paragraph_format.space_after = Pt(10)
+                
+                doc.save(output)
+                mimetype, filename = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', f"Study_Notes_{title.replace(' ', '_')}.docx"
+                
+            except Exception as e:
+                print(f"⚠️ Word Export Fallback Active: {e}")
+                html_body = []
+                for b in final_text.split('\n\n'):
+                    if b.strip():
+                        if (b.isupper() and len(b) < 80) or b.startswith('SECTION'):
+                            html_body.append(f"<h2 style='color: #1a365d; border-bottom: 1px solid #e2e8f0; margin-top: 30px; font-size: 1.4em;'>{b.strip()}</h2>")
+                        else:
+                            html_body.append(f"<p style='line-height: 1.7; color: #334155; margin-bottom: 12px;'>{b.strip().replace('\\n', '<br/>')}</p>")
+                            
+                html_content = f"""
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='UTF-8'></head>
+                    <body style='font-family: Calibri, sans-serif; padding: 1in; max-width: 800px; margin: auto;'>
+                        <h1 style='text-align: center; color: #2563eb; font-size: 2.2em; margin-bottom: 0.5in;'>{title}</h1>
+                        {''.join(html_body)}
+                        <hr style='margin-top: 50px; border: 0; border-top: 1px solid #cbd5e1;'/>
+                        <p style='text-align: center; color: #94a3b8; font-size: 0.8em;'>Generated by Eduface AI - Premium Study Guide</p>
+                    </body>
+                </html>
+                """
+                output.write(html_content.encode('utf-8'))
+                mimetype, filename = 'application/msword', f"Study_Notes_{title.replace(' ', '_')}.doc"
+
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ============ HEALTH CHECK ============
 @app.route("/api/health", methods=["GET"])

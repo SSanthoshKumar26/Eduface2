@@ -1,0 +1,1 @@
+React.js is a popular JavaScript library used for building responsive user interfaces. Developed by Facebook, it enables developers to create reusable UI components with ease. By leveraging the Virtual DOM for efficient rendering, React.js facilitates complex and interactive web applications.

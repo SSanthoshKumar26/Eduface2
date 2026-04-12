@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Send, Sparkles, Trash2, Share2, Mic, MicOff, AudioLines, MessageSquare, Lightbulb, FileText, HelpCircle } from 'lucide-react';
+import { Send, Sparkles, Trash2, Share2, Mic, MicOff, AudioLines, MessageSquare, Lightbulb, FileText, HelpCircle, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ShareModal from './ShareModal';
 
-const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, onClearChat, facePreview }) => {
+const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, formatText, onClearChat, facePreview, onClose }) => {
   const chatEndRef = useRef(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -105,7 +105,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
   return (
     <div className="ld-tutor-panel">
       <div className="ld-tutor-header">
-        <div className="ld-tutor-title-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="ld-tutor-title-group">
           <div className="ld-pro-badge">
             <Sparkles size={14} />
           </div>
@@ -114,10 +114,6 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
             <div className="ld-status-dot"></div>
             <span>LIVE SESSION</span>
           </div>
-          <div className="ld-context-indicator">
-            <AudioLines size={12} />
-            <span>Lesson Context Active</span>
-          </div>
         </div>
         <div className="ld-tutor-header-actions">
           <button className="ld-header-btn" title="Share Chat securely" onClick={handleShareChat}>
@@ -125,6 +121,10 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
           </button>
           <button className="ld-header-btn" title="Clear Chat messages" onClick={onClearChat}>
             <Trash2 size={16} />
+          </button>
+          <div className="ld-header-divider"></div>
+          <button className="ld-chat-close-btn-header" onClick={onClose} title="Exit AI Session">
+            <X size={18} />
           </button>
         </div>
       </div>
@@ -195,14 +195,14 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
         </div>
 
         <div className={`ld-tutor-input-area ${isRecording ? 'recording' : ''}`}>
-          <input 
-            type="text" 
+          <textarea 
             placeholder={isRecording ? "Listening..." : "Ask about this lesson, concepts, or doubts..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping || isRecording}
             className="ld-chat-input"
+            rows={1}
           />
           
           <div className="ld-input-actions">

@@ -1,0 +1,19 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. Let's begin. nextjs... ... NextJS."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+[00:07] [SCENE START]
+TEXT: "Moving to the next slide. NextJS... ... NextJS is a popular React-based framework for building server-side rendered, static, and performance-optimized web applications. It provides a comprehensive set of features for building fast, scalable, and maintainable applications. Key Features... Server-side rendering for improved SEO and performance... Static site generation for fast page loads... Automatic code splitting for optimized bundle sizes... Built-in support for internationalization and localization... Extensive plugin ecosystem for customization."
+FACE: - slight smile
+TIMING: - duration: 55s
+
+[00:48] [SCENE START]
+TEXT: "Moving to the next slide. Setting Up a NextJS Project... ... Creating a New Project... Use the npx create-next-app command to create a new project... Choose a template or start from scratch... Install required dependencies and plugins... Configure project settings and environment variables... Start the development server with npm run dev... Page Routing... Use the pages directory to create routes for your application... Create index pages for root routes... Use dynamic routing for parameterized routes... Use the Link component for client-side navigation... Use the useRouter hook for programmatic navigation."
+FACE: - slight smile
+TIMING: - duration: 61s
+
+[01:34] [SCENE START]
+TEXT: "Moving to the next slide. State Management and Data Fetching... ... Data Fetching Strategies... Use getStaticProps for static site generation... Use getServerSideProps for server-side rendering... Use useEffect for client-side data fetching... Use the useContext hook for state management... Use a library like Redux or MobX for complex state management... Deployment Options... Deploy to Vercel for automatic optimization and scaling... Deploy to a custom server for more control... Use a CDN for improved performance and caching... Optimize images and assets for reduced bundle sizes... Use the next build command to generate a production-ready build. Thank you for watching this lesson. If you have any questions, feel free to ask Eduface AI. I'm here to help you learn better."
+FACE: - slight smile
+TIMING: - duration: 78s

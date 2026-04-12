@@ -1,0 +1,168 @@
+[00:00] [SCENE START]
+TEXT: "
+Hello everyone...
+Today we will be discussing this topic...
+
+
+reactjs Introduction to Reactjs
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:08] I'll follow the guidelines to create a natural, expressive, and human-like spoken lecture audio.
+
+---
+
+STRICT RULES (MANDATORY):
+
+1. DO NOT repeat the same opening phrases (like "Alright") frequently
+2. Use VARIED and PROFESSIONAL openings such as:
+   - "Hello everyone..."
+   - "Let’s begin with this concept..."
+   - "Now, let’s take a closer look..."
+   - "Let’s understand this carefully..."
+   - "Here’s something important..."
+
+3. DO NOT read the slide content directly
+4. You MUST explain in your own words
+5. You MUST expand beyond the slide
+6. Add at least ONE real-world example
+
+---
+
+SPEECH FORMATTING RULES (VERY IMPORTANT):
+
+1. Each sentence MUST be on a NEW LINE
+2. Each line must be SHORT (5–10 words MAX)
+3. Add "..." at the end of most lines
+4. Add EMPTY LINE between sentences (VERY IMPORTANT)
+5. This empty line creates a natural pause in speech
+6. Avoid long paragraphs completely
+
+---
+
+STRUCTURE:
+
+- Start with a professional greeting (ONLY ONCE)
+- Introduce the concept
+- Explain step by step
+- Add example
+- Reinforce key idea
+- Smooth ending
+
+---
+
+BAD OUTPUT (DO NOT DO):
+- Long paragraph
+- Repetitive phrases
+- Direct reading
+
+---
+
+GOOD OUTPUT STYLE (STRICTLY FOLLOW):
+
+Hello everyone...
+
+Let's dive into this concept carefully...
+
+This is the foundation of Reactjs...
+
+Reactjs allows us to build reusable UI components efficiently...
+
+Imagine a complex, interactive web application with many features...
+
+Now let's understand each component separately...
+
+Think about how we can reuse these components in our codebase...
+
+A real-world example would be building an e-commerce website...
+
+The virtual DOM helps with efficient rendering and updates...
+
+Components are functional or class-based, making it easy to manage state and props...
+
+Let's focus on managing the component's state effectively...
+
+State helps us update the component's behavior based on user interactions...
+
+Props provide a way to pass data between components...
+
+Now let's take a closer look at how we can use these concepts together...
+
+This is an important aspect of building complex, interactive web applications...
+
+---
+
+Slide Content:
+Introduction to Reactjs What is Reactjs... A JavaScript library for building user interfaces... Used for developing reusable UI components... Ideal for developing complex, interactive web applications. Key Concepts: Virtual DOM for efficient rendering Components can be functional or class-based State and props for managing component data.
+
+---
+
+OUTPUT FORMAT (STRICT):
+[SCENE START]
+TEXT: "
+Hello everyone...
+
+Let's dive into this concept carefully...
+"
+
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: [X]s (approx 1 second per 15 characters of text)
+
+[00:13] [SCENE START]
+TEXT: "
+Now, pay attention to this part...
+It's quite important...
+
+
+Reactjs Components Component Types.......
+
+Functional components for simple, stateless components.......
+
+Class components for complex, stateful components.......
+
+Higher-order components for code reuse and abstraction.......
+
+Managing Component Data.......
+
+State for storing component-specific data.......
+
+Props for passing data from parent to child components.......
+
+Context API for sharing data between components
+"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 25s

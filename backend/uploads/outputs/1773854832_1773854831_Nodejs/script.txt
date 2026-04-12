@@ -1,0 +1,31 @@
+[00:00] [SCENE START]
+TEXT: "Nodejs Node.js"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 0s
+
+[00:02] [SCENE START]
+TEXT: "What is Node.js? Node.js is a JavaScript runtime environment that allows developers to run JavaScript on the server-side... It's built on Chrome's V8 JavaScript engine and provides an event-driven, non-blocking I O model... Key Features Async I O: Node.js uses asynchronous I O to handle multiple requests concurrently, making it well-suited for real-time applications... Event Loop: The event loop is the core of Node.js, handling incoming messages events and processing them in a timely manner... Built-in Modules: Node.js comes with a large ecosystem of built-in modules that provide various functionality, such as file I O, networking, and database interactions... Use Cases Server-Side Development: Node.js is ideal for building scalable server-side applications, including APIs, web servers, and microservices... Real-Time Applications: Node.js is well-suited for real-time applications, such as live updates, chatbots, and gaming platforms... Web Development: Node.js can be used to build complex web applications using frameworks like Express.js and Next.js... Practical Example javascript const express require 'express' ; const app express; app.get ' ', req, res Handle incoming GET request res.send 'Hello, World!' ; app.listen 3000, console.log 'Server listening on port 3000' ; Advantages No Compile-Time Errors: Node.js runs at runtime, eliminating the need for compile-time errors... Cross-Platform Compatibility: Node.js can run on multiple platforms, including Windows, macOS, and Linux... Large Ecosystem: Node.js has a vast array of libraries and frameworks to choose from."
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 104s

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useUser } from '@clerk/clerk-react';
 import { 
@@ -10,10 +11,11 @@ import LearningDashboard from './LearningDashboard';
 const API_BASE_URL = 'http://localhost:5000';
 
 const VideoGallery = () => {
+    const navigate = useNavigate();
     const { user, isSignedIn } = useUser();
     const [dbVideos, setDbVideos] = useState([]);
     const [playingVideoId, setPlayingVideoId] = useState(null);
-    const [learningSession, setLearningSession] = useState(null);
+    const [activeJob, setActiveJob] = useState(null);
 
     // Modal States
     const [modalAction, setModalAction] = useState(null); // 'delete' or 'rename'
@@ -35,6 +37,50 @@ const VideoGallery = () => {
 
     useEffect(() => {
         fetchHistory();
+    }, [isSignedIn, user?.id]);
+
+    // --- ACTIVE JOB POLLING ---
+    useEffect(() => {
+        const activeJobId = localStorage.getItem('eduface_active_job');
+        if (!activeJobId) {
+            setActiveJob(null);
+            return;
+        }
+
+        const pollActiveJob = async () => {
+            try {
+                // If it's the sync flag, we check the server for the real ID first
+                let currentId = activeJobId;
+                if (currentId === 'generating_sync' && user?.id) {
+                    const jobRes = await axios.get(`${API_BASE_URL}/api/active-job/${user.id}`);
+                    if (jobRes.data.jobId) {
+                        currentId = jobRes.data.jobId;
+                        localStorage.setItem('eduface_active_job', currentId);
+                    }
+                }
+
+                if (!currentId || currentId === 'generating_sync') return;
+
+                const res = await axios.get(`${API_BASE_URL}/api/video-status/${currentId}`);
+                if (res.data.status === 'completed') {
+                    localStorage.removeItem('eduface_active_job');
+                    setActiveJob(null);
+                    fetchHistory(); // Refresh list to show the new video
+                } else if (res.data.status === 'processing') {
+                    setActiveJob(res.data);
+                } else if (res.data.status === 'error') {
+                    localStorage.removeItem('eduface_active_job');
+                    setActiveJob(null);
+                    toast.error("Background generation failed: " + res.data.error);
+                }
+            } catch (err) {
+                console.error("Gallery polling error", err);
+            }
+        };
+
+        const interval = setInterval(pollActiveJob, 4000);
+        pollActiveJob();
+        return () => clearInterval(interval);
     }, [isSignedIn, user?.id]);
 
     const confirmDelete = async () => {
@@ -77,23 +123,6 @@ const VideoGallery = () => {
         );
     }
 
-    if (learningSession) {
-        return (
-            <LearningDashboard 
-                 videoUrl={learningSession.videoUrl} 
-                 scriptUrl={learningSession.scriptUrl} 
-                 audioUrl={learningSession.audioUrl} 
-                 summaryUrl={learningSession.summaryUrl}
-                 jobId={learningSession.jobId} 
-                 facePreview={learningSession.facePreview}
-                 resetForm={() => setLearningSession(null)} 
-                 user={user}
-                 isSignedIn={isSignedIn}
-                 pptName={learningSession.title}
-                 fromGallery={true}
-             />
-        );
-    }
 
     return (
         <div style={{ width: '100%', minHeight: '100vh', backgroundColor: 'var(--bg-light)', color: 'var(--text-dark)', fontFamily: 'var(--font-body)', position: 'relative' }}>
@@ -161,7 +190,31 @@ const VideoGallery = () => {
 
             {/* Video List Section */}
             <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
-                {dbVideos.length === 0 ? (
+                {/* ACTIVE JOB PLACEHOLDER */}
+                {activeJob && (
+                    <div style={{ 
+                        margin: '0 24px 24px 24px', padding: '24px', 
+                        backgroundColor: 'var(--bg-white)', borderRadius: '12px',
+                        border: '2px dashed var(--cyan-primary)', display: 'flex',
+                        alignItems: 'center', gap: '20px', animation: 'pulse 2s infinite'
+                    }}>
+                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid var(--border-light)', borderTopColor: 'var(--cyan-primary)', animation: 'spin 1s linear infinite' }}></div>
+                        <div style={{ flex: 1 }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-dark)' }}>
+                                Architecting Your Lesson... ({activeJob.progress}%)
+                            </h3>
+                            <p style={{ margin: '4px 0 0 0', color: 'var(--text-gray)', fontSize: '14px' }}>
+                                Currently at: {activeJob.step}
+                            </p>
+                            <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-light)', borderRadius: '4px', marginTop: '12px', overflow: 'hidden' }}>
+                                <div style={{ width: `${activeJob.progress}%`, height: '100%', backgroundColor: 'var(--cyan-primary)', transition: 'width 0.5s ease' }}></div>
+                            </div>
+                        </div>
+                        <span style={{ fontSize: '14px', color: 'var(--cyan-primary)', fontWeight: '600' }}>Processing</span>
+                    </div>
+                )}
+
+                {dbVideos.length === 0 && !activeJob ? (
                     <div style={{ padding: '100px 24px', textAlign: 'center', color: 'var(--text-gray)' }}>
                         <p style={{ fontSize: '18px' }}>No videos yet. Generate your first video.</p>
                     </div>
@@ -250,14 +303,17 @@ const VideoGallery = () => {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <button 
                                             onClick={() => {
-                                                setLearningSession({
-                                                    videoUrl: vUrl,
-                                                    scriptUrl: sess.scriptUrl,
-                                                    audioUrl: sess.audioUrl,
-                                                    summaryUrl: sess.summaryUrl,
-                                                    jobId: sess.jobId || vid.videoId,
-                                                    facePreview: sess.facePreview,
-                                                    title: vid.title
+                                                navigate('/video-generator', {
+                                                    state: {
+                                                        videoUrl: vUrl,
+                                                        scriptUrl: sess.scriptUrl,
+                                                        audioUrl: sess.audioUrl,
+                                                        summaryUrl: sess.summaryUrl,
+                                                        jobId: sess.jobId || vid.videoId,
+                                                        facePreview: sess.facePreview,
+                                                        title: vid.title,
+                                                        fromGallery: true
+                                                    }
                                                 });
                                             }}
                                             style={{ 
@@ -334,6 +390,14 @@ const VideoGallery = () => {
                 @keyframes modalSlideIn {
                     from { opacity: 0; transform: translateY(-20px) scale(0.95); }
                     to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                @keyframes pulse {
+                    0% { opacity: 0.85; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.85; }
                 }
                 `}
             </style>

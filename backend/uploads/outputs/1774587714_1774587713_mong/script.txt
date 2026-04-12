@@ -1,0 +1,31 @@
+[00:00] [SCENE START]
+TEXT: "mong Mongodb Overview"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1s
+
+[00:18] [SCENE START]
+TEXT: "Mongodb Overview What is MongoDB? Mongodb is a popular NoSQL document-oriented database management system designed to handle large amounts of semi-structured or unstructured data... Key Features: Document-based data model Flexible schema design High performance and scalability Real-time data synchronization Advantages of MongoDB Key Benefits: High Performance: MongoDB's document-oriented design allows for efficient data retrieval and manipulation... Scalability: Easily scale up or down to meet changing workload demands... Flexibility: Supports a variety of data formats and protocols... Real-World Use Cases Applications with MongoDB: NoSQL databases for large-scale, high-performance applications Real-time web applications: e.g., live updates, social media platforms Use Cases: Streaming platforms e.g., Netflix Social media platforms e.g., Facebook, Twitter Common Query Patterns Advanced Queries: Filtering by multiple fields Ordering and limiting results Grouping and aggregating data MongoDB Aggregation Framework Data Processing Pipelines: Use the aggregation framework to process large datasets Filter, group, sort, aggregate, and project data Example: db.collection.aggregate group: id: " date", count: sum: 1 sort: "count": -1 project: id: 0, date: " id", count: " count" Data Modeling and Schema Design Document-Based Data Model: Each document represents a single record or item Use JSON-like data structures to represent schema Schema Design: Use the MongoDB shell or command-line tools to create and modify schemas Define relationships between documents using foreign keys Example Schema: User Collection " id": ObjectId, "name": String, "email": String, "password": String, "address": "street": String, "city": String, "state": String, "zipCode": String "createdDate": Date MongoDB Replication and Sharding High Availability: Use multiple instances of MongoDB for redundancy create replication to ensure data durability Replication: Use the rs command-line tool or MongoDB shell to create replicas Configure replica sets, shadows, and sync slaves Shard Design: Divide large collections into smaller shards for improved performance Use the mongos console to manage shard clusters"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 146s

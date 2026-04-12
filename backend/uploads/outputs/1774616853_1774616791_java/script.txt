@@ -1,0 +1,95 @@
+[00:00] [SCENE START]
+TEXT: "java Generated in Creative mode"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 2s
+
+[00:02] [SCENE START]
+TEXT: "Overview Java Overview"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 1s
+
+[00:05] [SCENE START]
+TEXT: "What is Java? A high-level, object-oriented programming language Developed by Sun Microsystems now owned by Oracle First released in 1995 Java Features"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 10s
+
+[00:16] [SCENE START]
+TEXT: "Key Features Object-oriented programming model Platform-independent execution Compile-time checking and error prevention Garbage collection Strong type safety"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 10s
+
+[00:26] [SCENE START]
+TEXT: "Benefits of Using Java Portability across various platforms Easy to learn and use for beginners Robust security features Wide range of applications web, mobile, desktop Java Development Environment Key Components"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 14s
+
+[00:40] [SCENE START]
+TEXT: "Essential Tools Java IDE Integrated Development Environment Text Editor Compiler javac Library managers e.g., Eclipse Marketplace, Maven Central Best Practices for Learning Java"
+FACE:
+- slight smile
+- attentive
+EYES:
+- look straight at viewer
+HEAD:
+- small nod
+HANDS:
+- subtle gestures
+BODY:
+- upright posture
+TIMING:
+- duration: 11s

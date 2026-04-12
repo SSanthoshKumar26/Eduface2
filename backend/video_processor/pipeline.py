@@ -173,7 +173,7 @@ class VideoPipeline:
     # MAIN PIPELINE
     # ─────────────────────────────────────────────────────────────────
 
-    def process(self, ppt_path, face_path, options=None):
+    def process(self, ppt_path, face_path, options=None, job_id=None):
         if options is None:
             options = {}
 
@@ -182,7 +182,9 @@ class VideoPipeline:
         quality     = options.get('quality',     'medium')
         tts_engine  = options.get('tts_engine',  'edge')
 
-        job_id   = f"{int(time.time())}_{os.path.splitext(os.path.basename(ppt_path))[0]}"
+        if not job_id:
+            job_id = f"{int(time.time())}_{os.path.splitext(os.path.basename(ppt_path))[0]}"
+        
         job_dir  = os.path.join(self.output_dir, job_id)
         slides_dir = os.path.join(job_dir, 'slides')
 

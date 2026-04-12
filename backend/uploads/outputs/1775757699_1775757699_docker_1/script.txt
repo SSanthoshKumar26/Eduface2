@@ -1,0 +1,39 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. docker... ... Introduction to Docker."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+[00:05] [SCENE START]
+TEXT: "Now let's continue. Introduction to Docker... ... Docker is a containerization platform that allows developers to package, ship, and run applications in containers. Lightweight and portable: Docker containers are much lighter than virtual machines, making them easier to deploy and manage. Isolation: Docker containers provide a high level of isolation between applications, ensuring that they do not interfere with each other. Scalability: Docker containers can be easily scaled up or down as needed, making them ideal for large and complex applications.."
+FACE: - slight smile
+TIMING: - duration: 55s
+
+[00:43] [SCENE START]
+TEXT: "Now let's continue. Benefits of Using Docker... ... Faster deployment: Docker containers can be deployed much faster than traditional virtual machines. Improved collaboration: Docker provides a consistent environment for development, testing, and production, making it easier for teams to collaborate. Reduced costs: Docker containers can help reduce infrastructure costs by allowing multiple applications to run on a single host. Docker Client: The Docker client is used to interact with the Docker daemon, which is responsible for managing containers. Docker Daemon: The Docker daemon is the background process that manages containers and handles Docker commands. Docker Registry: The Docker registry is a repository of Docker images that can be used to create containers.."
+FACE: - slight smile
+TIMING: - duration: 77s
+
+[01:36] [SCENE START]
+TEXT: "Now let's continue. Use Cases for Docker... ... Web development: Docker is widely used in web development to provide a consistent environment for development, testing, and production. DevOps: Docker is used in DevOps to improve collaboration between development and operations teams. Cloud computing: Docker is used in cloud computing to provide a scalable and flexible way to deploy applications.."
+FACE: - slight smile
+TIMING: - duration: 39s
+
+[02:03] [SCENE START]
+TEXT: "Now let's continue. Docker Commands... ... docker run: This command is used to create and start a new container. docker ps: This command is used to list all running containers. docker stop: This command is used to stop a running container. docker rm: This command is used to delete a stopped container.."
+FACE: - slight smile
+TIMING: - duration: 30s
+
+[02:26] [SCENE START]
+TEXT: "Now let's continue. Docker Tools... ... Docker Compose: This tool is used to define and run multi-container Docker applications. Docker Swarm: This tool is used to manage and orchestrate containers in a cluster. Docker Machine: This tool is used to create and manage Docker hosts. Use official Docker images: Official Docker images are maintained by Docker and are updated regularly. Use a consistent naming convention: A consistent naming convention makes it easier to manage and identify containers. Monitor and log containers: Monitoring and logging containers helps to identify and debug issues.."
+FACE: - slight smile
+TIMING: - duration: 60s
+
+[03:08] [SCENE START]
+TEXT: "Now let's continue. Common Docker Issues... ... Container crashes: Container crashes can occur due to a variety of reasons, including resource constraints and software bugs. Network issues: Network issues can occur due to misconfiguration or conflicts between containers. Security issues: Security issues can occur due to vulnerabilities in the Docker image or misconfiguration of the container. Docker provides a number of security features, including network policies and secret management. Docker images can be scanned for vulnerabilities using tools like Docker Security Scanning. Containers can be configured to run with reduced privileges to reduce the risk of security breaches.."
+FACE: - slight smile
+TIMING: - duration: 68s
+
+[03:54] [SCENE START]
+TEXT: "Now let's continue. Docker Networking... ... Docker provides a number of networking options, including bridge, host, and none. Containers can be connected to each other using Docker networks. Docker networks can be configured to provide isolation and security between containers.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 36s

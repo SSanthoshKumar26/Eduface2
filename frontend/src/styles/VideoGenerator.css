@@ -123,7 +123,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin: 0;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .vg-progress-card p {
@@ -357,7 +357,8 @@ select.vg-cyber-input option {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(3, 7, 18, 0.9);
+  background: var(--bg-core);
+  opacity: 0.95;
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
@@ -369,12 +370,12 @@ select.vg-cyber-input option {
 .vg-premium-loading-card {
   width: 100%;
   max-width: 450px;
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
   border-radius: 24px;
   padding: 40px;
   text-align: center;
-  box-shadow: 0 0 50px rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 50px var(--neon-glow);
 }
 
 .vg-loading-icon-wrapper {
@@ -408,14 +409,14 @@ select.vg-cyber-input option {
   font-weight: 800;
   font-family: var(--font-display);
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #fff, var(--cyan-primary));
+  background: linear-gradient(135deg, var(--text-primary), var(--cyan-primary));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .vg-loading-subtitle {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   margin-bottom: 30px;
 }
@@ -462,10 +463,10 @@ select.vg-cyber-input option {
 .vg-feature-tag {
   font-size: 0.7rem;
   padding: 4px 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--glass-surface-hover);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* Animations */

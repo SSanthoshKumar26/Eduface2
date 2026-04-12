@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useUser } from '@clerk/clerk-react';
 import { 
@@ -28,6 +28,9 @@ const API_BASE_URL = 'http://localhost:5000';
 
 const VideoGenerator = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const fromGallery = location.state?.fromGallery || false;
+
   
   // File states
   const [pptFile, setPptFile] = useState(null);
@@ -56,6 +59,7 @@ const VideoGenerator = () => {
   const [audioUrl, setAudioUrl] = useState(null);
   const [summaryUrl, setSummaryUrl] = useState(null);
   const [jobId, setJobId] = useState(null);
+  const [activeJobId, setActiveJobId] = useState(localStorage.getItem('eduface_active_job'));
 
   const { user, isSignedIn } = useUser();
 
@@ -83,6 +87,12 @@ const VideoGenerator = () => {
             setSummaryUrl(session.summaryUrl);
             setJobId(session.jobId);
             setFacePreview(session.facePreview);
+            
+            // Restore PPT file info for the title
+            if (session.pptName) {
+              setPptFile({ name: session.pptName, size: 0, restored: true });
+              if (session.serverPptPath) setServerPptPath(session.serverPptPath);
+            }
           } else {
             // Data leakage protection: Wipe old user's session from browser
             localStorage.removeItem('eduface_video_session');
@@ -94,10 +104,11 @@ const VideoGenerator = () => {
       }
     }
     // 3. Security: If logged out, clear any existing session states for protection
-    else if (!isSignedIn) {
+    else if (isSignedIn === false) { // Explicitly check for false, not just falsy
       setVideoUrl(null);
       localStorage.removeItem('eduface_video_session');
       localStorage.removeItem('eduface_chat_messages');
+      localStorage.removeItem('eduface_active_job');
     }
 
     // Handle PPT file passing from Content Generator
@@ -107,7 +118,97 @@ const VideoGenerator = () => {
       setPptFile({ name, size: 0, isServerFile: true });
     }
     fetchVoices();
-  }, [location.state]);
+  }, [isSignedIn, user?.id, location.state]);
+
+  // --- PERSISTENT GENERATION TRACKING ---
+  useEffect(() => {
+    // Priority: use local state if set, else check storage
+    const currentActiveJob = activeJobId || localStorage.getItem('eduface_active_job');
+    if (!currentActiveJob || videoUrl) return;
+
+    let pollInterval;
+    
+    const checkStatus = async () => {
+      let currentJobId = activeJobId;
+      
+      // If we are in "generating_sync" mode, try to fetch the real job ID from the server
+      if (currentJobId === 'generating_sync' && isSignedIn && user?.id) {
+        try {
+          const jobRes = await axios.get(`${API_BASE_URL}/api/active-job/${user.id}`);
+          if (jobRes.data.jobId) {
+            currentJobId = jobRes.data.jobId;
+            localStorage.setItem('eduface_active_job', currentJobId);
+          }
+        } catch (e) { console.error("Could not fetch active job id", e); }
+      }
+
+      if (!currentJobId || currentJobId === 'generating_sync') return;
+
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/video-status/${currentJobId}`);
+        if (res.data.status === 'completed') {
+          clearInterval(pollInterval);
+          const data = res.data;
+          const baseUrl = API_BASE_URL;
+          const sessionToSave = {
+            videoUrl: `${baseUrl}${data.video_url}`,
+            scriptUrl: `${baseUrl}${data.script_url}`,
+            audioUrl: `${baseUrl}${data.audio_url}`,
+            summaryUrl: `${baseUrl}${data.summary_url}`,
+            jobId: data.job_id,
+            facePreview: facePreview,
+            userId: user?.id,
+            pptName: pptFile ? pptFile.name : 'Generated Video Lesson',
+            serverPptPath: serverPptPath
+          };
+          localStorage.setItem('eduface_video_session', JSON.stringify(sessionToSave));
+          localStorage.removeItem('eduface_active_job');
+          setActiveJobId(null);
+          
+          setScriptUrl(sessionToSave.scriptUrl);
+          setAudioUrl(sessionToSave.audioUrl);
+          setSummaryUrl(sessionToSave.summaryUrl);
+          setJobId(sessionToSave.jobId);
+          setVideoUrl(sessionToSave.videoUrl);
+          setLoading(false);
+
+          // AUTO-SAVE to Gallery upon background completion
+          if (isSignedIn && user?.id) {
+            try {
+              await axios.post(`${API_BASE_URL}/api/videos`, {
+                userId: user.id,
+                videoId: data.job_id,
+                videoUrl: sessionToSave.videoUrl,
+                title: pptFile ? pptFile.name : 'Generated Video Lesson',
+                videoData: JSON.stringify(sessionToSave)
+              });
+              console.log("✅ Video auto-saved to Gallery after background generation");
+            } catch (saveErr) {
+              console.error("❌ Failed to auto-save to gallery:", saveErr);
+            }
+          }
+        } else if (res.data.status === 'processing') {
+          setLoading(true);
+          setProgress(`${res.data.progress}%`);
+          setCurrentStep(res.data.step);
+        } else if (res.data.status === 'error') {
+          clearInterval(pollInterval);
+          localStorage.removeItem('eduface_active_job');
+          setError(res.data.error || "An unknown error occurred during generation.");
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Polling error", err);
+      }
+    };
+
+    setLoading(true);
+    setCurrentStep("Resuming active generation...");
+    checkStatus();
+    pollInterval = setInterval(checkStatus, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [isSignedIn, user?.id, activeJobId, videoUrl]);
 
   const fetchVoices = async () => {
     setVoicesLoading(true);
@@ -153,6 +254,13 @@ const VideoGenerator = () => {
     // Clear local session storage on "End Session" so it doesn't reload
     localStorage.removeItem('eduface_video_session');
     localStorage.removeItem('eduface_chat_messages');
+    localStorage.removeItem('eduface_active_job');
+    setActiveJobId(null);
+    
+    // If we came from gallery, go back to gallery on exit
+    if (location.state?.fromGallery) {
+      navigate('/video-gallery');
+    }
   };
 
   const handleGenerate = async () => {
@@ -174,6 +282,10 @@ const VideoGenerator = () => {
 
       setCurrentStep('generating');
       setProgress('AI is creating your lesson video...');
+      
+      // Mark that a generation is active (using a temp flag until we get a real job ID)
+      localStorage.setItem('eduface_active_job', 'generating_sync'); 
+      setActiveJobId('generating_sync');
 
       const generateRes = await axios.post(`${API_BASE_URL}/api/generate-video`, {
         ppt_path: serverPptPath || uploadRes.data.ppt_path,
@@ -186,29 +298,19 @@ const VideoGenerator = () => {
 
       const baseUrl = API_BASE_URL;
       const data = generateRes.data;
-      
-      const sessionToSave = {
-        videoUrl: `${baseUrl}${data.video_url}`,
-        scriptUrl: `${baseUrl}${data.script_url}`,
-        audioUrl: `${baseUrl}${data.audio_url}`,
-        summaryUrl: `${baseUrl}${data.summary_url}`,
-        jobId: data.job_id,
-        facePreview: facePreview,
-        userId: user.id // Store identity token within session
-      };
-
-      localStorage.setItem('eduface_video_session', JSON.stringify(sessionToSave));
-      
-      // Update states so props are passed correctly to LearningDashboard
-      setScriptUrl(sessionToSave.scriptUrl);
-      setAudioUrl(sessionToSave.audioUrl);
-      setSummaryUrl(sessionToSave.summaryUrl);
-      setJobId(sessionToSave.jobId);
-      setVideoUrl(sessionToSave.videoUrl); // Open dashboard
+      if (data.success) {
+        // Update with the REAL job id so the poller (useEffect) can take over
+        localStorage.setItem('eduface_active_job', data.job_id); 
+        setActiveJobId(data.job_id);
+        console.log(`🚀 Generation started in background: ${data.job_id}`);
+      } else {
+        throw new Error(data.error || "Failed to start generation");
+      }
     } catch (err) {
+      localStorage.removeItem('eduface_active_job'); // CLEAR ON ERROR
       setError(err.response?.data?.error || err.message);
-    } finally {
       setLoading(false);
+    } finally {
       setProgress('');
       setCurrentStep('');
     }
@@ -218,6 +320,7 @@ const VideoGenerator = () => {
     <>
       {videoUrl ? (
         <LearningDashboard 
+          key={jobId || 'session-reset'}
           videoUrl={videoUrl} 
           scriptUrl={scriptUrl} 
           audioUrl={audioUrl} 
@@ -228,6 +331,7 @@ const VideoGenerator = () => {
           user={user}
           isSignedIn={isSignedIn}
           pptName={pptFile ? pptFile.name : 'Generated Video Lesson'}
+          fromGallery={fromGallery}
         />
       ) : (
         <div className="vg-root-container">

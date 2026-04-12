@@ -1,0 +1,29 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. networking... ... Introduction to Networking."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+[00:06] [SCENE START]
+TEXT: "Now let's continue. Introduction to Networking... ... Networking refers to the process of connecting devices, such as computers, servers, and other hardware, to share resources, exchange data, and communicate with each other. A network can be as simple as two devices connected by a cable or as complex... Local Area Network LAN : A LAN connects devices in a limited geographical area, such as a home, office building, or campus. Wide Area Network WAN : A WAN connects devices over a larger geographical area, such as a city or country. Wireless Network WLAN : A WLAN connects devices wirelessly, using radio waves or infrared signals. Virtual Private Network VPN : A VPN is a network that uses encryption and other security measures to create a secure and private connection between devices over the internet.."
+FACE: - slight smile
+TIMING: - duration: 81s
+
+[01:04] [SCENE START]
+TEXT: "Now let's continue. Network Topologies... ... Bus Topology: A bus topology is a network configuration in which all devices are connected to a single cable or backbone. Star Topology: A star topology is a network configuration in which all devices are connected to a central device or hub. Ring Topology: A ring topology is a network configuration in which devices are connected in a circular configuration, with each device connected to its two neighbors. Mesh Topology: A mesh topology is a network configuration in which each device is connected to every other device.."
+FACE: - slight smile
+TIMING: - duration: 57s
+
+[01:43] [SCENE START]
+TEXT: "Now let's continue. Network Devices... ... Router: A router is a device that connects multiple networks together and routes traffic between them. Switch: A switch is a device that connects multiple devices within a network and forwards data packets between them. Hub: A hub is a device that connects multiple devices within a network and broadcasts incoming data to all connected devices. Modem: A modem is a device that connects a network to the internet via a broadband connection.."
+FACE: - slight smile
+TIMING: - duration: 48s
+
+[02:16] [SCENE START]
+TEXT: "Now let's continue. Network Protocols... ... TCP IP: The Transmission Control Protocol Internet Protocol TCP IP is a suite of protocols that governs how data is transmitted over the internet. HTTP: The Hypertext Transfer Protocol HTTP is a protocol that governs how data is transmitted over the web. FTP: The File Transfer Protocol FTP is a protocol that governs how files are transferred over a network. DNS: The Domain Name System DNS is a protocol that translates domain names into IP addresses.."
+FACE: - slight smile
+TIMING: - duration: 49s
+
+[02:55] [SCENE START]
+TEXT: "Now let's continue. Network Security... ... Firewall: A firewall is a device or software that blocks unauthorized access to a network. Antivirus Software: Antivirus software is a program that detects and removes malware from a network. Encryption: Encryption is the process of converting plaintext data into unreadable ciphertext to protect it from unauthorized access. Authentication: Authentication is the process of verifying the identity of devices or users on a network.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 56s
