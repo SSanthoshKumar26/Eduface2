@@ -84,7 +84,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
   const handleShareChat = async () => {
     try {
       // In production, use the actual backend URL instead of hardcoded localhost
-      const resp = await fetch('http://localhost:5000/api/share-chat', {
+      const resp = await fetch('http://127.0.0.1:5000/api/share-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, visibility: 'public' })
@@ -142,7 +142,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
                   <Sparkles size={12} />
                 </div>
                 <span className="ld-chat-role">EDUFACE AI</span>
-                <span className="ld-chat-verified-badge">SYSTEM</span>
+                <span className="ld-chat-verified-badge">EXPERT TUTOR</span>
               </div>
             )}
             <div className="ld-chat-bubble">
@@ -160,7 +160,7 @@ const TutorPanel = ({ messages, input, setInput, onSendMessage, isTyping, format
                 <Sparkles size={12} />
               </div>
               <span className="ld-chat-role">EDUFACE AI</span>
-              <span className="ld-chat-verified-badge">SYSTEM</span>
+              <span className="ld-chat-verified-badge">EXPERT TUTOR</span>
             </div>
             <div className="ld-typing-indicator">
               <span></span>

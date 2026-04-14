@@ -12,6 +12,10 @@
   --ld-accent-glow: rgba(14, 165, 233, 0.15);
   --ld-radius: 20px;
   --ld-glass-bg: rgba(15, 23, 42, 0.55);
+  --ld-chat-bg: #030712; /* Deep Obsidian */
+  --ld-bubble-bg: rgba(15, 23, 42, 0.4); 
+  --ld-bubble-border: rgba(255, 255, 255, 0.05);
+  --ld-bubble-text: #e2e8f0;
 }
 
 [data-theme="light"] {
@@ -23,6 +27,10 @@
   --ld-accent: #0ea5e9;
   --ld-accent-glow: rgba(14, 165, 233, 0.15);
   --ld-glass-bg: rgba(255, 255, 255, 0.7);
+  --ld-chat-bg: #ffffff;
+  --ld-bubble-bg: #f8fafc;
+  --ld-bubble-border: rgba(0, 0, 0, 0.06);
+  --ld-bubble-text: #1e293b;
 }
 
 body {
@@ -55,10 +63,12 @@ body {
   height: 100%; 
   overflow: hidden;
   background: var(--ld-bg);
-  padding: 85px 40px 48px 40px; /* Enhanced top padding for badge visibility */
+  padding: 40px 40px 30px 40px; /* Reduced vertical padding for maximized vertical space */
   display: flex;
   flex-direction: row;
-  align-items: stretch; 
+  align-items: flex-start;
+  gap: 0;
+  transition: all 0.4s ease;
 }
 
 .ld-viewport-shifter {
@@ -130,12 +140,12 @@ body {
 
 .ld-video-header-area {
   position: absolute;
-  top: -68px; 
+  top: -32px; 
   left: 0;
-  width: fit-content; /* Only occupies the space of the badge itself */
+  width: fit-content;
   display: flex;
   justify-content: flex-start;
-  z-index: 10;
+  z-index: 100;
 }
 
 .ld-video-badge {
@@ -445,112 +455,136 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-/* Resume System UI */
+/* Premium SaaS Resume System UI */
 .ld-resume-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 9, 20, 0.85); /* Deep rich overlay */
+  backdrop-filter: blur(12px); /* High-fidelity glassmorphism */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  animation: fadeIn 0.4s ease;
+  animation: modalFadeIn 0.5s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(12px); }
 }
 
 .ld-resume-card {
-  background: var(--ld-surface);
-  border: 1px solid var(--ld-border);
-  border-radius: 24px;
-  padding: 32px;
-  width: 400px;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.3);
-  transform: translateY(0);
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px 32px;
+  width: 360px;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+  transform: translateY(0) scale(1);
+  animation: modalSlideUpBounce 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideUpBounce {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ld-resume-info {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .resume-icon {
-  color: var(--ld-accent);
-  background: var(--ld-accent-glow);
-  padding: 12px;
-  border-radius: 16px;
-  width: 48px;
-  height: 48px;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px;
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .ld-resume-info h4 {
   margin: 0 0 4px 0;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: var(--ld-text-primary);
+  color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
 .ld-resume-info p {
+  margin: 0 0 8px 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.ld-resume-info .resume-sub-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0ea5e9;
   margin: 0;
-  font-size: 0.9rem;
-  color: var(--ld-text-secondary);
+  display: inline-block;
+  padding: 3px 8px;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(14, 165, 233, 0.15);
 }
 
 .ld-resume-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .resume-btn {
   width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   border: none;
 }
 
 .resume-btn.primary {
-  background: var(--ld-accent);
+  background: #0ea5e9;
   color: white;
 }
 
 .resume-btn.primary:hover {
   background: #0284c7;
-  transform: translateY(-2px);
 }
 
 .resume-btn.secondary {
-  background: rgba(255,255,255,0.05);
-  color: white;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .resume-btn.secondary:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .resume-btn.minimal {
   background: transparent;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 0.85rem;
-  font-weight: 600;
-  margin-top: 8px;
+  margin-top: 4px;
   padding: 8px;
 }
 
 .resume-btn.minimal:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
 }
 
 @keyframes fadeIn {
@@ -1335,15 +1369,16 @@ body {
 }
 
 .ld-chat-overlay-panel.open {
-  width: 500px; /* Increased chatbot width */
-  margin-left: 40px;
+  width: 500px;
+  margin-left: 20px;
   height: 100%;
   opacity: 1;
   pointer-events: all;
-  background: var(--ld-surface);
-  border-radius: 24px;
-  border: 1px solid var(--ld-border);
-  box-shadow: -10px 0 30px rgba(0,0,0,0.25);
+  background: transparent; /* Seamless integration */
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 /* Force internal content to stay rigid during width animation */
@@ -1398,13 +1433,12 @@ body {
 }
 
 .ld-tutor-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--ld-border);
+  padding: 12px 0 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--ld-glass-bg);
-  backdrop-filter: blur(10px);
+  background: transparent;
 }
 
 .ld-tutor-title-group {
@@ -1425,20 +1459,21 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(16, 185, 129, 0.1);
-  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.06);
+  padding: 3px 10px;
   border-radius: 100px;
-  font-size: 0.6rem;
-  font-weight: 700;
+  font-size: 0.55rem;
+  font-weight: 800;
   color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  letter-spacing: 0.05em;
 }
 
 .ld-status-dot {
-  width: 6px; height: 6px;
+  width: 5px; height: 5px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
 }
 
 .ld-tutor-header-actions {
@@ -1464,9 +1499,9 @@ body {
 
 .ld-header-divider {
   width: 1px;
-  height: 20px;
-  background: rgba(255,255,255,0.1);
-  margin: 0 8px;
+  height: 14px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 10px;
 }
 
 .ld-chat-close-btn-header {
@@ -1489,19 +1524,20 @@ body {
 
 .ld-tutor-messages {
   flex: 1 1 0;
-  height: 0; /* Critical for flex scrolling constraint */
+  height: 0; 
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
+  padding: 20px 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
   scroll-behavior: smooth;
+  background: transparent;
 }
 
-.ld-tutor-messages::-webkit-scrollbar { width: 6px; }
-.ld-tutor-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.ld-tutor-messages::-webkit-scrollbar { width: 4px; }
+.ld-tutor-messages::-webkit-scrollbar-thumb { background: var(--ld-border); border-radius: 10px; }
 
 .ld-chat-wrapper {
   max-width: 90%;
@@ -1518,32 +1554,34 @@ body {
 }
 
 .ld-chat-bubble {
-  padding: 16px 20px;
-  border-radius: 20px;
-  font-size: 0.95rem; 
-  line-height: 1.6;
+  padding: 12px 18px; /* Slightly more compact */
+  border-radius: 12px; /* More modern geometric radius */
+  font-size: 0.9rem; /* Professional standard reading size */
+  line-height: 1.5;
   word-break: break-word;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .ld-chat-wrapper.user .ld-chat-bubble {
-  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  background: #3b82f6; /* Solid professional blue */
   color: white;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+  border-bottom-right-radius: 2px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .ld-chat-wrapper.assistant .ld-chat-bubble {
-  background: var(--ld-glass-bg);
-  border: 1px solid var(--ld-border);
-  color: var(--ld-text-primary);
+  background: var(--ld-bubble-bg);
+  border: 1px solid var(--ld-bubble-border);
+  color: var(--ld-bubble-text);
   border-bottom-left-radius: 4px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  backdrop-filter: blur(12px);
 }
 
 .ld-tutor-footer {
-  padding: 16px;
-  border-top: 1px solid var(--ld-border);
-  background: var(--ld-surface);
+  padding: 12px 0 24px 0;
+  background: transparent;
 }
 
 .ld-tutor-toolbar {
@@ -1554,19 +1592,19 @@ body {
 }
 
 .ld-toolbar-btn {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   color: var(--ld-text-secondary);
-  border: none;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
 }
 
 .ld-toolbar-btn:hover {
@@ -1585,18 +1623,20 @@ body {
 
 .ld-tutor-input-area {
   display: flex;
-  align-items: center; /* Icons and input in same line */
+  align-items: center; 
   gap: 12px;
-  background: var(--ld-bg); /* Smooth matte background */
-  border: 1px solid var(--ld-border);
-  border-radius: 40px; /* Perfect pill shape */
-  padding: 10px 16px;
-  transition: all 0.2s ease;
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 10px 18px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
 }
 
 .ld-tutor-input-area:focus-within {
   border-color: var(--ld-accent);
-  background: var(--ld-bg);
+  background: rgba(30, 41, 59, 0.5);
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.15);
 }
 
 .ld-chat-input {
@@ -1711,6 +1751,7 @@ body {
   padding: 32px;
   box-shadow: 0 32px 64px rgba(0,0,0,0.5);
   position: relative;
+  margin: auto;
 }
 
 .ld-modal-header {
@@ -2016,6 +2057,7 @@ body {
   display: flex; /* Sidebar + Main Content */
   overflow: hidden;
   box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+  margin: auto;
 }
 
 .modal-sidebar {

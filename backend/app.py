@@ -2,21 +2,22 @@ import os
 import subprocess
 import sys
 
-def install_and_import(package):
+def install_and_import(dist_name, module_name=None):
+    if module_name is None: module_name = dist_name
     try:
-        __import__(package)
+        __import__(module_name)
     except ImportError:
-        print(f"[*] Installing {package} for premium features (this may take a minute)...")
+        print(f"[*] Installing {dist_name} for premium features (this may take a minute)...")
         try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--quiet", "--no-input"])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", dist_name, "--quiet", "--no-input"])
         except:
             pass
 
-# Auto-install PDF/DOCX exporters if missing
-try: install_and_import('fpdf2')
+# Auto-install PDF/DOCX exporters if missing (Corrected module names)
+try: install_and_import('fpdf2', 'fpdf')
 except: pass
 
-try: install_and_import('python-docx')
+try: install_and_import('python-docx', 'docx')
 except: pass
 import sys
 import io
@@ -410,7 +411,11 @@ def generate_with_ai(prompt: str, mode: str = "Creative", slide_count: int = 5) 
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Creative"])
     mode_instruction = mode_config.get("instructions", "")
     
-    enhanced_prompt = f"""{mode_instruction}
+    # If it's Quick Response and user asks for "ONLY" or "ONE" thing, use a simpler instruction to avoid overhead formatting
+    if mode == "Quick Response" and ("ONLY" in prompt or "ONE" in prompt or "question" in prompt.lower()):
+        enhanced_prompt = f"User Request: {prompt}\n\nStrict Rule: Provide EXACTLY what was requested. ZERO headers, ZERO bullet points, ZERO markdown formatting symbols unless explicitly asked for. NO introductory text."
+    else:
+        enhanced_prompt = f"""{mode_instruction}
 
 User Topic/Request: {prompt}
 
@@ -431,51 +436,64 @@ CRITICAL INSTRUCTIONS:
 - Focus on clear, structured markdown ONLY
 - Generate comprehensive content for ALL {slide_count} slides"""
 
-    # Try Groq API first
-    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
-    if groq_api_key:
+    # ── Helper: call Groq with a given key ─────────────────────────────────
+    def _try_groq(api_key: str, label: str) -> str | None:
         try:
-            print(f"🤖 Generating with Eduface AI Persona (Mode: {mode})...")
-            client = Groq(api_key=groq_api_key)
-            
-            system_prompt = """You are Eduface AI — an advanced conversational learning and content creation assistant.
-You operate as a REAL-TIME INTERACTIVE CHAT SYSTEM with a persistent working document.
+            print(f"🤖 Generating with Eduface AI ({label}) — Mode: {mode}...")
+            client = Groq(api_key=api_key)
 
-CORE MODES:
-1. CHAT MODE (conversation with user)
-2. DOCUMENT MODE (live structured content)
+            system_prompt = """You are Eduface AI — an advanced conversational learning assistant.
+You operate as a real-time interactive system.
 
 Every response MUST have 2 parts:
-1. [CHAT] - A short, natural, conversational reply acknowledging the user (1-2 lines max).
-2. [DOCUMENT] - The full, updated, structured markdown content.
+1. [CHAT] - A short, natural, conversational reply (1-2 lines max).
+2. [DOCUMENT] - The full structured content or requested answer.
 
 RULES:
-- Maintain a persistent document. All updates modify the existing structure.
-- [DOCUMENT] SECTION MUST ONLY CONTAIN THE FINAL TOPIC CONTENT.
-- DO NOT include ANY conversational meta-talk in the [DOCUMENT] segment (e.g., Avoid: 'Here is your update...', 'Let me know if you need more...').
+- If the user specifies 'ONLY' or 'ONE' item, the [DOCUMENT] section MUST contain exactly that item and nothing else (no headers, no markdown boilerplate).
 - Put ALL conversational pleasantries, explanations, and follow-up questions exclusively in the [CHAT] segment.
-- If input is voice, the [CHAT] part should be warmer, but the [DOCUMENT] part must remain a clean, professional written asset.
-- Use structured markdown (Headings, Bullet points) in [DOCUMENT]."""
+- In [DOCUMENT], use structured markdown only if appropriate for the request.
+- Keep the [DOCUMENT] clean and professional."""
+
+            # Trim prompt to stay within TPM limits (~8000 tokens safe)
+            trimmed_prompt = prompt[:6000] if len(prompt) > 6000 else prompt
 
             response = client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Mode: {mode}\nUser Input: {prompt}"}
+                    {"role": "user", "content": f"Mode: {mode}\nUser Input: {trimmed_prompt}"}
                 ],
                 model="llama-3.3-70b-versatile",
                 temperature=0.7,
+                max_tokens=4096,
             )
-            
+
             if response.choices and len(response.choices) > 0:
                 generated_text = response.choices[0].message.content.strip()
-                print(f"✅ Generation complete via Groq ({len(generated_text)} chars)\n")
+                print(f"✅ Generation complete via {label} ({len(generated_text)} chars)\n")
                 return generated_text
         except Exception as e:
-            print(f"[WARNING] Groq API failed: {str(e)}. Falling back to Ollama...")
-    else:
-        print("[INFO] No GROQ_API_KEY found. Falling back to Ollama...")
-    
-    # Fallback to Ollama
+            print(f"[WARNING] {label} failed: {str(e)}")
+            return None
+
+    # ── Priority 1: Primary Groq key ───────────────────────────────────────
+    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if groq_api_key:
+        result = _try_groq(groq_api_key, "Groq Primary")
+        if result:
+            return result
+
+    # ── Priority 2: Secondary Groq key ─────────────────────────────────────
+    groq_api_key_2 = os.getenv("GROQ_API_KEY_2", "").strip()
+    if groq_api_key_2:
+        print("[INFO] Primary Groq failed. Trying secondary Groq API key...")
+        result = _try_groq(groq_api_key_2, "Groq Secondary")
+        if result:
+            return result
+
+    print("[INFO] Both Groq keys failed or unavailable. Falling back to Ollama...")
+
+    # ── Priority 3: Ollama (local) ──────────────────────────────────────────
     try:
         url = f"{OLLAMA_BASE_URL}/api/generate"
         payload = {
@@ -484,36 +502,36 @@ RULES:
             "stream": False,
             "temperature": 0.7 if mode == "Creative" else (0.5 if mode == "Quick Response" else 0.6),
         }
-        
+
         print(f"🤖 Generating [{mode}] ({slide_count} slides) with local {AI_MODEL}...")
-        
-        # Increased timeout to 300s to allow the 1B model to finish without throwing an error
+
         response = requests.post(url, json=payload, timeout=300)
-        
+
         if response.status_code == 200:
             result = response.json()
             generated_text = result.get('response', '').strip()
-            print(f"✅ Generation complete ({len(generated_text)} chars)\n")
+            print(f"✅ Generation complete via Ollama ({len(generated_text)} chars)\n")
             return generated_text
         else:
             error_msg = f"Ollama error: HTTP {response.status_code}"
             print(f"❌ {error_msg}")
             return f"[Error]: {error_msg}"
-            
+
     except requests.exceptions.ConnectionError:
         error_msg = f"Cannot connect to Ollama at {OLLAMA_BASE_URL}."
         print(f"❌ {error_msg}")
         return f"[Error]: {error_msg}"
-    
+
     except requests.exceptions.Timeout:
         error_msg = f"Generation timed out (300s). Try a simpler prompt or Quick Response mode."
         print(f"❌ {error_msg}")
         return f"[Error]: {error_msg}"
-    
+
     except Exception as e:
         error_msg = str(e)
         print(f"❌ AI error: {error_msg}")
         return f"[Error]: {error_msg}"
+
 # ============ TEXT PROCESSING ============
 def clean_markdown(text):
     """Remove markdown formatting"""
@@ -1490,7 +1508,7 @@ def get_user_active_job(user_id):
 # ============ EDUFACE AI CHATBOT ============
 @app.route("/api/chat", methods=["POST"])
 def tutor_chat():
-    '''Elite Groq-powered Eduface AI (Llama 3.3)'''
+    '''Elite Groq-powered Eduface AI (Llama 3.3) with Streaming Support'''
     try:
         data = request.json
         messages = data.get('messages', [])
@@ -1526,12 +1544,27 @@ def tutor_chat():
         }
         messages.insert(0, system_i)
 
-        comp = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            temperature=0.7
-        )
-        return jsonify({"success": True, "message": {"role": "assistant", "content": comp.choices[0].message.content}})
+        from flask import Response
+
+        def generate():
+            stream = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                temperature=0.7,
+                stream=True
+            )
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content:
+                    yield f"data: {json.dumps({'content': content})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -1584,26 +1617,28 @@ def manage_quiz():
         Provide a meaningful 'explanation' for the correct answer.
 
         TASK (EVALUATION):
-        If this is EVALUATION mode, grade the 'User's Provided Answers' against the 'QUIZ_CONTENT' (if provided).
-        If 'QUIZ_CONTENT' is NOT provided, it's GENERATION mode.
-        CALCULATION RULE:
-        1. Correct: Number of answers in 'User's Provided Answers' that match correct_answer in 'QUIZ_CONTENT'.
-        2. Total: MUST be {len(full_quiz) if full_quiz else num_questions}.
-        3. Wrong: Total - Correct (EVERY question NOT in 'User's Provided Answers' is WRONG).
-        4. Accuracy: (Correct / Total) * 100.
+        If this is EVALUATION mode, grade the 'User's Provided Answers' against the 'QUIZ_CONTENT'.
         
-        ADVANCED AI LEARNING ANALYST LAYER (Crucial):
-        Analyze the quiz data and identify deep patterns in HOW the student learns and makes mistakes:
-        - Conceptual Understanding: Which core topics are definitively weak or strong.
-        - Error Patterns: Track repeated mistakes in similar questions. Differentiate fundamental misunderstandings vs careless errors.
-        - Thinking Behavior: Is the user rushing? Overthinking? Guessing based on distractor choices?
-        
-        Perform concept-wise analysis for ALL unique concepts to determine accuracy per concept.
+        STRICT GRADING RULES:
+        For each question in 'QUIZ_CONTENT':
+        - If 'id' is NOT in 'User's Provided Answers' → status = "not_attempted"
+        - If 'id' is in 'User's Provided Answers' AND matches 'correct_answer' → status = "correct"
+        - If 'id' is in 'User's Provided Answers' AND does NOT match 'correct_answer' → status = "wrong"
 
-        OUTPUT FORMAT: STRICT JSON ONLY. NO MARKDOWN.
+        SCORE CALCULATION:
+        - total: Total number of questions in 'QUIZ_CONTENT'.
+        - correct: Count of questions with status "correct".
+        - wrong: Count of questions with status "wrong".
+        - not_attempted: Count of questions with status "not_attempted".
+        - attempted: Count of questions that are "correct" or "wrong".
+        - accuracy: (correct / total) * 100 (formatted as percentage string).
+        
+        Note: DO NOT count "not_attempted" as correct.
+
+        OUTPUT FORMAT: STRICT JSON ONLY.
         {{
           "quiz": [
-            {{
+             {{
               "id": 1,
               "question": "...",
               "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
@@ -1614,19 +1649,31 @@ def manage_quiz():
             }}
           ],
           "evaluation": {{
-            "score": {{"total": 0, "correct": 0, "wrong": 0, "accuracy": "0%"}},
+            "score": {{
+               "total": 0, 
+               "attempted": 0,
+               "not_attempted": 0,
+               "correct": 0, 
+               "wrong": 0, 
+               "accuracy": "0%"
+            }},
+            "detailed_evaluations": [
+               {{
+                 "question_id": 1,
+                 "status": "correct/wrong/not_attempted",
+                 "user_answer": "A",
+                 "correct_answer": "A",
+                 "explanation": "..."
+               }}
+            ],
             "concept_analysis": [
               {{"concept": "...", "accuracy": "0%", "level": "Strong/Moderate/Weak"}}
             ],
-            "learning_insights": [
-              "Insight 1 about thinking behaviour",
-              "Insight 2 about error patterns",
-              "Insight 3 about conceptual depth"
-            ],
-            "strengths": ["Strength 1", "Strength 2"],
-            "weaknesses": ["Weakness 1", "Weakness 2"],
-            "suggestions": ["Behavioral advice", "Specific practice needed"],
-            "learning_level": "Beginner/Intermediate/Advanced"
+            "learning_insights": ["..."],
+            "strengths": ["..."],
+            "weaknesses": ["..."],
+            "suggestions": ["..."],
+            "learning_level": "..."
           }}
         }}
         """
@@ -1670,26 +1717,26 @@ def evaluate_quiz_detailed():
         QUIZ DATA (JSON):
         {json.dumps(questions)}
 
-        INSTRUCTIONS:
-        For EACH question:
-        1. Determine correctness (Result: Correct/Incorrect).
-        2. If CORRECT:
-           - Start with: "Your answer is correct!"
-           - Explain WHY the correct answer is right in extreme depth (200-300 words).
-           - Provide advanced professional insights, historical context, or complex real-world use cases.
-           - Ensure the explanation is highly elaborated and teaches the concept thoroughly.
-        3. If INCORRECT:
-           - Start with: "Your answer is incorrect."
-           - State the correct answer clearly.
-           - Explain WHY the correct answer is right and critically analyze why the student's answer was logically flawed (200-300 words).
-           - Provide deep technical details to correct the misconception entirely.
-        4. ADDITIONAL RESOURCES:
-           - Provide an array of exactly 2 "additionalResources".
-           - These must NOT be generic. They must be highly specialized, conceptual, and heavily differentiated from other questions.
-           - Format strictly as: "Advanced Concept Name - Detailed 2-sentence description of exactly what technical details to study to master this specific niche edge-case."
+         INSTRUCTIONS:
+         For EACH question:
+         1. Determine correctness (Result: Correct / Incorrect / Not Attempted).
+            - Note: If user_answer is null, undefined, or empty, result is "Not Attempted".
+         2. If CORRECT:
+            - Start with: "Your answer is correct!"
+            - Provide extremely detailed professional insights and real-world context for WHY it's correct.
+         3. If INCORRECT:
+            - Start with: "Your answer is incorrect."
+            - Explain the correct answer and logically debunk the user's misconception.
+         4. If NOT ATTEMPTED:
+            - Start with: "You did not provide an answer for this question."
+            - Explain the core concept thoroughly so the user can learn it.
 
-        TONE: Encouraging, highly professional, deeply analytical, and academic SaaS-level.
-        GOAL: Provide a premium, university-level technical breakdown equivalent to a senior engineer's review.
+         5. ADDITIONAL RESOURCES:
+            - Provide an array of exactly 2 "additionalResources".
+            - Format: "Concept Name - Brief description."
+
+         TONE: Encouraging, professional, and deeply analytical.
+         GOAL: Provide a university-level technical breakdown equivalent to a senior engineer's review.
 
         OUTPUT FORMAT: STRICT JSON ONLY. NO MARKDOWN.
         {{

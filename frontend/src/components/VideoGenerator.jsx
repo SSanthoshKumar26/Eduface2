@@ -24,7 +24,7 @@ import {
 import LearningDashboard from './LearningDashboard';
 import '../styles/VideoGenerator.css';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 const VideoGenerator = () => {
   const location = useLocation();
@@ -445,11 +445,20 @@ const VideoGenerator = () => {
             </div>
           </div>
 
-          <div className="vg-button-wrapper" style={{ marginBottom: '4rem' }}>
+          <div className="vg-button-wrapper" style={{ marginBottom: '4rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button onClick={handleGenerate} disabled={loading || !pptFile || !faceImage} className="vg-cyber-button">
               {loading ? <RefreshCcw className="vg-spin" size={18} /> : <Video size={18} />}
               {loading ? 'Processing...' : 'Generate AI Lesson'}
             </button>
+
+            <button 
+              onClick={() => navigate(`/thinking-mode/${jobId || 'new'}`)}
+              className="vg-cyber-button"
+              style={{ background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)', boxShadow: '0 0 20px rgba(139, 92, 246, 0.4)' }}
+            >
+              🧠 AI Thinking Coach
+            </button>
+
             {!loading && (pptFile || faceImage) && (
               <button onClick={resetForm} className="vg-reset-btn">Reset</button>
             )}

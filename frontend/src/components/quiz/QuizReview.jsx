@@ -27,12 +27,17 @@ const QuizReview = () => {
 
   const review = detailedReviews[currentIndex];
   const total = detailedReviews.length;
-  const isCorrect = review.result === 'Correct';
+  
+  // Normalize result check (handles casing and spaces)
+  const resultStr = review.result?.toLowerCase().trim() || 'not attempted';
+  const isCorrect = resultStr === 'correct';
+  const isWrong = resultStr === 'incorrect' || resultStr === 'wrong';
+  const isSkipped = resultStr === 'not attempted' || resultStr === 'not_attempted' || !review.userAnswer;
 
   const handleNext = () => {
     if (currentIndex < total - 1) {
       setCurrentIndex(currentIndex + 1);
-      setIsExpanded(false); // Reset expansion on new question
+      setIsExpanded(false);
     }
   };
 
@@ -43,13 +48,21 @@ const QuizReview = () => {
     }
   };
 
+  const getStatusConfig = () => {
+    if (isCorrect) return { label: 'CORRECT', color: 'bg-success', icon: <CheckCircle size={16} />, glow: 'correct-glow' };
+    if (isWrong) return { label: 'WRONG', color: 'bg-error', icon: <XCircle size={16} />, glow: 'wrong-glow' };
+    return { label: 'SKIPPED', color: 'bg-neutral', icon: <AlertCircle size={16} />, glow: 'skipped-glow' };
+  };
+
+  const status = getStatusConfig();
+
   return (
     <div className="qr-page-root" data-theme="dark">
       
       {/* Top Header Navigation */}
       <header className="qr-top-nav">
         <button className="qr-back-btn" onClick={() => navigate(-1)}>
-          <ArrowLeft size={18} /> Back to Dashboard
+          <ArrowLeft size={18} /> Back to Insights
         </button>
         <div className="qr-progress-indicator">
           Question {currentIndex + 1} of {total}
@@ -59,11 +72,11 @@ const QuizReview = () => {
       <main className="qr-main-container">
         
         {/* Left Side: Question & User Choices */}
-        <section className={`qr-question-panel ${isCorrect ? 'correct-glow' : 'wrong-glow'}`}>
+        <section className={`qr-question-panel ${status.glow}`}>
           <div className="qr-badge-container">
-            <span className={`qr-status-badge ${isCorrect ? 'bg-success' : 'bg-error'}`}>
-              {isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
-              {review.result.toUpperCase()}
+            <span className={`qr-status-badge ${status.color}`}>
+              {status.icon}
+              {status.label}
             </span>
           </div>
 
@@ -73,15 +86,17 @@ const QuizReview = () => {
 
           <div className="qr-choice-box">
             <div className="qr-choice-header">Your Selection:</div>
-            <div className={`qr-choice-content ${isCorrect ? 'text-success' : 'text-error'}`}>
-              {review.userAnswer}
-              {!isCorrect && <XCircle size={18} className="qr-choice-icon" />}
+            <div className={`qr-choice-content ${isCorrect ? 'text-success' : isSkipped ? 'text-neutral' : 'text-error'}`}>
+              {isSkipped ? '— Question Skipped —' : review.userAnswer}
+              {isCorrect && <CheckCircle size={18} className="qr-choice-icon" />}
+              {isWrong && <XCircle size={18} className="qr-choice-icon" />}
+              {isSkipped && <AlertCircle size={18} className="qr-choice-icon" />}
             </div>
           </div>
 
-          {!isCorrect && (
+          {(!isCorrect) && (
             <div className="qr-choice-box qr-correct-box">
-              <div className="qr-choice-header">Correct Answer:</div>
+              <div className="qr-choice-header">Correct Path:</div>
               <div className="qr-choice-content text-success">
                 {review.correctAnswer}
                 <CheckCircle size={18} className="qr-choice-icon" />
@@ -99,13 +114,17 @@ const QuizReview = () => {
               <ChevronLeft size={20} /> Previous
             </button>
             <div className="qr-dots">
-              {detailedReviews.map((_, idx) => (
-                <span 
-                  key={idx} 
-                  className={`qr-dot ${idx === currentIndex ? 'active' : ''} ${detailedReviews[idx].result === 'Correct' ? 'dot-success' : 'dot-wrong'}`}
-                  onClick={() => setCurrentIndex(idx)}
-                />
-              ))}
+              {detailedReviews.map((r, idx) => {
+                const res = r.result?.toLowerCase().trim() || 'not attempted';
+                const dotClass = res === 'correct' ? 'dot-success' : (res === 'incorrect' || res === 'wrong') ? 'dot-wrong' : 'dot-skipped';
+                return (
+                  <span 
+                    key={idx} 
+                    className={`qr-dot ${idx === currentIndex ? 'active' : ''} ${dotClass}`}
+                    onClick={() => setCurrentIndex(idx)}
+                  />
+                );
+              })}
             </div>
             <button 
               className="qr-nav-btn qr-nav-next" 

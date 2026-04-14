@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/LearningDashboard.css';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 const LearningDashboard = ({ 
   videoUrl, 
@@ -65,7 +65,7 @@ const LearningDashboard = ({
   const videoRef = useRef(null);
   
   const handleClearChat = () => {
-    const defaultMsg = [{ role: 'assistant', content: "Chat cleared! Let's start over." }];
+    const defaultMsg = [{ role: 'assistant', content: "Hi! I'm Eduface AI. Ask me anything about this video lesson." }];
     setMessages(defaultMsg);
     localStorage.setItem('eduface_chat_messages', JSON.stringify(defaultMsg));
   };
@@ -291,19 +291,75 @@ const LearningDashboard = ({
   };
 
   const handleSendMessage = async (text = null) => {
-    const input = text || chatInput;
-    if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: input }];
-    setMessages(newMessages); 
-    setChatInput(''); setIsTyping(true);
+    const userInput = text || chatInput;
+    if (!userInput.trim()) return;
+
+    const userMessage = { role: 'user', content: userInput };
+    const initialMessages = [...messages, userMessage];
+    
+    setMessages(initialMessages);
+    setChatInput('');
+    setIsTyping(true);
+
     try {
-      const resp = await axios.post(`${API_BASE_URL}/api/chat`, {
-        messages: [{ role: 'system', content: `Context: ${lessonContext}` }, ...newMessages]
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'system', content: `Context: ${lessonContext}` }, ...initialMessages]
+        })
       });
-      if (resp.data.success) {
-        setMessages([...newMessages, { role: 'assistant', content: resp.data.message.content }]);
+
+      if (!response.ok) throw new Error("Chat fetch failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      
+      // Add initial empty assistant message to avoid layout jump
+      setMessages(prev => [...prev, { role: 'assistant', content: "" }]);
+      setIsTyping(false); // Stop typing indicator once stream starts
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') break;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.content) {
+                assistantContent += data.content;
+                // Update ONLY the last message (the assistant's content)
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { 
+                    role: 'assistant', 
+                    content: assistantContent 
+                  };
+                  return updated;
+                });
+              }
+            } catch (e) {
+              console.warn("Error parsing stream chunk", e);
+            }
+          }
+        }
       }
-    } catch (e) { console.error(e); } finally { setIsTyping(false); }
+    } catch (e) {
+      console.error("Streaming Error:", e);
+      setIsTyping(false);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "I encountered an error connecting to the AI. Please check your connection." 
+      }]);
+    }
   };
 
   const activeChapter = chapters.find((chap, idx) => {
@@ -577,6 +633,16 @@ const LearningDashboard = ({
                     </button>
                   )}
 
+
+
+                   <button 
+                    onClick={() => navigate(`/thinking-mode/${jobId || 'new'}`)}
+                    className="ld-btn premium-thinking-coach"
+                    style={{ background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)', color: 'white', border: 'none' }}
+                  >
+                    🧠 AI Thinking Coach
+                  </button>
+
                   <button onClick={resetForm} className="ld-btn premium-end" style={{ marginLeft: 'auto' }}>
                     <LogOut size={18} /> End Session
                   </button>
@@ -606,83 +672,6 @@ const LearningDashboard = ({
                   {generatingNotes ? <><RefreshCcw className="ld-spin" size={14} /> Exporting...</> : "Customize & Export"}
                 </button>
               </div>
-
-                {/* Notes Setup Modal Overlay */}
-                {showNotesModal && (
-                  <div className="ld-modal-overlay">
-                    <div className="ld-study-modal-premium">
-                      <div className="modal-sidebar">
-                        <div className="sidebar-icon">
-                          <BookOpen size={48} strokeWidth={1} />
-                        </div>
-                        <div className="sidebar-text">
-                          <h3>Elite Guide</h3>
-                          <p>Tailor your academic material for professional retention.</p>
-                        </div>
-                        <div className="sidebar-footer">
-                          <span className="premium-badge">PRO GRADE</span>
-                        </div>
-                      </div>
-
-                      <div className="modal-main">
-                        <div className="main-header">
-                          <h4>Configuration</h4>
-                          <button className="close-x" onClick={() => setShowNotesModal(false)}><X size={18} /></button>
-                        </div>
-
-                        <div className="main-body">
-                          <div className="config-grid-dual">
-                            <div className="config-item">
-                              <label><Layers size={13} /> Style</label>
-                              <select value={notesConfig.style} onChange={e => setNotesConfig({...notesConfig, style: e.target.value})}>
-                                <option value="EXPLANATIVE">Detailed Paragraphs</option>
-                                <option value="BULLET">Structured Bullets</option>
-                                <option value="HINTS">Memory Hints</option>
-                              </select>
-                            </div>
-                            <div className="config-item">
-                              <label><Eye size={13} /> Depth</label>
-                              <select value={notesConfig.depth} onChange={e => setNotesConfig({...notesConfig, depth: e.target.value})}>
-                                <option value="BASIC">Foundational</option>
-                                <option value="INTERMEDIATE">Comprehensive</option>
-                                <option value="ADVANCED">Mastery</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="config-section">
-                            <label><CheckCircle2 size={13} /> Academic Inclusions</label>
-                            <div className="checkbox-row">
-                              <label className="checkbox-card-compact">
-                                <input type="checkbox" checked={notesConfig.includeExamples} onChange={e => setNotesConfig({...notesConfig, includeExamples: e.target.checked})} />
-                                <span>Practical Examples</span>
-                              </label>
-                              <label className="checkbox-card-compact">
-                                <input type="checkbox" checked={notesConfig.includeKeyPoints} onChange={e => setNotesConfig({...notesConfig, includeKeyPoints: e.target.checked})} />
-                                <span>Key Points Summary</span>
-                              </label>
-                            </div>
-                          </div>
-
-                          <div className="config-section">
-                            <label><FileText size={13} /> Distribution Format</label>
-                            <div className="format-pills-premium">
-                              <button className={`format-pill ${notesConfig.format === 'PDF' ? 'active' : ''}`} onClick={() => setNotesConfig({...notesConfig, format: 'PDF'})}>PDF Document</button>
-                              <button className={`format-pill ${notesConfig.format === 'WORD' ? 'active' : ''}`} onClick={() => setNotesConfig({...notesConfig, format: 'WORD'})}>Word Document</button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="main-footer">
-                          <button className="cancel-minimal" onClick={() => setShowNotesModal(false)}>Cancel</button>
-                          <button className="export-action-btn" onClick={handleExportNotes} disabled={generatingNotes}>
-                            {generatingNotes ? <><RefreshCcw className="ld-spin" size={14} /> Generating...</> : "Generate & Export"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                <div className="ld-quiz-cta-card" onClick={() => navigate('/quiz/setup', { state: { lessonContent: lessonContext } })}>
                   <div className="cta-icon-box">
@@ -719,6 +708,83 @@ const LearningDashboard = ({
           <Sparkles size={20} />
           <span>Ask Eduface AI</span>
         </button>
+      )}
+
+      {/* Notes Setup Modal Overlay - Moved to root for better positioning */}
+      {showNotesModal && (
+        <div className="ld-modal-overlay">
+          <div className="ld-study-modal-premium">
+            <div className="modal-sidebar">
+              <div className="sidebar-icon">
+                <BookOpen size={48} strokeWidth={1} />
+              </div>
+              <div className="sidebar-text">
+                <h3>Elite Guide</h3>
+                <p>Tailor your academic material for professional retention.</p>
+              </div>
+              <div className="sidebar-footer">
+                <span className="premium-badge">PRO GRADE</span>
+              </div>
+            </div>
+
+            <div className="modal-main">
+              <div className="main-header">
+                <h4>Configuration</h4>
+                <button className="close-x" onClick={() => setShowNotesModal(false)}><X size={18} /></button>
+              </div>
+
+              <div className="main-body">
+                <div className="config-grid-dual">
+                  <div className="config-item">
+                    <label><Layers size={13} /> Style</label>
+                    <select value={notesConfig.style} onChange={e => setNotesConfig({ ...notesConfig, style: e.target.value })}>
+                      <option value="EXPLANATIVE">Detailed Paragraphs</option>
+                      <option value="BULLET">Structured Bullets</option>
+                      <option value="HINTS">Memory Hints</option>
+                    </select>
+                  </div>
+                  <div className="config-item">
+                    <label><Eye size={13} /> Depth</label>
+                    <select value={notesConfig.depth} onChange={e => setNotesConfig({ ...notesConfig, depth: e.target.value })}>
+                      <option value="BASIC">Foundational</option>
+                      <option value="INTERMEDIATE">Comprehensive</option>
+                      <option value="ADVANCED">Mastery</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="config-section">
+                  <label><CheckCircle2 size={13} /> Academic Inclusions</label>
+                  <div className="checkbox-row">
+                    <label className="checkbox-card-compact">
+                      <input type="checkbox" checked={notesConfig.includeExamples} onChange={e => setNotesConfig({ ...notesConfig, includeExamples: e.target.checked })} />
+                      <span>Practical Examples</span>
+                    </label>
+                    <label className="checkbox-card-compact">
+                      <input type="checkbox" checked={notesConfig.includeKeyPoints} onChange={e => setNotesConfig({ ...notesConfig, includeKeyPoints: e.target.checked })} />
+                      <span>Key Points Summary</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="config-section">
+                  <label><FileText size={13} /> Distribution Format</label>
+                  <div className="format-pills-premium">
+                    <button className={`format-pill ${notesConfig.format === 'PDF' ? 'active' : ''}`} onClick={() => setNotesConfig({ ...notesConfig, format: 'PDF' })}>PDF Document</button>
+                    <button className={`format-pill ${notesConfig.format === 'WORD' ? 'active' : ''}`} onClick={() => setNotesConfig({ ...notesConfig, format: 'WORD' })}>Word Document</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="main-footer">
+                <button className="cancel-minimal" onClick={() => setShowNotesModal(false)}>Cancel</button>
+                <button className="export-action-btn" onClick={handleExportNotes} disabled={generatingNotes}>
+                  {generatingNotes ? <><RefreshCcw className="ld-spin" size={14} /> Generating...</> : "Generate & Export"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

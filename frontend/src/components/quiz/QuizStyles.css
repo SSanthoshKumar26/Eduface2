@@ -904,3 +904,124 @@
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
+
+/* --- NEW UPGRADED QUIZ STYLES --- */
+
+/* Attempt Upgrades */
+.qc-progress-header {
+  margin-bottom: 32px;
+}
+.qc-stats-row {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0,0,0,0.2);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--ld-border);
+}
+.qc-stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.qc-stat-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.qc-stat-val.primary { color: var(--ld-accent); }
+.qc-stat-val.warning { color: #f59e0b; }
+.qc-stat-lab {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ld-text-secondary);
+  letter-spacing: 0.05em;
+}
+.qc-step-info {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.qc-footer-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  gap: 16px;
+}
+.qc-nav-arrow-btn, .qc-final-submit-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--ld-border);
+  background: var(--ld-surface);
+  color: var(--ld-text-primary);
+}
+.qc-nav-arrow-btn.primary {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #ffffff;
+}
+.qc-nav-arrow-btn.primary:hover {
+  background: #f1f5f9;
+  border-color: #f1f5f9;
+  transform: translateY(-2px);
+}
+.qc-final-submit-btn {
+  background: linear-gradient(135deg, var(--ld-accent), #6366f1);
+  border: none;
+  flex: 1;
+}
+
+.qc-opt-marker {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+.selected .qc-opt-marker { background: var(--ld-accent); color: white; }
+
+/* Response Text Colors */
+.text-neutral { color: #94a3b8; }
+.bg-neutral { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+.skipped-glow { box-shadow: 0 0 20px rgba(148, 163, 184, 0.05); border-color: rgba(148, 163, 184, 0.1) !important; }
+.dot-skipped { background: #64748b !important; opacity: 0.6; }
+
+/* Result Upgrades */
+.qd-perfect-badge {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  color: #000;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.05em;
+}
+
+.qd-feedback-card {
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.02);
+}
+.qd-feedback-card[data-type="perfect"] { background: rgba(251, 191, 36, 0.05); border-color: rgba(251, 191, 36, 0.2); }
+.qd-feedback-card[data-type="good"] { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
+.qd-feedback-card h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.1rem; }
+.qd-feedback-card p { margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
+

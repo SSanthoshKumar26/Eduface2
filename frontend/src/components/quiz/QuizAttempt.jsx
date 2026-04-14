@@ -91,24 +91,37 @@ const QuizAttempt = () => {
     }
   };
 
+  const answeredCount = Object.keys(currentAnswers).length;
+  const remainingCount = totalQuestions - answeredCount;
   const progressPercentage = ((currentIndex + 1) / totalQuestions) * 100;
 
   return (
     <div className="qc-page-root ld-root" data-theme="dark">
       <div className="qc-attempt-container animate-fade">
-        <div className="qc-progress-section">
-          <div className="qc-progress-text">
-            Question {currentIndex + 1} of {totalQuestions}
-          </div>
-          <div className="qc-progress-track">
-            <div 
-              className="qc-progress-fill" 
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
+        <div className="qc-progress-header">
+           <div className="qc-stats-row">
+             <div className="qc-stat-group">
+               <span className="qc-stat-val primary">{answeredCount}</span>
+               <span className="qc-stat-lab">Attempted</span>
+             </div>
+             <div className="qc-stat-group">
+               <span className="qc-stat-val warning">{remainingCount}</span>
+               <span className="qc-stat-lab">Remaining</span>
+             </div>
+           </div>
+           <div className="qc-progress-track">
+             <div 
+               className="qc-progress-fill" 
+               style={{ width: `${progressPercentage}%` }}
+             ></div>
+           </div>
+           <div className="qc-step-info">Question {currentIndex + 1} of {totalQuestions}</div>
         </div>
 
         <div className="qc-question-section">
+          <div className="qc-q-meta">
+             <span className="qc-q-concept">{currentQuestion?.concept || 'Core Concept'}</span>
+          </div>
           <h2 className="qc-question-text">{currentQuestion?.question}</h2>
           <div className="qc-options-list">
             {currentQuestion?.options && Object.entries(currentQuestion.options).map(([key, val]) => {
@@ -120,7 +133,7 @@ const QuizAttempt = () => {
                   onClick={() => handleSelectOption(key)}
                   disabled={loading}
                 >
-                  <span className="qc-opt-key">{key}</span>
+                  <span className="qc-opt-marker">{key}</span>
                   <span className="qc-opt-val">{val}</span>
                 </button>
               );
@@ -128,28 +141,32 @@ const QuizAttempt = () => {
           </div>
         </div>
 
-        <div className="qc-nav-controls">
-          <div>
-            {!isLastQuestion && (
-              <button 
-                className="qc-secondary-btn" 
-                onClick={handleNext}
-                disabled={loading}
-              >
-                Next
-              </button>
-            )}
-          </div>
+        <div className="qc-footer-nav">
+          <button 
+            className="qc-nav-arrow-btn" 
+            onClick={handlePrevious}
+            disabled={loading || currentIndex === 0}
+          >
+            Previous
+          </button>
           
-          <div>
+          {isLastQuestion ? (
             <button 
-              className="qc-submit-btn" 
+              className="qc-final-submit-btn" 
               onClick={handleSubmit}
-              disabled={loading || Object.keys(currentAnswers).length === 0}
+              disabled={loading}
             >
-              {loading ? 'Submitting...' : 'Submit'}
+              {loading ? 'Analyzing...' : 'Finish Assessment'}
             </button>
-          </div>
+          ) : (
+            <button 
+              className="qc-nav-arrow-btn primary" 
+              onClick={handleNext}
+              disabled={loading}
+            >
+              Next Question
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -108,21 +108,38 @@ const QuizResult = () => {
 
   const totalCorrect = Number(evaluation.score?.correct) || 0;
   const totalWrong = Number(evaluation.score?.wrong) || 0;
-  // Use the total from the score, or calculate it if missing
-  const totalQuestions = Number(evaluation.score?.total) || (totalCorrect + totalWrong);
+  const totalSkipped = Number(evaluation.score?.not_attempted) || 0;
+  const totalQuestions = Number(evaluation.score?.total) || (totalCorrect + totalWrong + totalSkipped);
   
-  // Calculate accuracy more robustly
   const overallAccuracy = totalQuestions > 0 
     ? Math.round((totalCorrect / totalQuestions) * 100) 
     : parseInt(evaluation.score?.accuracy || '0');
 
-  const getMasteryLevel = (acc) => {
-    if (acc >= 90) return { label: 'Expert', color: '#10b981' };
-    if (acc >= 70) return { label: 'Proficient', color: '#3b82f6' };
-    if (acc >= 50) return { label: 'Developing', color: '#f59e0b' };
-    return { label: 'Beginner', color: '#ef4444' };
+  const getFeedback = (acc) => {
+    if (acc === 100) return {
+      title: "Outstanding! Perfect Score 🎉",
+      message: "You’ve mastered this topic! Excellent work.",
+      type: "perfect"
+    };
+    if (acc >= 70) return {
+      title: "Great Job!",
+      message: "You've shown a strong grasp of the material. A bit more review and you'll be perfect!",
+      type: "good"
+    };
+    if (acc >= 40) return {
+      title: "Good effort! Keep improving.",
+      message: "You're on the right track! Review missed concepts to improve.",
+      type: "neutral"
+    };
+    return {
+      title: "Learning takes practice.",
+      message: "Don’t worry — review the lesson and try again. Practice makes perfect!",
+      type: "low"
+    };
   };
-  const mastery = getMasteryLevel(overallAccuracy);
+
+  const feedback = getFeedback(overallAccuracy);
+  const mastery = { label: evaluation.learning_level || 'Beginner', color: overallAccuracy >= 70 ? '#10b981' : overallAccuracy >= 40 ? '#3b82f6' : '#ef4444' };
 
   return (
     <div className={`qd-page-root ${mounted ? 'mounted' : ''}`} data-theme="dark">
@@ -161,7 +178,7 @@ const QuizResult = () => {
             <RefreshCcw size={18} /> Retake Quiz
           </button>
           <button className="qd-nav-btn" onClick={() => navigate('/quiz/detailed-review', { state: { detailedReviews, evaluation } })}>
-            <BookOpen size={18} /> Static detailed Review
+            <BookOpen size={18} /> Detailed Review
           </button>
         </div>
         
@@ -174,66 +191,57 @@ const QuizResult = () => {
       <main className="qd-main-content">
         <header className="qd-main-header stagger-1">
           <div>
-            <h1 className="qd-greeting">Analytics Dashboard</h1>
-            <p className="qd-greeting-sub">Your AI-generated performance breakdown & personalized path.</p>
+            <h1 className="qd-greeting">Cognitive Analysis</h1>
+            <p className="qd-greeting-sub">AI-powered performance assessment and behavioral insights.</p>
           </div>
+          {overallAccuracy === 100 && (
+            <div className="qd-perfect-badge">
+               <FiAward size={20} /> PERFECT SCORE
+            </div>
+          )}
         </header>
 
         {/* Top KPIs */}
         <div className="qd-kpi-grid stagger-2">
-          {/* Always show Video Count */}
           <div className="qd-kpi-card">
-            <div className="qd-kpi-icon" style={{ color: '#8b5cf6' }}><Video size={26} /></div>
+            <div className="qd-kpi-icon" style={{ color: '#3b82f6' }}><FiTarget size={26} /></div>
             <div className="qd-kpi-data">
-              <span className="qd-kpi-value">{videoCount}</span>
-              <span className="qd-kpi-label">Videos Generated</span>
+              <span className="qd-kpi-value">{overallAccuracy}%</span>
+              <span className="qd-kpi-label">Final Accuracy</span>
             </div>
-            <div className="qd-kpi-chart-mini">
-               <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>AI Learning Material</span>
+          </div>
+          
+          <div className="qd-kpi-card">
+            <div className="qd-kpi-icon" style={{ color: '#10b981' }}><CheckCircle size={26} /></div>
+            <div className="qd-kpi-data">
+              <span className="qd-kpi-value">{totalCorrect}</span>
+              <span className="qd-kpi-label">Correct Answers</span>
             </div>
           </div>
 
-          {hasAttempted && (
-            <>
-              <div className="qd-kpi-card">
-                <div className="qd-kpi-icon" style={{ color: '#3b82f6' }}><FiTarget size={26} /></div>
-                <div className="qd-kpi-data">
-                  <span className="qd-kpi-value">{overallAccuracy}%</span>
-                  <span className="qd-kpi-label">Overall Accuracy</span>
-                </div>
-                <div className="qd-kpi-chart-mini">
-                   <div className="qd-mini-progress"><div style={{ width: `${overallAccuracy}%`, background: '#3b82f6' }}></div></div>
-                </div>
-              </div>
-              
-              <div className="qd-kpi-card">
-                <div className="qd-kpi-icon" style={{ color: '#10b981' }}><FiAward size={26} /></div>
-                <div className="qd-kpi-data">
-                  <span className="qd-kpi-value">{totalCorrect} / {totalQuestions}</span>
-                  <span className="qd-kpi-label">Questions Correct</span>
-                </div>
-                <div className="qd-kpi-chart-mini">
-                  <div className="qd-mini-progress">
-                    <div style={{ 
-                      width: `${totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0}%`, 
-                      background: '#10b981' 
-                    }}></div>
-                  </div>
-                </div>
-              </div>
+          <div className="qd-kpi-card">
+            <div className="qd-kpi-icon" style={{ color: '#ef4444' }}><XCircle size={26} /></div>
+            <div className="qd-kpi-data">
+              <span className="qd-kpi-value">{totalWrong}</span>
+              <span className="qd-kpi-label">Wrong Hits</span>
+            </div>
+          </div>
 
-              <div className="qd-kpi-card">
-                <div className="qd-kpi-icon" style={{ color: '#f59e0b' }}><FiTrendingUp size={26} /></div>
-                <div className="qd-kpi-data">
-                  <span className="qd-kpi-value">{mastery.label}</span>
-                  <span className="qd-kpi-label">AI Assessed Level</span>
-                </div>
-                <div className="qd-kpi-chart-mini">
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Based on recent quiz performance</span>
-                </div>
-              </div>
-            </>
-          )}
+          <div className="qd-kpi-card">
+            <div className="qd-kpi-icon" style={{ color: '#64748b' }}><AlertCircle size={26} /></div>
+            <div className="qd-kpi-data">
+              <span className="qd-kpi-value">{totalSkipped}</span>
+              <span className="qd-kpi-label">Questions Skipped</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="qd-feedback-card stagger-2-5" data-type={feedback.type}>
+           <div className="qd-feedback-content">
+              <h3>{feedback.title}</h3>
+              <p>{feedback.message}</p>
+           </div>
+        </div>
 
           {!hasAttempted && (
             <div className="qd-kpi-card qd-empty-kpi" style={{ gridColumn: 'span 3', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)' }}>
@@ -248,7 +256,6 @@ const QuizResult = () => {
                </div>
             </div>
           )}
-        </div>
 
         {hasAttempted ? (
           <>
