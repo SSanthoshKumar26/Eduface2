@@ -1,0 +1,14 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. git1... ... GitHub is a web-based platform for version control and collaboration on...."
+FACE: - slight smile
+TIMING: - duration: 11s
+
+[00:10] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Introduction to GitHub... GitHub is a web-based platform for version control and collaboration on software development projects. It allows developers to host and manage their code, track changes, and collaborate with others. GitHub was founded in 2008 and is now owned by...."
+FACE: - slight smile
+TIMING: - duration: 31s
+
+[00:37] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Key Features of GitHub... Repositories: GitHub allows users to create repositories, which are essentially folders that contain all the files, history, and collaborators for a project.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 30s

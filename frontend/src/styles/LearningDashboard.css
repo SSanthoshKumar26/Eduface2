@@ -828,6 +828,20 @@ body {
   color: #fff !important;
 }
 
+/* AI Thinking Coach — Sophisticated Violet variant */
+.premium-thinking-coach {
+  background: #7c3aed !important; /* Solid Violet-600 */
+  border-color: rgba(167, 139, 250, 0.2) !important;
+  color: #fff !important;
+}
+
+.premium-thinking-coach:hover {
+  background: #6d28d9 !important;
+  border-color: rgba(167, 139, 250, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25) !important;
+  transform: translateY(-2px) !important;
+}
+
 
 /* End Session button — danger accent */
 .premium-end {

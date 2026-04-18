@@ -133,6 +133,7 @@ from .text_processor import TextProcessor
 from .tts_engine import TTSEngine
 from .face_processor import FaceProcessor
 from .lipsync_generator import LipSyncGenerator
+from .face_animator import FaceAnimator
 
 
 DEFAULT_FPS = 24
@@ -159,12 +160,19 @@ class VideoPipeline:
         self.output_dir = os.path.abspath(output_dir)
         os.makedirs(self.output_dir, exist_ok=True)
 
-        self.text_processor   = TextProcessor()
-        self.tts_engine       = TTSEngine()
-        self.face_processor   = FaceProcessor()
+        self.text_processor    = TextProcessor()
+        self.tts_engine        = TTSEngine()
+        self.face_processor    = FaceProcessor()
         self.lipsync_generator = LipSyncGenerator()
+        self.face_animator     = FaceAnimator()
 
-    def _log(self, pct, msg):
+    def _update_progress(self, job_dir, pct, msg):
+        """Write progress to a JSON file for the status poller"""
+        try:
+            with open(os.path.join(job_dir, 'progress.json'), 'w') as f:
+                json.dump({'progress': pct, 'step': msg, 'timestamp': time.time()}, f)
+        except:
+            pass
         print(f"\n{'=' * 52}")
         print(f"[{pct:3d}%] {msg}")
         print(f"{'=' * 52}")
@@ -181,6 +189,7 @@ class VideoPipeline:
         slang_level = options.get('slang_level', 'medium')
         quality     = options.get('quality',     'medium')
         tts_engine  = options.get('tts_engine',  'edge')
+        audio_path  = options.get('audio_path')
 
         if not job_id:
             job_id = f"{int(time.time())}_{os.path.splitext(os.path.basename(ppt_path))[0]}"
@@ -206,7 +215,7 @@ class VideoPipeline:
 
         try:
             # ── STEP 1: PPT Extraction ─────────────────────────────
-            self._log(10, "STEP 1/6 — Extracting PPT content")
+            self._update_progress(job_dir, 10, "Extracting PPT content")
             extractor  = PPTExtractor(ppt_path)
             slides_data = extractor.extract_text()
             if not slides_data:
@@ -218,7 +227,7 @@ class VideoPipeline:
             results['steps']['extraction'] = 'completed'
 
             # ── STEP 2: Face Preprocessing ─────────────────────────
-            self._log(20, "STEP 2/6 — Processing face validation")
+            self._update_progress(job_dir, 20, "Preprocessing avatar (BG Removal)")
             is_valid, msg = self.face_processor.validate_image(face_path)
             if not is_valid:
                 raise RuntimeError(msg)
@@ -229,8 +238,40 @@ class VideoPipeline:
                 raise RuntimeError("Face preprocessing failed")
             results['steps']['preprocessing'] = 'completed'
 
+            # ── STEP 2.5: Face Animation (Eye Blink + Eyebrow + Head Motion) ──
+            #  If the input was a static image (PNG), we pre-animate it into a
+            #  video so Wav2Lip has a *moving* face to work with — giving us
+            #  realistic eye blinks, eyebrow lifts and head micro-motion on top
+            #  of the lip sync that Wav2Lip already provides.
+            self._update_progress(job_dir, 28, "Generating facial animations")
+
+            if processed_face.lower().endswith('.png'):
+                print("\n[FaceAnimator] 🎭 Static image detected — animating face...")
+                animated_face_path = os.path.join(job_dir, 'animated_face.mp4')
+
+                # Estimate duration: ~35 s gives Wav2Lip plenty to loop from.
+                # Use a slightly longer value to avoid hard loop artefacts.
+                animated = self.face_animator.animate(
+                    processed_face,
+                    animated_face_path,
+                    duration_sec=35,
+                    fps=DEFAULT_FPS,
+                )
+
+                if animated and os.path.exists(animated):
+                    print(f"  [FaceAnimator] ✅ Face animation complete — using animated video")
+                    # Replace the static PNG with the animated MP4 for Wav2Lip
+                    face_for_lipsync = animated
+                else:
+                    print("  [FaceAnimator] ⚠️  Animation failed — falling back to static image")
+                    face_for_lipsync = processed_face
+            else:
+                # User uploaded a video — it already has natural motion, skip animation
+                print("  [FaceAnimator] ℹ️  Video input detected — skipping face animation")
+                face_for_lipsync = processed_face
+
             # ── STEP 3: Script Generation ──────────────────────────
-            self._log(35, "STEP 3/6 — Generating narrations and summary")
+            self._update_progress(job_dir, 35, "Generating narrations")
             scripts = self.text_processor.format_for_speech_per_slide(
                 slides_data, slang_level)
 
@@ -259,7 +300,7 @@ class VideoPipeline:
             results['steps']['script']    = 'completed'
 
             # ── STEP 4: TTS Audio ──────────────────────────────────
-            self._log(50, "STEP 4/6 — Generating audio narration")
+            self._update_progress(job_dir, 50, "Synthesizing voice")
             audio_files = []
             for i, script in enumerate(scripts):
                 audio_path = os.path.join(job_dir, f'audio_{i:03d}.wav')
@@ -273,19 +314,19 @@ class VideoPipeline:
             results['steps']['audio'] = 'completed'
 
             # ── STEP 5: LipSync ────────────────────────────────────
-            self._log(65, "STEP 5/6 — Generating lip-sync videos")
+            self._update_progress(job_dir, 65, "Neural lip-syncing")
             lipsync_videos = []
             for i, audio in enumerate(audio_files):
                 ls_out = os.path.join(job_dir, f'lipsync_{i:03d}.mp4')
                 vp, msg = self.lipsync_generator.generate_video(
-                    processed_face, audio, ls_out, quality=quality)
+                    face_for_lipsync, audio, ls_out, quality=quality)
                 if not vp or not os.path.exists(vp):
                     raise RuntimeError(f"Lip-sync failed for slide {i + 1}: {msg}")
                 lipsync_videos.append(vp)
             results['steps']['lipsync'] = 'completed'
 
             # ── STEP 6: Final Composition ──────────────────────────
-            self._log(85, "STEP 6/6 — Compositing final video")
+            self._update_progress(job_dir, 85, "Compositing HD video")
 
             final_clips  = []
             current_time = 0.0
@@ -379,7 +420,7 @@ class VideoPipeline:
                 f.write('\n\n'.join(script_ts))
 
             # ── Concatenate ───────────────────────────────────────
-            self._log(95, "Finalizing export")
+            self._update_progress(job_dir, 95, "Assembling final clips")
 
             print(f"  [EXPORT] Found {len(final_clips)} composite clips. Starting concatenation...")
             # 'chain' is MUCH faster than 'compose' for clips of identical size
@@ -401,7 +442,7 @@ class VideoPipeline:
             # ── Export ──────────────────────────────────────────────────
             output_file = os.path.join(job_dir, 'final_lesson.mp4')
             
-            self._log(98, "COMPILING FINAL VIDEO (ENCODING)...")
+            self._update_progress(job_dir, 98, "Compiling final MP4")
             print(f"  [EXPORT] Saving high-quality lesson MP4: {output_file}")
             print(f"  [EXPORT] This may take a minute based on lesson length...")
             
@@ -420,7 +461,7 @@ class VideoPipeline:
             )
             
             # --- FINAL STEP ---
-            self._log(100, "GENERATION COMPLETE!")
+            self._update_progress(job_dir, 100, "Generation complete")
             print(f"\n{'*' * 60}")
             print(f"🌟 SUCCESS: EDUFACE VIDEO LESSON GENERATED 🌟")
             print(f"📍 LOCATION: {output_file}")

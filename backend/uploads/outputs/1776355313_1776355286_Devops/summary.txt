@@ -1,0 +1,1 @@
+DevOps combines software development and IT operations to improve speed, quality, and reliability of releases and deployments. Collaboration between teams is a key principle, emphasizing the importance of unified goals. DevOps tools such as Git, Jenkins, and Prometheus enable practices like continuous integration, automation, and monitoring to streamline processes.

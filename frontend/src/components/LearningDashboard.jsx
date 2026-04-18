@@ -122,8 +122,18 @@ const LearningDashboard = ({
   };
 
   useEffect(() => {
-    if (scriptUrl) fetch(scriptUrl).then(res => res.text()).then(t => setLessonContext(t));
-    if (summaryUrl) fetch(summaryUrl).then(res => res.text()).then(t => setLessonSummary(t));
+    if (scriptUrl) {
+      fetch(scriptUrl)
+        .then(res => res.ok ? res.text() : null)
+        .then(t => t && setLessonContext(t))
+        .catch(() => {}); // Silent catch to prevent console noise if backend is down
+    }
+    if (summaryUrl) {
+      fetch(summaryUrl)
+        .then(res => res.ok ? res.text() : null)
+        .then(t => t && setLessonSummary(t))
+        .catch(() => {}); // Silent catch to prevent console noise
+    }
   }, [scriptUrl, summaryUrl]);
 
   const [displayTitle, setDisplayTitle] = useState(pptName || 'Educational Lesson');
@@ -277,10 +287,14 @@ const LearningDashboard = ({
       });
       if (res.data.success) {
         setSavedToGallery(true);
-        toast.success('✅ Saved to My Videos Gallery!', { position: 'bottom-center', autoClose: 3000, theme: 'dark' });
+        toast.success('✅ Saved to My Videos Gallery!', { 
+          position: 'bottom-center', 
+          autoClose: 3000, 
+          theme: 'dark'
+        });
       } else {
         toast.error(res.data.message || 'Already saved or save failed.');
-        setSavedToGallery(true); // mark as saved if it already exists
+        setSavedToGallery(true); 
       }
     } catch (err) {
       console.error(err);
@@ -621,15 +635,15 @@ const LearningDashboard = ({
                   
                   {!fromGallery && (
                     <button 
-                      onClick={handleSaveToGallery} 
-                      disabled={savedToGallery || savingToGallery}
+                      onClick={savedToGallery ? () => navigate('/video-gallery') : handleSaveToGallery} 
+                      disabled={savingToGallery}
                       className="ld-btn premium-gallery-save"
                       style={{
                          background: savedToGallery ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #6366f1, #4f46e5)',
                          color: '#fff', border: 'none'
                       }}
                     >
-                      {savedToGallery ? <><CheckCircle2 size={18} /> Saved to Gallery</> : savingToGallery ? <><RefreshCcw className="ld-spin" size={18} /> Saving...</> : <><PlusCircle size={18} /> Save to My Gallery</>}
+                      {savedToGallery ? <><CheckCircle2 size={18} /> Go to Gallery</> : savingToGallery ? <><RefreshCcw className="ld-spin" size={18} /> Saving...</> : <><PlusCircle size={18} /> Save to My Gallery</>}
                     </button>
                   )}
 
@@ -638,9 +652,8 @@ const LearningDashboard = ({
                    <button 
                     onClick={() => navigate(`/thinking-mode/${jobId || 'new'}`)}
                     className="ld-btn premium-thinking-coach"
-                    style={{ background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)', color: 'white', border: 'none' }}
                   >
-                    🧠 AI Thinking Coach
+                    AI Thinking Coach
                   </button>
 
                   <button onClick={resetForm} className="ld-btn premium-end" style={{ marginLeft: 'auto' }}>

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
 import { useUser } from '@clerk/clerk-react';
-import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiDownload, FiLoader, FiCheck, FiX, FiTrash2, FiFileText, FiBook, FiPlay } from 'react-icons/fi';
 import ThemeSelector from './ThemeSelector';
 import '../styles/PPTGenerator.css';
 
@@ -59,7 +59,6 @@ const PPTGenerator = () => {
   };
 
   const handleCustomizationChange = (key, value) => {
-    // If setting slide count, don't allow it to go below minimum required
     if (key === 'slide_count') {
       const minRequired = Math.ceil((generatedContent?.length || 0) / 600) || 3;
       if (value < minRequired) {
@@ -86,10 +85,7 @@ const PPTGenerator = () => {
   };
 
   const handleGeneratePPT = async () => {
-    if (!generatedContent) {
-      alert('No content available for PPT generation!');
-      return;
-    }
+    if (!generatedContent) return;
 
     setIsGenerating(true);
     setStatus('generating');
@@ -113,7 +109,7 @@ const PPTGenerator = () => {
 
       const response = await axios.post('http://localhost:5000/api/generate-ppt', pptData, {
         responseType: 'blob',
-        timeout: 120000 // Extended timeout for large PPTs
+        timeout: 120000
       });
 
       setProgress(100);
@@ -131,12 +127,9 @@ const PPTGenerator = () => {
 
       saveAs(blob, `${fileName}.pptx`);
       setStatus('success');
-
-      // Keep success status visible longer
     } catch (error) {
       console.error('PPT generation failed:', error);
       setStatus('error');
-      alert('Failed to generate PPT. Please try again.');
     } finally {
       setIsGenerating(false);
       clearInterval(progressInterval);
@@ -157,22 +150,26 @@ const PPTGenerator = () => {
 
   return (
     <div className="ppt-root-container">
+      {/* Header */}
       <div className="ppt-header">
+        <div className="ppt-header-brand">
+          <FiFileText style={{ color: 'var(--cyan-primary)' }} />
+          <span>Presentation Builder</span>
+        </div>
         <button className="ppt-back-btn" onClick={() => navigate(-1)}>
-          <FiArrowLeft size={20} />
-          Back
+          <FiArrowLeft size={16} />
+          Go Back
         </button>
-        <h1 className="ppt-page-title">Professional PPT Generator</h1>
-        <div className="ppt-header-spacer"></div>
       </div>
 
+      {/* Main Grid */}
       <div className="ppt-main-content">
         <div className="ppt-grid-wrapper">
-          {/* Left Section - Content Preview */}
+          {/* LEFT — Content Preview */}
           <div className="ppt-left-panel">
             <div className="ppt-preview-header">
               <div className="ppt-header-title">
-                <FiTrash2 className="title-icon" />
+                <FiBook className="title-icon" />
                 <span>Content Preview</span>
               </div>
               <div className="ppt-toggle-group">
@@ -180,22 +177,18 @@ const PPTGenerator = () => {
                   className={`ppt-toggle-btn ${!isEditing ? 'active' : ''}`}
                   onClick={() => setIsEditing(false)}
                 >
-                  Preview
+                  Read
                 </button>
                 <button 
                   className={`ppt-toggle-btn ${isEditing ? 'active' : ''}`}
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit Content
+                  Edit
                 </button>
               </div>
             </div>
 
             <div className="ppt-preview-card">
-              <div style={{ display: 'none' }}>
-                <button onClick={handleClear}><FiTrash2 size={16} /> Clear</button>
-              </div>
-              
               <div className="ppt-content-box">
                 {isEditing ? (
                   <textarea
@@ -206,29 +199,32 @@ const PPTGenerator = () => {
                   />
                 ) : (
                   <p className="ppt-preview-text">
-                    {generatedContent ? generatedContent : "No content available. Paste content in Edit mode to begin."}
+                    {generatedContent || "No content available. Switch to Edit mode to paste content."}
                   </p>
                 )}
               </div>
               
-              <div className="ppt-content-info" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="ppt-info-badge">📄 {Math.ceil((generatedContent?.length || 0) / 500)} Estimated Slides</span>
+              <div className="ppt-content-info">
+                <span className="ppt-info-badge">
+                  <FiFileText size={14} />
+                  {Math.ceil((generatedContent?.length || 0) / 500)} Estimated Slides
+                </span>
                 <button onClick={handleClear} className="ppt-mini-clear">
-                  <FiTrash2 size={14} /> Reset
+                  <FiTrash2 size={13} /> Reset
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right Section - Customization */}
+          {/* RIGHT — Settings */}
           <div className="ppt-right-panel">
-            {/* Theme Section */}
+            {/* Theme */}
             <div className="ppt-settings-card">
               <h3 className="ppt-card-title">Design Theme</h3>
               <ThemeSelector selectedTheme={selectedTheme} onThemeSelect={handleThemeSelect} />
             </div>
 
-            {/* Advanced Options */}
+            {/* Customization */}
             <div className="ppt-settings-card">
               <h3 className="ppt-card-title">Customization</h3>
               
@@ -263,7 +259,7 @@ const PPTGenerator = () => {
               </div>
             </div>
 
-            {/* Filename Input */}
+            {/* Filename */}
             <div className="ppt-settings-card">
               <h3 className="ppt-card-title">File Name</h3>
               <div className="ppt-form-group">
@@ -278,13 +274,13 @@ const PPTGenerator = () => {
               </div>
             </div>
 
-            {/* Progress Section */}
+            {/* Progress */}
             {status === 'generating' && (
               <div className="ppt-progress-card">
                 <div className="ppt-progress-content">
-                  <FiLoader size={24} className="ppt-progress-spinner" />
+                  <FiLoader size={22} className="ppt-progress-spinner" />
                   <div className="ppt-progress-text">
-                    <p className="ppt-progress-title">Creating Presentation...</p>
+                    <p className="ppt-progress-title">Building Presentation...</p>
                     <p className="ppt-progress-subtitle">{Math.round(progress)}% complete</p>
                   </div>
                 </div>
@@ -294,45 +290,42 @@ const PPTGenerator = () => {
               </div>
             )}
 
-            {/* Status Messages */}
+            {/* Status */}
             {status === 'success' && (
               <div className="ppt-status-card ppt-status-success">
-                <FiCheck size={24} className="ppt-status-icon" />
+                <FiCheck size={22} className="ppt-status-icon" />
                 <div>
-                  <p className="ppt-status-title">Success!</p>
-                  <p className="ppt-status-message">Professional PPT generated and downloaded</p>
+                  <p className="ppt-status-title">Presentation Ready</p>
+                  <p className="ppt-status-message">Your .pptx file has been downloaded</p>
                 </div>
               </div>
             )}
 
             {status === 'error' && (
               <div className="ppt-status-card ppt-status-error">
-                <FiX size={24} className="ppt-status-icon" />
+                <FiX size={22} className="ppt-status-icon" />
                 <div>
-                  <p className="ppt-status-title">Error!</p>
-                  <p className="ppt-status-message">Generation failed. Please try again.</p>
+                  <p className="ppt-status-title">Generation Failed</p>
+                  <p className="ppt-status-message">Something went wrong. Please try again.</p>
                 </div>
               </div>
             )}
 
-            {/* Buttons Group */}
+            {/* Buttons */}
             <div className="ppt-actions-wrapper">
               <button
                 className="ppt-generate-btn"
                 onClick={handleGeneratePPT}
                 disabled={isGenerating || !generatedContent}
               >
-                <FiDownload size={20} />
-                {isGenerating ? 'Generating...' : status === 'success' ? 'Regenerate PPT' : 'Generate Professional PPT'}
+                <FiDownload size={18} />
+                {isGenerating ? 'Generating...' : status === 'success' ? 'Regenerate PPT' : 'Generate Presentation'}
               </button>
 
               {status === 'success' && generatedPpt && (
-                <button
-                  className="ppt-use-btn"
-                  onClick={handleUseForVideo}
-                >
-                  <FiCheck size={20} />
-                  Use this PPT for Video
+                <button className="ppt-use-btn" onClick={handleUseForVideo}>
+                  <FiPlay size={18} />
+                  Use for Video Generation
                 </button>
               )}
             </div>

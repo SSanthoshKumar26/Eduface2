@@ -1,0 +1,29 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. git2... On this slide, we focus on git2.."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+[00:08] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Introduction to GitHub... GitHub is a web-based platform for version control and collaboration on software development projects. It allows developers to host and manage their code, track changes, and collaborate with others. GitHub was founded in 2008 and is now owned by...."
+FACE: - slight smile
+TIMING: - duration: 31s
+
+[00:34] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Key Features of GitHub... Repositories: GitHub allows users to create repositories, which are essentially folders that contain all the files, history, and collaborators for a project.."
+FACE: - slight smile
+TIMING: - duration: 22s
+
+[00:53] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Version Control: GitHub uses Git, a version control system that tracks changes to code over time, allowing developers to revert back to previous versions if needed. Collaboration: GitHub enables multiple developers to collaborate on a project by allowing them to create branches, make changes, and merge those changes into the main project.."
+FACE: - slight smile
+TIMING: - duration: 37s
+
+[01:23] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Pull Requests: GitHub's pull request feature allows developers to review and discuss changes before they are merged into the main project. Issues: GitHub's issue tracker allows developers to track bugs, feature requests, and other project-related tasks.."
+FACE: - slight smile
+TIMING: - duration: 29s
+
+[01:46] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Uses of GitHub... Open-Source Software Development: GitHub is widely used for open-source software development, allowing developers to collaborate on projects and share their code with the world. Private Project Management: GitHub is also used for private project management, allowing companies to manage their internal projects and collaborate with team members. Resume Building: GitHub can be used as a portfolio for developers, allowing them to showcase their projects and skills to potential employers.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 62s

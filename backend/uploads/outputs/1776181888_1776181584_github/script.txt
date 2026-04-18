@@ -1,0 +1,29 @@
+[00:00] [SCENE START]
+TEXT: "Welcome to this lesson. github... ... GitHub is a web-based platform for version control and collaboration on...."
+FACE: - slight smile
+TIMING: - duration: 11s
+
+[00:08] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Introduction to GitHub... GitHub is a web-based platform for version control and collaboration on software development projects. It allows developers to host and manage their code, track changes, and collaborate with others. GitHub was founded in 2008 and is now owned by... Key Features of GitHub... Repositories: GitHub allows users to create repositories, which are essentially folders that contain all the files, history, and collaborators for a project.."
+FACE: - slight smile
+TIMING: - duration: 49s
+
+[00:44] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Version Control: GitHub uses Git, a version control system that tracks changes to code over time, allowing developers to revert back to previous versions if needed. Collaboration: GitHub enables multiple developers to collaborate on a project by allowing them to create branches, make changes, and merge those changes into the main project.."
+FACE: - slight smile
+TIMING: - duration: 37s
+
+[01:10] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Pull Requests: GitHub's pull request feature allows developers to review and discuss changes before they are merged into the main project. Issues: GitHub's issue tracker allows developers to track bugs, feature requests, and other project-related tasks.."
+FACE: - slight smile
+TIMING: - duration: 29s
+
+[01:30] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Uses of GitHub... Open-Source Software Development: GitHub is widely used for open-source software development, allowing developers to collaborate on projects and share their code with the world. Private Project Management: GitHub is also used for private project management, allowing companies to manage their internal projects and collaborate with team members. Resume Building: GitHub can be used as a portfolio for developers, allowing them to showcase their projects and skills to potential employers.."
+FACE: - slight smile
+TIMING: - duration: 54s
+
+[02:07] [SCENE START]
+TEXT: "Now let's continue. Overview... ... Getting Started with GitHub... Create an Account: To get started with GitHub, users need to create an account on the GitHub website. Install Git: Users need to install Git on their local machine to use GitHub. Create a Repository: Users can create a new repository on GitHub and start managing their code. Learn Git Basics: Users can learn the basics of Git and GitHub by reading the official documentation and tutorials.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 54s

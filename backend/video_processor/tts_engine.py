@@ -2,6 +2,8 @@ import os
 import time
 import shutil
 import re
+import requests
+import uuid
 from gtts import gTTS
 from pydub import AudioSegment
 from pydub.effects import normalize
@@ -39,6 +41,45 @@ class TTSEngine:
         else:
             print("  [WARNING] FFmpeg NOT FOUND. Edge/gTTS MP3→WAV conversion will fail.")
             print("            Download from https://ffmpeg.org/download.html and add to PATH.")
+            print("            Download from https://ffmpeg.org/download.html and add to PATH.")
+
+    def clone_voice(self, audio_file_path, name="Custom Presenter Voice"):
+        """Clones a voice using ElevenLabs Instant Voice Cloning."""
+        elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
+        if not elevenlabs_key:
+            print("[TTSEngine] ⚠️ No ElevenLabs API Key set — skipping voice cloning.")
+            return None
+            
+        print(f"[TTSEngine] 🎙️ Cloning explicit identity from {os.path.basename(audio_file_path)}...")
+        url = "https://api.elevenlabs.io/v1/voices/add"
+        headers = {
+            "xi-api-key": elevenlabs_key,
+            "Accept": "application/json"
+        }
+        
+        # Ensure a unique namespace for the cloned identity cache
+        unique_name = f"{name}_{str(uuid.uuid4())[:8]}"
+        data = {
+            "name": unique_name,
+            "description": "Auto-cloned custom voice identity via Eduface AI"
+        }
+        
+        try:
+            with open(audio_file_path, 'rb') as f:
+                # API expects a tuple of (filename, bytes_stream, mimetype)
+                files = [("files", (os.path.basename(audio_file_path), f, "audio/mpeg"))]
+                response = requests.post(url, headers=headers, data=data, files=files)
+                
+            if response.status_code == 200:
+                voice_id = response.json().get('voice_id')
+                print(f"[TTSEngine] ✅ Voice identity successfully locked. Synth ID: {voice_id}")
+                return f"elevenlabs_{voice_id}"
+            else:
+                print(f"[TTSEngine] ❌ Voice clone API rejected parameters: {response.text}")
+                return None
+        except Exception as e:
+            print(f"[TTSEngine] ❌ Failed to invoke clone API over network: {str(e)}")
+            return None
 
     # ─────────────────────────────────────────────────────────────────
     # PUBLIC: VOICE ROUTING & FALLBACK CHAIN
@@ -73,24 +114,37 @@ class TTSEngine:
         for engine in engines_to_try:
             print(f"\n  Trying {engine.upper()}...")
             try:
+                # Detect gender for appropriate fallback
+                is_male = any(x in voice_id.lower() for x in ['guy', 'steffan', 'drew', 'clyde', 'david', 'male', 'man', 'boy', 'roger', 'ryan', 'william', 'christopher', 'eric', 'jacob', 'antoni', 'josh', 'adam', 'arnold'])
+                is_female = not is_male # Default to female or existing logic
+                
+                # If we are falling back (engine != target_engine), pick a gender-matching default
                 current_voice = voice_id if (target_engine == engine) else None
+                fallback_voice = None
+                
+                if not current_voice:
+                    if engine == 'edge':
+                        fallback_voice = 'edge_guy' if is_male else 'edge_aria'
+                    elif engine == 'elevenlabs':
+                        fallback_voice = 'elevenlabs_josh' if is_male else 'elevenlabs_rachel'
+                    elif engine == 'pyttsx3':
+                        fallback_voice = 'pyttsx3_0' if is_male else 'pyttsx3_1'
+                
+                voice_to_use = current_voice or fallback_voice
                 result = None
 
                 if engine == 'edge':
-                    # Skip if ffmpeg is missing — conversion will fail anyway
                     if not self.ffmpeg_path:
                         print("  ⚠️  Skipping Edge TTS: FFmpeg not available for MP3→WAV")
                         continue
-                    result = self.generate_audio_edge(
-                        spoken_text, output_path, current_voice or 'edge_aria')
+                    result = self.generate_audio_edge(spoken_text, output_path, voice_to_use or 'edge_aria')
 
                 elif engine == 'elevenlabs':
                     api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
                     if not api_key:
                         print("    [SKIP] ElevenLabs API key missing")
                         continue
-                    result = self.generate_audio_elevenlabs(
-                        spoken_text, output_path, current_voice or 'elevenlabs_rachel')
+                    result = self.generate_audio_elevenlabs(spoken_text, output_path, voice_to_use or 'elevenlabs_rachel')
 
                 elif engine == 'gtts':
                     if not self.ffmpeg_path:
@@ -99,10 +153,10 @@ class TTSEngine:
                     result = self.generate_audio_gtts(spoken_text, output_path)
 
                 elif engine == 'pyttsx3':
-                    v_idx = 0
-                    if current_voice and 'pyttsx3_' in current_voice:
-                        try: v_idx = int(current_voice.split('_')[1])
-                        except: v_idx = 0
+                    v_idx = 0 if is_male else 1
+                    if voice_to_use and 'pyttsx3_' in voice_to_use:
+                        try: v_idx = int(voice_to_use.split('_')[1])
+                        except: v_idx = (0 if is_male else 1)
                     result = self.generate_audio_pyttsx3(spoken_text, output_path, v_idx)
 
                 if result and os.path.exists(result):
@@ -151,10 +205,16 @@ class TTSEngine:
             import asyncio
             import edge_tts
             voice_map = {
-                'edge_aria':    'en-US-AriaNeural',
-                'edge_guy':     'en-US-GuyNeural',
-                'edge_jenny':   'en-US-JennyNeural',
-                'edge_steffan': 'en-US-SteffanNeural',
+                'edge_aria':        'en-US-AriaNeural',
+                'edge_jenny':       'en-US-JennyNeural',
+                'edge_emma':        'en-US-EmmaNeural',
+                'edge_guy':         'en-US-GuyNeural',
+                'edge_steffan':     'en-US-SteffanNeural',
+                'edge_christopher': 'en-US-ChristopherNeural',
+                'edge_eric':        'en-US-EricNeural',
+                'edge_roger':       'en-US-RogerNeural',
+                'edge_william':     'en-AU-WilliamNeural',
+                'edge_ryan':        'en-GB-RyanNeural',
             }
             edge_v = voice_map.get(voice_id, 'en-US-AriaNeural')
             print(f"  🎤 Using voice: {edge_v}")
@@ -237,6 +297,11 @@ class TTSEngine:
                 'elevenlabs_drew':   '29vD33N1CtxCmqQRPOHJ',
                 'elevenlabs_clyde':  '2EiwWnXFnvU5JabPnv8n',
                 'elevenlabs_mim':    'EXAVITQu4vr4xnSDxMaL',
+                'elevenlabs_josh':   'TxGEqn989ZiL49vS6f37',
+                'elevenlabs_adam':   'pNInz6obpgDQGcFmaJgB',
+                'elevenlabs_antoni': 'ErXw9S1qBy8WxqM7vByf',
+                'elevenlabs_bella':  'aEO01A4mbXgrpjqS3S6F',
+                'elevenlabs_arnold': 'VR6Aewyiyvcy65v81lV1',
             }
             vid = voice_map.get(voice_id, voice_id)
             print(f"  🎙️  Connecting to ElevenLabs API...")
@@ -289,12 +354,31 @@ class TTSEngine:
 
     def list_voices(self):
         voices = [
-            {'id': 'edge_aria',    'name': 'Aria (Female, Edge)',    'engine': 'edge'},
-            {'id': 'edge_guy',     'name': 'Guy (Male, Edge)',        'engine': 'edge'},
-            {'id': 'edge_jenny',   'name': 'Jenny (Female, Edge)',   'engine': 'edge'},
-            {'id': 'edge_steffan', 'name': 'Steffan (Male, Edge)',   'engine': 'edge'},
-            {'id': 'gtts_en',      'name': 'Google TTS (English)',   'engine': 'gtts'},
-            {'id': 'elevenlabs_rachel', 'name': 'Rachel (Female, ElevenLabs)', 'engine': 'elevenlabs'},
-            {'id': 'elevenlabs_drew',   'name': 'Drew (Male, ElevenLabs)',     'engine': 'elevenlabs'},
+            # --- EDGE (Free, High Quality) ---
+            {'id': 'edge_aria',        'name': 'Aria (Female, Soft)',       'engine': 'edge', 'gender': 'Female'},
+            {'id': 'edge_jenny',       'name': 'Jenny (Female, Friendly)',   'engine': 'edge', 'gender': 'Female'},
+            {'id': 'edge_emma',        'name': 'Emma (Female, Professional)', 'engine': 'edge', 'gender': 'Female'},
+            {'id': 'edge_guy',         'name': 'Guy (Male, Corporate)',     'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_steffan',     'name': 'Steffan (Male, Narrator)',  'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_christopher', 'name': 'Christopher (Male, Formal)', 'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_eric',        'name': 'Eric (Male, Bright)',       'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_roger',       'name': 'Roger (Male, Deep)',        'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_ryan',        'name': 'Ryan (Male, British)',      'engine': 'edge', 'gender': 'Male'},
+            {'id': 'edge_william',     'name': 'William (Male, Aussie)',    'engine': 'edge', 'gender': 'Male'},
+
+            # --- ELEVENLABS (Premium, Hyper-Realistic) ---
+            {'id': 'elevenlabs_rachel', 'name': 'Rachel (Female, Elegant)',   'engine': 'elevenlabs', 'gender': 'Female'},
+            {'id': 'elevenlabs_bella',  'name': 'Bella (Female, Soft)',      'engine': 'elevenlabs', 'gender': 'Female'},
+            {'id': 'elevenlabs_mim',    'name': 'Mim (Female, Sharp)',       'engine': 'elevenlabs', 'gender': 'Female'},
+            {'id': 'elevenlabs_josh',   'name': 'Josh (Male, Deep/Bass)',    'engine': 'elevenlabs', 'gender': 'Male'},
+            {'id': 'elevenlabs_adam',   'name': 'Adam (Male, Trustworthy)',  'engine': 'elevenlabs', 'gender': 'Male'},
+            {'id': 'elevenlabs_antoni', 'name': 'Antoni (Male, Friendly)',   'engine': 'elevenlabs', 'gender': 'Male'},
+            {'id': 'elevenlabs_arnold', 'name': 'Arnold (Male, Powerful)',   'engine': 'elevenlabs', 'gender': 'Male'},
+            {'id': 'elevenlabs_drew',   'name': 'Drew (Male, Energetic)',    'engine': 'elevenlabs', 'gender': 'Male'},
+
+            # --- SYSTEM (Offline) ---
+            {'id': 'pyttsx3_1',    'name': 'Zira (Female, System)',     'engine': 'pyttsx3', 'gender': 'Female'},
+            {'id': 'pyttsx3_0',    'name': 'David (Male, System)',      'engine': 'pyttsx3', 'gender': 'Male'},
+            {'id': 'gtts_en',      'name': 'Google (Neutral/AI)',       'engine': 'gtts', 'gender': 'Female'},
         ]
         return voices

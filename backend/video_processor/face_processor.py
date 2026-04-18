@@ -62,16 +62,56 @@ class FaceProcessor:
                 print(f"  [WARNING] Background removal failed or rembg not installed: {bg_err}")
                 img = Image.open(file_path).convert('RGBA')
             
-            # 2. Prevent arbitrary square cropping
-            # We skip cropping to preserve shoulders, hair, etc.
-            
+            # 2. Auto-Centering & Intelligent Cropping
+            try:
+                # Convert PIL image to OpenCV format for detection
+                cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGBA2BGR)
+                gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+                faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
+
+                if len(faces) > 0:
+                    # Sort faces by size (width * height) and pick largest
+                    faces = sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
+                    x, y, w, h = faces[0]
+                    
+                    # Calculate padding to keep shoulders and head (Portrait style)
+                    # We want about 30% padding above, 60% below (shoulders), 35% on sides
+                    pad_up = int(h * 0.45)
+                    pad_down = int(h * 0.85)
+                    pad_side = int(w * 0.55)
+                    
+                    cx, cy = x + w // 2, y + h // 2
+                    
+                    # Define crop bounds
+                    y1 = max(0, y - pad_up)
+                    y2 = min(img.height, y + h + pad_down)
+                    x1 = max(0, cx - pad_side)
+                    x2 = min(img.width, cx + pad_side)
+                    
+                    # Ensure square crop by expanding the smaller dimension
+                    cw, ch = x2 - x1, y2 - y1
+                    if cw > ch:
+                        diff = cw - ch
+                        y1 = max(0, y1 - diff // 2)
+                        y2 = min(img.height, y1 + cw)
+                    else:
+                        diff = ch - cw
+                        x1 = max(0, x1 - diff // 2)
+                        x2 = min(img.width, x1 + ch)
+                    
+                    print(f"  [PROCESS] Auto-centering face at ({x1},{y1}) to ({x2},{y2})")
+                    img = img.crop((x1, y1, x2, y2))
+                else:
+                    print("  [WARNING] No face detected for auto-centering — using original crop")
+            except Exception as crop_err:
+                print(f"  [WARNING] Auto-centering failed: {crop_err}")
+
             # 3. Resize and Save
             # We ensure the output is a PNG to retain the alpha channel
             output_path = output_path.rsplit('.', 1)[0] + '.png'
             
-            max_size = max(target_size)
-            img.thumbnail((max_size, max_size), Image.LANCZOS)
-            
+            # Use fixed size for consistent AI input
+            img = img.resize(target_size, Image.LANCZOS)
             img.save(output_path, format="PNG")
             
             return output_path

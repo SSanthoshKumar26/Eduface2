@@ -22,6 +22,7 @@ except: pass
 import sys
 import io
 import threading
+import base64
 
 # Fix terminal encoding issues on Windows
 try:
@@ -58,6 +59,14 @@ from io import BytesIO
 from werkzeug.utils import secure_filename
 from openai import OpenAI
 from groq import Groq
+
+# Background removal imports
+try:
+    from rembg import remove
+    REMBG_AVAILABLE = True
+except ImportError:
+    REMBG_AVAILABLE = False
+    print("[WARNING] rembg not found. Background removal will be disabled.")
 
 # Video generation imports
 try:
@@ -116,23 +125,29 @@ if VIDEO_GENERATION_ENABLED:
 
 # ============ MODE CONFIGURATIONS ============
 MODE_PROMPTS = {
-    "Quick Response": {
-        "instructions": "Create a concise presentation with key points only. Keep it brief and to the point.",
-        "slide_count": 3,
-        "max_bullets": 3,
-        "font_size_body": 13
-    },
-    "Creative": {
-        "instructions": "Create an engaging and creative presentation with storytelling elements. Use vivid descriptions and make it interesting.",
-        "slide_count": 5,
-        "max_bullets": 4,
-        "font_size_body": 12
+    "Quick": {
+        "instructions": "Generate concise content for exactly ONE slide. Use 3-5 high-impact bullet points only. Style should be clean, direct, and presentation-ready. Focus on a quick overview suitable for a single summary slide.",
+        "slide_count": 1,
+        "max_bullets": 5,
+        "font_size_body": 14
     },
     "Detailed": {
-        "instructions": "Create a comprehensive presentation with detailed explanations, examples, and in-depth analysis. Cover all aspects thoroughly.",
-        "slide_count": 7,
+        "instructions": "Generate structured content for 2-3 slides. Use clear headings and bullet points per section. Include at least one practical example. Style should be slightly expanded for a normal presentation section breakdown.",
+        "slide_count": 3,
         "max_bullets": 5,
+        "font_size_body": 12
+    },
+    "Deep Dive": {
+        "instructions": "Generate EXTREMELY EXTENSIVE, ultra-detailed academic content for a full masterclass (20+ slides). Requirements: 1. Compelling title slide overview. 2. Exhaustive multi-chapter breakdown deeply dissecting the core mechanics. 3. Dense, technical bullet points per slide (6-10 per slide). 4. Comprehensive real-world case studies, architecture patterns, and technical edge cases. 5. Include 'Related Concepts' to connect the topic to the broader tech/science ecosystem. 6. Provide deep, non-obvious value and examples for every single concept. Style: Senior academic, highly professional, exhaustive, and authoritative.",
+        "slide_count": 20,
+        "max_bullets": 10,
         "font_size_body": 11
+    },
+    "Exam": {
+        "instructions": "Strictly follow this pattern for every topic: 1. Definition/Meaning (1-2 lines). 2. Key Points (Short bullet phrases only, high-scoring facts). 3. Important Keywords List. 4. Diagrams/Flow Structure (Simple steps). 5. Examples (1-2 short ones). Style Rules: Exam-focused, no storytelling, no paragraphs, high clarity, memorization-friendly. Output should feel like last-minute revision notes or 'what you write in exams'.",
+        "slide_count": 4,
+        "max_bullets": 8,
+        "font_size_body": 12
     }
 }
 
@@ -406,9 +421,9 @@ def calculate_dynamic_font_sizes(slide_sections, mode, has_image):
     }
 
 # ============ AI GENERATION ============
-def generate_with_ai(prompt: str, mode: str = "Creative", slide_count: int = 5) -> str:
+def generate_with_ai(prompt: str, mode: str = "Detailed", slide_count: int = 5) -> str:
     """Generate content trying Groq first, then fallback to local AI model via Ollama"""
-    mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Creative"])
+    mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Detailed"])
     mode_instruction = mode_config.get("instructions", "")
     
     # If it's Quick Response and user asks for "ONLY" or "ONE" thing, use a simpler instruction to avoid overhead formatting
@@ -442,18 +457,19 @@ CRITICAL INSTRUCTIONS:
             print(f"🤖 Generating with Eduface AI ({label}) — Mode: {mode}...")
             client = Groq(api_key=api_key)
 
-            system_prompt = """You are Eduface AI — an advanced conversational learning assistant.
-You operate as a real-time interactive system.
+            system_prompt = """You are Eduface AI — an elite conversational learning assistant.
+You operate as a real-time interactive system for generating high-fidelity educational content.
 
-Every response MUST have 2 parts:
-1. [CHAT] - A short, natural, conversational reply (1-2 lines max).
-2. [DOCUMENT] - The full structured content or requested answer.
+Every response MUST have exactly 2 parts:
+1. [CHAT] - A short, engaging, conversational reply (1-2 lines max).
+2. [DOCUMENT] - The full structured educational content.
 
-RULES:
-- If the user specifies 'ONLY' or 'ONE' item, the [DOCUMENT] section MUST contain exactly that item and nothing else (no headers, no markdown boilerplate).
-- Put ALL conversational pleasantries, explanations, and follow-up questions exclusively in the [CHAT] segment.
-- In [DOCUMENT], use structured markdown only if appropriate for the request.
-- Keep the [DOCUMENT] clean and professional."""
+INTELLIGENT CONTENT MANAGEMENT:
+- You will be provided with [Existing document] context.
+- If the user's new request is a FOLLOW-UP or a request to ADD more content/examples/details to the CURRENT topic, you MUST return the [Existing document] PLUS the new content integrated logically. Do NOT just give the new part.
+- If the user's new request is a COMPLETELY NEW TOPIC (e.g., they generated about "Python" and now ask about "History of Rome"), you MUST discard the previous context and generate a BRAND NEW [DOCUMENT] for the new topic only.
+- In [DOCUMENT], use structured markdown (# ## ###) strictly as defined by the generation rules.
+- Maintain professional tone throughout."""
 
             # Trim prompt to stay within TPM limits (~8000 tokens safe)
             trimmed_prompt = prompt[:6000] if len(prompt) > 6000 else prompt
@@ -464,8 +480,8 @@ RULES:
                     {"role": "user", "content": f"Mode: {mode}\nUser Input: {trimmed_prompt}"}
                 ],
                 model="llama-3.3-70b-versatile",
-                temperature=0.7,
-                max_tokens=4096,
+                temperature=0.6,
+                max_tokens=8192,
             )
 
             if response.choices and len(response.choices) > 0:
@@ -500,7 +516,7 @@ RULES:
             "model": AI_MODEL,
             "prompt": enhanced_prompt,
             "stream": False,
-            "temperature": 0.7 if mode == "Creative" else (0.5 if mode == "Quick Response" else 0.6),
+            "temperature": 0.7 if mode == "Detailed" else (0.5 if mode == "Quick Response" else 0.6),
         }
 
         print(f"🤖 Generating [{mode}] ({slide_count} slides) with local {AI_MODEL}...")
@@ -790,14 +806,14 @@ def generate_content():
     data = request.get_json()
     prompt = data.get("prompt", "")
     context = data.get("context", "")
-    mode = data.get("mode", "Creative")
+    mode = data.get("mode", "Detailed")
     slide_count = data.get("slide_count", 5)
     
     if context:
-        prompt = f"Existing document (for context):\n{context}\n\nUser's new request/update: {prompt}"
+        prompt = f"[Existing document]:\n{context}\n\n[User's new request/update]: {prompt}"
     
     if mode not in MODE_PROMPTS:
-        mode = "Creative"
+        mode = "Detailed"
     
     print(f"\n📝 Generating content in '{mode}' mode for {slide_count} slides...")
     output = generate_with_ai(prompt, mode, slide_count)
@@ -845,10 +861,10 @@ def generate_ppt():
         title = data.get("title", "Generated Presentation").strip()
         filename = (data.get("filename", "") or "").strip().replace(" ", "_")
         include_images = data.get("include_images", True)
-        mode = data.get("mode", "Creative")
+        mode = data.get("mode", "Detailed")
         
         if mode not in MODE_PROMPTS:
-            mode = "Creative"
+            mode = "Detailed" # Fallback to a valid mode instead of 'Creative'
         
         if not filename:
             filename = title.replace(" ", "_")
@@ -856,7 +872,10 @@ def generate_ppt():
         customizations = data.get("customizations", {}) or {}
         theme_id = customizations.get("theme", "modern_blue")
         theme = THEMES.get(theme_id, THEMES["modern_blue"])
-        max_slides = int(customizations.get("slide_count", MODE_PROMPTS[mode]["slide_count"]))
+        
+        # Safe access to slide count
+        mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["Detailed"])
+        max_slides = int(customizations.get("slide_count", mode_config["slide_count"]))
         
         if not content:
             return jsonify({"error": "Content is empty"}), 400
@@ -902,26 +921,7 @@ def generate_ppt():
         p.alignment = PP_ALIGN.CENTER
         p.line_spacing = 1.2
         
-        if slides_content and slides_content[0]:
-            first_text = next(
-                (s['content'] for s in slides_content[0] if s['type'] in ['h1', 'h2', 'text']),
-                f"Generated in {mode} mode"
-            )
-            subtitle_box = title_slide.shapes.add_textbox(
-                Inches(MARGIN_LEFT),
-                Inches(SLIDE_HEIGHT * 0.5),
-                Inches(CONTENT_WIDTH),
-                Inches(1.0)
-            )
-            tf_sub = subtitle_box.text_frame
-            tf_sub.word_wrap = True
-            p_sub = tf_sub.paragraphs[0]
-            p_sub.text = truncate_text(first_text, 80)
-            p_sub.font.size = Pt(24)
-            p_sub.font.name = theme["fonts"]["text"]
-            p_sub.font.color.rgb = RGBColor(*theme["colors"]["subtitle"])
-            p_sub.alignment = PP_ALIGN.CENTER
-        
+        # Removed subtitle from title slide to ensure it only contains the heading
         # Content slides
         for slide_idx, slide_sections in enumerate(slides_content):
             slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -1189,15 +1189,6 @@ def upload_files():
             face_file.save(path)
             response_data["face_path"] = path
 
-        if audio_file:
-            # Create audio upload directory if needed
-            audio_upload_dir = os.path.join(UPLOAD_FOLDER, 'audio')
-            os.makedirs(audio_upload_dir, exist_ok=True)
-            filename = f"{timestamp}_{secure_filename(audio_file.filename)}"
-            path = os.path.join(audio_upload_dir, filename)
-            audio_file.save(path)
-            response_data["audio_path"] = path
-            
         return jsonify(response_data)
     
     except Exception as e:
@@ -1277,6 +1268,13 @@ def generate_video():
                 # Process the video
                 video_pipeline.process(ppt_path, face_path, options, job_id=job_id)
                 
+                # Write success marker ensuring the file is fully ready
+                try:
+                    with open(os.path.join(f'uploads/outputs/{job_id}', 'success.txt'), 'w') as f:
+                        f.write('done')
+                except:
+                    pass
+                
                 # PERSIST TO DATABASE upon completion
                 if u_id:
                     try:
@@ -1302,7 +1300,7 @@ def generate_video():
                                 'videoUrl': video_url,
                                 'videoData': json.dumps(session_data),
                                 'title': video_title,
-                                'createdAt': time.time()
+                                'createdAt': time.time() * 1000
                             }
                             
                             # Check if already exists to avoid duplicates
@@ -1446,33 +1444,33 @@ def get_video_status(job_id):
                 "error": error_msg
             })
         
-        # Determine progress based on file existence
+        # Determine progress based on progress.json or file existence fallback
         progress = 0
         step = "Initializing"
         
-        if os.path.exists(os.path.join(base_path, 'slides')):
-            progress = 15
-            step = "Extracting PPT"
+        progress_file = os.path.join(base_path, 'progress.json')
+        if os.path.exists(progress_file):
+            try:
+                with open(progress_file, 'r') as f:
+                    p_data = json.load(f)
+                    progress = p_data.get('progress', 0)
+                    step = p_data.get('step', 'Processing')
+            except:
+                pass
+        else:
+            # Fallback to file-based estimation if progress.json is missing
+            if os.path.exists(os.path.join(base_path, 'slides')): progress = 15; step = "Extracting PPT"
+            if os.path.exists(os.path.join(base_path, 'script.txt')): progress = 35; step = "Generated Script"
+            if any(f.startswith('audio_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
+                progress = 50; step = "Generating Audio"
+            if any(f.startswith('lipsync_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
+                progress = 75; step = "Syncing Animation"
         
-        if os.path.exists(os.path.join(base_path, 'script.txt')):
-            progress = 35
-            step = "Generated Script"
-            
-        if any(f.startswith('audio_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
-            progress = 50
-            step = "Generating Audio"
-            
-        if any(f.startswith('lipsync_') for f in os.listdir(base_path) if os.path.isfile(os.path.join(base_path, f))):
-            progress = 75
-            step = "Syncing Animation"
-            
-        if os.path.exists(os.path.join(base_path, 'final_lesson.mp4')):
-            progress = 100
-            step = "Completed"
+        if os.path.exists(os.path.join(base_path, 'success.txt')) and os.path.exists(os.path.join(base_path, 'final_lesson.mp4')):
             return jsonify({
                 "status": "completed",
                 "progress": 100,
-                "step": step,
+                "step": "Completed",
                 "video_url": f"/api/download-video/{job_id}/final",
                 "script_url": f"/api/download-video/{job_id}/script",
                 "audio_url": f"/api/download-video/{job_id}/audio",
@@ -1505,6 +1503,50 @@ def get_user_active_job(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/refine-query", methods=["POST"])
+def refine_query():
+    """Real-time AI query refinement (checks grammar, spelling, and sentence structure)"""
+    try:
+        data = request.json
+        query = data.get('query', '')
+        if not query or len(query.strip()) < 3:
+            return jsonify({"success": True, "refined_query": query})
+
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            return jsonify({"success": False, "error": "GROQ_API_KEY not found"}), 500
+            
+        client = Groq(api_key=api_key)
+
+        prompt = f"""
+        Analyze the following user query for spelling, grammar, and sentence structure.
+        If there are mistakes, rewrite it to be clear, professional, and grammatically correct while preserving user intent.
+        If it's already perfect or just a single name, return it exactly as is.
+        
+        STRICT RULES:
+        1. Return ONLY the refined query text.
+        2. NO introductory text.
+        3. NO explanations.
+        4. Keep it concise.
+        
+        Query: {query}
+        """
+
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant", # Fastest model for real-time
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=200
+        )
+        
+        refined = completion.choices[0].message.content.strip()
+        refined = re.sub(r'^["\']|["\']$', '', refined) # Remove accidental quotes
+        
+        return jsonify({"success": True, "refined_query": refined})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # ============ EDUFACE AI CHATBOT ============
 @app.route("/api/chat", methods=["POST"])
 def tutor_chat():
@@ -1527,19 +1569,46 @@ def tutor_chat():
             clean_c = re.sub(r'\s+', ' ', clean_c).strip()
             messages[0]['content'] = f"Context: {clean_c}"
 
-        # 2. ELITE NOTEBOOKLM-STYLE IDENTITY
+        # 2. MODE-BASED SYSTEM PROMPTS
+        chat_mode = data.get('mode', 'Quick')
+        
+        mode_instructions = {
+            "Quick": (
+                "STRICT RULE: Be extremely concise. Fast, direct, minimal explanation. "
+                "Provide the direct answer only. No extra context unless necessary. "
+                "Single paragraph is preferred."
+            ),
+            "Detailed": (
+                "STRICT RULE: Provide a medium-length response. "
+                "Include a clear explanation and the reasoning behind the answer. "
+                "Keep it structured and easy to read. Some examples are allowed."
+            ),
+            "Deep Dive": (
+                "STRICT RULE: Highly detailed educational response. "
+                "Provide a full breakdown with step-by-step reasoning. "
+                "Include examples, edge cases, and broad context. "
+                "Use headings and structured formatting to organize the depth."
+            ),
+            "Exam": (
+                "STRICT RULE: Structured like exam answers. "
+                "Use bullet points, clear definitions, and hit all key technical points. "
+                "Optimize for revision and high-mark answer structures."
+            )
+        }
+        
+        mode_instruction = mode_instructions.get(chat_mode, mode_instructions["Quick"])
+
         system_i = {
             "role": "system",
             "content": (
-                "You are 'Eduface AI', an intelligent real-time learner assistant. "
-                "YOUR CORE RULE: ALWAYS respond in professional MARKDOWN. "
-                "\n\nBEHAVIOR:"
-                "\n1. Explain like an elite teacher. Be clear, structured, and authoritative."
-                "\n2. Use **bolding** for key terms and concepts."
-                "\n3. Use bullet points or numbered lists for steps and examples."
-                "\n4. Use ### Headers for section breaks."
-                "\n5. Ensure your response is professional and readable with appropriate spacing."
-                "\n6. Engagement: Always offer follow-up help."
+                f"You are 'Eduface AI', an intelligent real-time learner assistant. Mode: {chat_mode}. "
+                f"\n{mode_instruction}"
+                "\n\nCORE RULES:"
+                "\n1. ALWAYS respond in professional MARKDOWN."
+                "\n2. Explain like an elite teacher. Be clear, structured, and authoritative."
+                "\n3. Use **bolding** for key terms."
+                "\n4. Use ### Headers for section breaks if needed."
+                "\n5. Engagement: If appropriate, offer brief follow-up help."
             )
         }
         messages.insert(0, system_i)
@@ -1550,7 +1619,7 @@ def tutor_chat():
             stream = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages,
-                temperature=0.7,
+                temperature=0.7 if chat_mode != 'Quick' else 0.4,
                 stream=True
             )
             for chunk in stream:
@@ -1856,67 +1925,93 @@ def export_study_notes():
         
         if export_format == "PDF":
             try:
-                # Optimized PDF handling with fpdf2/fpdf support
-                try: from fpdf import FPDF
-                except ImportError: from fpdf2 import FPDF
+                from reportlab.lib.pagesizes import letter
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+                from reportlab.lib.colors import HexColor
+
+                pdf_buffer = io.BytesIO()
+                doc = SimpleDocTemplate(pdf_buffer, pagesize=letter,
+                                        rightMargin=50, leftMargin=50,
+                                        topMargin=50, bottomMargin=50)
+
+                styles = getSampleStyleSheet()
                 
-                class PDF(FPDF):
-                    def header(self):
-                        try: self.set_font('Arial', 'B', 15)
-                        except: self.set_font('helvetica', 'B', 15)
-                        self.cell(0, 10, title, 0, 1, 'C')
-                        self.ln(8)
+                # Custom Styles
+                title_style = ParagraphStyle(
+                    'CustomTitle', parent=styles['Title'],
+                    fontName='Helvetica-Bold', fontSize=24,
+                    textColor=HexColor('#1a365d'), spaceAfter=30,
+                    alignment=TA_CENTER
+                )
                 
-                pdf = PDF()
-                pdf.set_auto_page_break(auto=True, margin=15)
-                pdf.add_page()
-                try: pdf.set_font('Arial', '', 11)
-                except: pdf.set_font('helvetica', '', 11)
+                heading_style = ParagraphStyle(
+                    'CustomHeading', parent=styles['Heading2'],
+                    fontName='Helvetica-Bold', fontSize=16,
+                    textColor=HexColor('#2563eb'), spaceBefore=20, spaceAfter=10
+                )
                 
-                # Pre-process text to avoid encoding errors while preserving structure
-                pdf.multi_cell(0, 8, final_text.encode('latin-1', 'replace').decode('latin-1'))
+                body_style = ParagraphStyle(
+                    'CustomBody', parent=styles['Normal'],
+                    fontName='Helvetica', fontSize=11,
+                    textColor=HexColor('#334155'), leading=16,
+                    spaceAfter=12, alignment=TA_JUSTIFY
+                )
+
+                bullet_style = ParagraphStyle(
+                    'CustomBullet', parent=body_style,
+                    leftIndent=20, bulletIndent=10
+                )
+
+                elements = []
+                elements.append(Paragraph(title, title_style))
                 
-                raw_out = pdf.output(dest='S')
-                # Handle fpdf vs fpdf2 output return types
-                if isinstance(raw_out, (bytearray, bytes)):
-                    output.write(raw_out)
-                else:
-                    output.write(raw_out.encode('latin-1'))
+                lines = final_text.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if not line: continue
                     
+                    if (line.isupper() and len(line) < 80) or line.startswith('CHAPTER') or line.startswith('SECTION') or line.startswith('Overview') or line.startswith('Conclusion'):
+                        elements.append(Paragraph(line, heading_style))
+                    elif line.startswith('*') or line.startswith('-'):
+                        # Platypus handles bullet chars if we wrap them properly or just remove the asterisk
+                        # By using a bullet style, we just push the text over. Let's prepend a standard bullet char manually 
+                        # or just rely on the text having '*'. Actually platypus has a bullet point feature:
+                        elements.append(Paragraph(line.lstrip('*- '), bullet_style, bulletText='•'))
+                    else:
+                        elements.append(Paragraph(line, body_style))
+
+                doc.build(elements)
+                output.write(pdf_buffer.getvalue())
                 mimetype, filename = 'application/pdf', f"Study_Notes_{title.replace(' ', '_')}.pdf"
                 
             except Exception as e:
-                # Try ReportLab as second option
-                try:
-                    from reportlab.lib.pagesizes import letter
-                    from reportlab.pdfgen import canvas
-                    c = canvas.Canvas(output, pagesize=letter)
-                    c.setFont("Helvetica-Bold", 16)
-                    c.drawCentredString(300, 750, title)
-                    c.setFont("Helvetica", 10)
-                    textobject = c.beginText(50, 720)
-                    for line in final_text.split('\n'):
-                        textobject.textLine(line)
-                    c.drawText(textobject)
-                    c.showPage()
-                    c.save()
-                    mimetype, filename = 'application/pdf', f"{title.replace(' ', '_')}.pdf"
-                except:
-                    print(f"⚠️ All PDF Libs Missing: {e}")
-                    # Final fallback to beautifully formatted plain text
-                    header = f"{'='*50}\n{title.upper()}\n{'='*50}\n\n"
-                    output.write((header + final_text).encode('utf-8'))
-                    mimetype, filename = 'text/plain', f"{title.replace(' ', '_')}.txt"
+                print(f"⚠️ PDF generation failed: {e}")
+                # Final fallback to beautifully formatted plain text
+                header = f"{'='*50}\n{title.upper()}\n{'='*50}\n\n"
+                output.write((header + final_text).encode('utf-8'))
+                mimetype, filename = 'text/plain', f"Study_Notes_{title.replace(' ', '_')}.txt"
         
         else: # WORD (DOCX)
             try:
-                try: from docx import Document; from docx.shared import Pt
-                except ImportError: from python_docx import Document; from docx.shared import Pt
+                try: from docx import Document; from docx.shared import Pt, RGBColor, Inches
+                except ImportError: from python_docx import Document; from docx.shared import Pt, RGBColor, Inches
                 
                 doc = Document()
+                
+                # Set Margins
+                for section in doc.sections:
+                    section.left_margin = Inches(1.0)
+                    section.right_margin = Inches(1.0)
+                    
                 # Set Title
-                title_run = doc.add_heading(title, 0).runs[0]
-                title_run.font.size = Pt(20)
+                title_paragraph = doc.add_heading('', level=0)
+                title_run = title_paragraph.add_run(title)
+                title_run.font.size = Pt(24)
+                title_run.font.name = 'Calibri'
+                title_run.font.color.rgb = RGBColor(0x1a, 0x36, 0x5d)
+                title_paragraph.alignment = 1 # Center alignment
                 
                 # Split content into sections
                 lines = final_text.split('\n')
@@ -1924,14 +2019,18 @@ def export_study_notes():
                     line = line.strip()
                     if not line: continue
                     
-                    # Logic to find headers
-                    if line.isupper() and len(line) < 80:
-                        doc.add_heading(line, level=1)
-                    elif line.startswith('SECTION') or line.startswith('CHAPTER'):
-                        doc.add_heading(line, level=1)
+                    if (line.isupper() and len(line) < 80) or line.startswith('SECTION') or line.startswith('CHAPTER') or line.startswith('Overview') or line.startswith('Conclusion'):
+                        h = doc.add_heading('', level=1)
+                        run = h.add_run(line)
+                        run.font.color.rgb = RGBColor(0x25, 0x63, 0xeb)
+                        run.font.name = 'Calibri'
+                    elif line.startswith('*') or line.startswith('-'):
+                        p = doc.add_paragraph(line.lstrip('*- '), style='List Bullet')
+                        p.paragraph_format.space_after = Pt(8)
                     else:
                         p = doc.add_paragraph(line)
-                        p.paragraph_format.space_after = Pt(10)
+                        p.paragraph_format.line_spacing = 1.5
+                        p.paragraph_format.space_after = Pt(12)
                 
                 doc.save(output)
                 mimetype, filename = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', f"Study_Notes_{title.replace(' ', '_')}.docx"
@@ -2063,6 +2162,60 @@ try:
 except ImportError:
     get_db = lambda: None
 
+# ==========================================
+# Background Removal Endpoint
+# ==========================================
+@app.route('/api/remove-background', methods=['POST'])
+def remove_background():
+    """Removes the background from a profile image using rembg"""
+    if not REMBG_AVAILABLE:
+        return jsonify({'success': False, 'error': 'Background removal module (rembg) is not installed on the server.'}), 501
+        
+    try:
+        # Check if it's a file upload or a base64 string/URL
+        if 'image' in request.files:
+            file = request.files['image']
+            input_data = file.read()
+            filename = secure_filename(file.filename)
+        else:
+            # Assume JSON with image_data (base64)
+            data = request.json
+            if not data or 'image_data' not in data:
+                return jsonify({'success': False, 'error': 'No image data provided'}), 400
+                
+            image_data = data['image_data']
+            if 'base64,' in image_data:
+                image_data = image_data.split('base64,')[1]
+            input_data = base64.b64decode(image_data)
+            filename = f"bg_removed_{int(time.time())}.png"
+
+        # Process image
+        print(f"✂️ Removing background for {filename}...")
+        output_data = remove(input_data)
+        
+        # Save processed image
+        base_name = os.path.splitext(filename)[0]
+        output_filename = f"{base_name}_transparent.png"
+        output_path = os.path.join(FACE_UPLOAD_DIR, output_filename)
+        
+        with open(output_path, 'wb') as f:
+            f.write(output_data)
+            
+        # Return base64 for immediate preview + path for generation
+        encoded_string = base64.b64encode(output_data).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'image_url': f"/uploads/faces/{output_filename}",
+            'preview': f"data:image/png;base64,{encoded_string}",
+            'filename': output_filename
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/users', methods=['POST'])
 def sync_user():
     try:
@@ -2079,7 +2232,7 @@ def sync_user():
             'name': data.get('name', ''),
             'email': data.get('email', ''),
             'profileImage': data.get('profileImage', ''),
-            'lastLogin': time.time()
+            'lastLogin': time.time() * 1000
         }
         
         # update or insert
@@ -2087,7 +2240,7 @@ def sync_user():
             {'clerkId': clerk_id},
             {
                 '$set': user_data,
-                '$setOnInsert': {'createdAt': time.time()}
+                '$setOnInsert': {'createdAt': time.time() * 1000}
             },
             upsert=True
         )
@@ -2112,11 +2265,11 @@ def save_video():
             print(f"❌ REJECTED: userId={u_id}, videoId={v_id}")
             return jsonify({'success': False, 'error': 'userId and videoId required'}), 400
             
-        # check if video already exists
-        existing = db.videos.find_one({'videoId': v_id})
+        # check if THIS user already has this video
+        existing = db.videos.find_one({'userId': u_id, 'videoId': v_id})
         if existing:
-            print(f"ℹ️ Video {v_id} already in gallery")
-            return jsonify({'success': True, 'message': 'Video already exists'})
+            print(f"ℹ️ Video {v_id} already in User {u_id}'s gallery")
+            return jsonify({'success': True, 'message': 'Video already exists in your gallery'})
             
         video_data = {
             'userId': data['userId'],
@@ -2124,7 +2277,7 @@ def save_video():
             'videoUrl': data.get('videoUrl', ''),
             'videoData': data.get('videoData', ''),
             'title': data.get('title', 'Generated Video'),
-            'createdAt': data.get('createdAt', time.time())
+            'createdAt': data.get('createdAt', time.time() * 1000)
         }
         
         db.videos.insert_one(video_data)

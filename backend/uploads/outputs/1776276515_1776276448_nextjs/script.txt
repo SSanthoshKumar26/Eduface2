@@ -1,0 +1,46 @@
+[SCENE START]
+TEXT: "Welcome to this lesson. nextjs... On this slide, we focus on nextjs.."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Introduction to Next.js... ... Next.js is an open-source React-based framework for building server-side rendered and statically generated websites and applications. It provides a set of features and tools that make it easy to build fast, scalable, and maintainable applications.."
+FACE: - slight smile
+TIMING: - duration: 29s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Features of Next.js... ... Server-Side Rendering SSR : Next.js allows you to render your React components on the server, which can improve SEO and provide faster page loads. Static Site Generation SSG : Next.js can also generate static HTML files for your application, which can be served directly by a web server or CDN.."
+FACE: - slight smile
+TIMING: - duration: 34s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Features of Next.js (Cont.)... Key Features of Next.js Cont. ... Internationalization and Localization: Next.js provides built-in support for internationalization and localization, making it easy to build applications that can be used by people all around the world. API Routes: Next.js allows you to create API routes, which can be used to handle server-side logic and provide data to your application. Built-in Support for CSS and Sass: Next.js provides built-in support for CSS and Sass, making it easy to style your application.."
+FACE: - slight smile
+TIMING: - duration: 55s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Features of Next.js (Cont.)... Key Features of Next.js Cont. ... Advantages of Using Next.js... Improved Performance: Next.js can improve the performance of your application by reducing the amount of JavaScript that needs to be loaded on the client-side. Better SEO: Next.js can improve the SEO of your application by providing server-side rendering and static site generation.."
+FACE: - slight smile
+TIMING: - duration: 40s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Features of Next.js (Cont.) (Cont.)... Key Features of Next.js Cont. Cont. ... Easier Maintenance: Next.js provides a set of tools and features that make it easy to maintain and update your application.."
+FACE: - slight smile
+TIMING: - duration: 22s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Features of Next.js (Cont.) (Cont.) (Cont.)... Key Features of Next.js Cont. Cont. Cont. ... Common Use Cases for Next.js... Building Server-Side Rendered Applications: Next.js is well-suited for building server-side rendered applications, such as blogs, news websites, and e-commerce sites. Building Statically Generated Websites: Next.js can be used to build statically generated websites, such as marketing sites, landing pages, and documentation sites. Building Progressive Web Apps: Next.js can be used to build progressive web apps, which provide a native app-like experience to users.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 70s

@@ -188,12 +188,12 @@ Content:
             is_first_slide = (i == 0)
             is_last_slide = (i == total - 1)
             
-            sys_prompt = f"""You are the EDUFACE VERBATIM NARRATOR. 
+            sys_prompt = f"""You are the EDUFACE ELITE NARRATOR. 
 
 ### ‼️ CRITICAL RULES for SLIDE {i+1} ‼️
 1. **NO INTRODUCTIONS**: { 'You MUST start with "Welcome to this lesson."' if is_first_slide else 'DO NOT say "Welcome", "Hello", or "Hi". Slide 1 is already finished. Start IMMEDIATELY with a transition like "Moving on to..." or "Continuing with..."'}
 2. **ZERO SUMMARIZATION**: You are narrating the FULL text. You must not skip a single bullet point or detail.
-3. **CONTENT ANCHOR**: If the slide has content, you MUST explain it. You cannot just output transition text.
+3. **HIGH REALISM**: You must include realistic facial motion markers (eye blinks, eyebrow movements, slight head tilts) in the FACE tag to guide the animation engine.
 
 ### 📜 SLIDE DATA
 **TITLE**: {title}
@@ -203,11 +203,11 @@ Content:
 ### 📤 OUTPUT REQUIREMENTS
 - **Start text**: { '"Welcome to this lesson."' if is_first_slide else '"Continuing to our next topic, ' + title + '."' }
 - **Body text**: Convert every single point from the BODY section into professional, flowing spoken sentences. DO NOT SHORTEN.
-- **Verification**: Ensure the output word count is consistent with the input density.
+- **Facial Animation**: In the 'FACE' section, specify natural actions: 'eye_blink', 'eyebrow_lift', 'slight_head_tilt', 'natural_smile'.
 
 [SCENE START]
 TEXT: "[Insert the FULL script here. Maintain absolute fidelity to the input body.]"
-FACE: - slight smile
+FACE: "eye_blink, natural_smile, slight_head_tilt during transitions, eyebrow_lift on important keywords. Realistic 4k facial expressions."
 TIMING: - duration: [1s per 10 characters]
 """
             

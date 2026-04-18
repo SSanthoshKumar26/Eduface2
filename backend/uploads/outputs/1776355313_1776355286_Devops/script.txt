@@ -1,0 +1,46 @@
+[SCENE START]
+TEXT: "Welcome to this lesson. Devops... On this slide, we focus on Devops.."
+FACE: - slight smile
+TIMING: - duration: 8s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Introduction to DevOps... ... DevOps is a set of practices that combines software development Dev and IT operations Ops to improve the speed, quality, and reliability of software releases and deployments. It aims to create a culture and environment where building, testing,...."
+FACE: - slight smile
+TIMING: - duration: 29s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Principles of DevOps... ... Collaboration: DevOps emphasizes the importance of collaboration between different teams, including development, operations, quality assurance, and security. This collaboration ensures that everyone is aligned and working towards common goals. Automation: Automation is a critical aspect of DevOps. It involves using tools to automate processes such as build, deployment, testing, and monitoring to reduce manual errors and increase efficiency. Continuous Integration and Continuous Deployment CI CD : CI CD is a core practice in DevOps. Continuous Integration involves integrating code changes into a central repository frequently, usually through automated builds and tests. Continuous...."
+FACE: - slight smile
+TIMING: - duration: 74s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Principles of DevOps (Cont.)... Key Principles of DevOps Cont. ... Monitoring and Feedback: Continuous monitoring of applications and infrastructure, along with feedback from users and the system itself, is crucial for identifying areas for improvement and implementing changes. DevOps Tools... Several tools are used in DevOps to facilitate its practices. These include: Version Control Systems VCS like Git for managing code changes.."
+FACE: - slight smile
+TIMING: - duration: 46s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Principles of DevOps (Cont.)... Key Principles of DevOps Cont. ... CI CD Tools such as Jenkins, GitLab CI CD, and CircleCI for automating build, test, and deployment processes. Configuration Management Tools like Ansible, Puppet, and Chef for managing and configuring infrastructure and applications. Monitoring Tools such as Prometheus, Grafana, and New Relic for keeping track of application and system performance.."
+FACE: - slight smile
+TIMING: - duration: 44s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Principles of DevOps (Cont.) (Cont.)... Key Principles of DevOps Cont. Cont. ... Benefits of DevOps... The adoption of DevOps practices offers several benefits, including:."
+FACE: - slight smile
+TIMING: - duration: 19s
+
+--- SLIDE BREAK ---
+
+[SCENE START]
+TEXT: "Now let's continue. Key Principles of DevOps (Cont.) (Cont.) (Cont.)... Key Principles of DevOps Cont. Cont. Cont. ... Faster Time-to-Market: By automating processes and improving collaboration, DevOps enables organizations to release software faster. Improved Quality: Continuous testing and monitoring ensure that software is thoroughly tested and meets quality standards before release. Enhanced Customer Satisfaction: By releasing features and fixes quickly and reliably, organizations can improve customer satisfaction.. Thank you for learning with Eduface AI. If you have any questions, feel free to ask."
+FACE: - slight smile
+TIMING: - duration: 61s
